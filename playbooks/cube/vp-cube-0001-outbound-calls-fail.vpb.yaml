@@ -1,0 +1,1199 @@
+playbook:
+  api_version: voicepilot.io/v1
+  kind: Playbook
+
+  metadata:
+    id: VP-CUBE-0001
+    version: "1.0.0"
+    title: Outbound Calls Fail
+    description: >
+      TAC-grade investigation for outbound PSTN failure on Cisco CUBE in a
+      CUCM -> CUBE -> ITSP topology. Investigates systematically through intake,
+      topology validation, evidence collection, hypothesis discrimination, and
+      verified resolution. Does not assume root cause without evidence.
+    category: cube
+    vendor: cisco
+    status: active
+    author: voicepilot-curator
+    reviewed_by: tac-sme
+    effective_from: 2026-06-01
+    tags: [outbound, pstn, cube, sip, routing, cucm, itsp]
+    related_playbooks: []
+
+  platforms:
+    - vendor: cisco
+      products: [cube, ios_voice]
+      min_version: "15.0"
+      roles: [session_border]
+    - vendor: cisco
+      products: [cucm]
+      roles: [call_manager]
+      optional: true
+
+  symptoms:
+    - id: SYM-OUTBOUND-FAIL
+      match:
+        summary_contains: [outbound, PSTN, external, off-net]
+        failure_modes: [fast_busy, no_dial_tone, immediate_disconnect, reorder_tone]
+        sip_codes: [404, 403, 408, 488, 503, 484, 486]
+        call_direction: outbound
+      weight: 1.0
+    - id: SYM-INTERNAL-OK
+      match:
+        summary_contains: [internal calls work, on-net works]
+      weight: 0.5
+
+  business_impact:
+    default_severity: high
+    description: Users cannot place outbound PSTN calls to external numbers
+    escalation_threshold_minutes: 60
+    user_impact: external_calling_blocked
+
+  topology:
+    pattern: cucm_cube_itsp
+    description: Cisco CUCM -> Cisco CUBE -> ITSP/PSTN
+    required_components:
+      - type: cube
+        role: session_border
+        min_count: 1
+      - type: provider
+        role: itsp
+        min_count: 1
+    optional_components:
+      - type: cucm
+        role: call_manager
+      - type: firewall
+        role: perimeter
+    path:
+      signaling: [cucm, cube, provider, pstn]
+      media: [cucm, cube, provider, pstn]
+
+  strategies:
+    - id: routing-first
+      weight: 0.80
+      description: Prove dial-peer, translation, and CUBE routing before provider blame
+      when:
+        any:
+          - sip_codes_present: [404, 484]
+          - symptom: no_matching_dial_peer
+      proof_objectives:
+        - Confirm SIP response origin (local vs remote)
+        - Validate dial-peer match for failing destination
+        - Rule out translation distortion of called number
+    - id: provider-first
+      weight: 0.75
+      description: Investigate ITSP rejection, fraud blocks, and caller ID policy
+      when:
+        any:
+          - sip_codes_present: [403, 503]
+          - finding: FIND-RESP-ORIGIN
+            equals: remote
+      proof_objectives:
+        - Confirm provider-originated SIP response
+        - Validate carrier routing and CLIP/CLIR policy
+        - Check provider status and geographic restrictions
+    - id: network-first
+      weight: 0.70
+      description: Investigate DNS, firewall, and timeout paths
+      when:
+        sip_codes_present: [408]
+      proof_objectives:
+        - Prove DNS resolution for provider FQDN
+        - Confirm signaling path reachability
+        - Correlate firewall or ACL changes
+    - id: media-first
+      weight: 0.65
+      description: Investigate codec and SDP negotiation
+      when:
+        sip_codes_present: [488]
+      proof_objectives:
+        - Capture SDP offer/answer in debug
+        - Compare codec lists on CUBE and provider trunk
+    - id: security-first
+      weight: 0.60
+      description: Investigate TLS and certificate failures
+      when:
+        any:
+          - finding: FIND-TLS-FAIL
+          - transport: tls
+      proof_objectives:
+        - Validate certificate chain and expiry
+        - Confirm TLS profile alignment with provider
+    - id: change-first
+      weight: 0.85
+      description: Correlate symptom onset with recent configuration or provider change
+      when:
+        recent_change_reported: true
+      proof_objectives:
+        - Establish change window vs symptom onset
+        - Diff affected configuration sections
+
+  intake:
+    questions:
+      - id: Q-INT-001
+        text: Did outbound PSTN calling ever work in this environment?
+        category: intake
+        phase: INTAKE
+        target_field: known_facts.worked_previously
+        required: true
+        information_gain: 0.85
+      - id: Q-INT-002
+        text: When did outbound calling stop working?
+        category: intake
+        phase: INTAKE
+        target_field: timeline.onset
+        required: true
+        information_gain: 0.80
+      - id: Q-INT-003
+        text: Were any changes made to CUBE, CUCM, firewall, or the provider recently?
+        category: change
+        phase: INTAKE
+        target_field: recent_changes
+        required: true
+        information_gain: 0.92
+      - id: Q-INT-004
+        text: Are all outbound calls failing, or only specific destinations (mobile, international, premium)?
+        category: scope
+        phase: INTAKE
+        target_field: affected_scope.destination_classes
+        required: true
+        information_gain: 0.90
+      - id: Q-INT-005
+        text: Are inbound PSTN calls still working?
+        category: scope
+        phase: INTAKE
+        target_field: known_facts.inbound_working
+        required: true
+        information_gain: 0.65
+      - id: Q-INT-006
+        text: Is only one site affected, or multiple locations?
+        category: scope
+        phase: DISCOVERY
+        target_field: affected_scope.sites
+        required: true
+        information_gain: 0.70
+      - id: Q-INT-007
+        text: Which ITSP/SIP provider carries outbound PSTN for this site?
+        category: topology
+        phase: DISCOVERY
+        target_field: topology.provider
+        required: true
+        information_gain: 0.78
+      - id: Q-INT-008
+        text: Is TLS-SIP used to the provider, or UDP/TCP plain SIP?
+        category: topology
+        phase: TOPOLOGY
+        target_field: topology.provider_transport
+        required: false
+        information_gain: 0.55
+
+  evidence:
+    requirements:
+      - id: EVD-REQ-SIP-UA
+        title: SIP UA registration and trunk status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+        blocks_confirmation: true
+        guidance: Establish whether provider-facing SIP trunk is registered before blaming routing
+      - id: EVD-REQ-DIAL-PEER-SUM
+        title: Dial-peer operational summary
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+        blocks_confirmation: false
+        guidance: Identify matched/unmatched dial-peers for failing call attempts
+      - id: EVD-REQ-SIP-DEBUG
+        title: SIP debug for failing outbound call
+        type: debug_log
+        mandatory: true
+        phase: COLLECTION
+        blocks_confirmation: true
+        guidance: Capture one controlled failing call; note SIP response code and origin
+      - id: EVD-REQ-DIAL-PEER-CFG
+        title: Dial-peer configuration
+        type: config_excerpt
+        mandatory: true
+        phase: COLLECTION
+        blocks_confirmation: true
+        guidance: Required before confirming dial-peer or translation root cause
+      - id: EVD-REQ-VOICE-SVC
+        title: Voice service VoIP configuration
+        type: config_excerpt
+        mandatory: false
+        phase: COLLECTION
+        blocks_confirmation: false
+        guidance: SIP profiles, bind controls, codec policy
+      - id: EVD-REQ-CALL-ACTIVE
+        title: Active call state during failure
+        type: cli_output
+        mandatory: false
+        phase: INVESTIGATION
+        blocks_confirmation: false
+        guidance: Capture matched dial-peer and call state during live test
+      - id: EVD-REQ-LOGGING
+        title: Recent CUBE logging
+        type: cli_output
+        mandatory: false
+        phase: COLLECTION
+        blocks_confirmation: false
+        guidance: Correlate syslog errors with failure window
+      - id: EVD-REQ-TRANS-CFG
+        title: Translation rules affecting called number
+        type: config_excerpt
+        mandatory: false
+        phase: INVESTIGATION
+        blocks_confirmation: false
+        guidance: Collect when translation or digit manipulation is suspected
+
+    commands:
+      - id: CMD-SIP-UA
+        requirement_id: EVD-REQ-SIP-UA
+        device_role: session_border
+        command: show sip-ua status
+        cost: low
+        privilege: show
+      - id: CMD-DIAL-PEER-SUM
+        requirement_id: EVD-REQ-DIAL-PEER-SUM
+        device_role: session_border
+        command: show dial-peer voice summary
+        cost: low
+        privilege: show
+      - id: CMD-DIAL-PEER-RUN
+        requirement_id: EVD-REQ-DIAL-PEER-CFG
+        device_role: session_border
+        command: show run | sec dial-peer
+        cost: low
+        privilege: show
+      - id: CMD-VOICE-SVC
+        requirement_id: EVD-REQ-VOICE-SVC
+        device_role: session_border
+        command: show run | sec voice service voip
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-CALL-ACTIVE
+        requirement_id: EVD-REQ-CALL-ACTIVE
+        device_role: session_border
+        command: show call active voice brief
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-LOGGING
+        requirement_id: EVD-REQ-LOGGING
+        device_role: session_border
+        command: show logging
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-TRANS-RULES
+        requirement_id: EVD-REQ-TRANS-CFG
+        device_role: session_border
+        command: show run | sec translation-rule
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-DNS-TEST
+        device_role: session_border
+        command: ping
+        cost: low
+        privilege: exec
+        optional: true
+        guidance: Resolve provider FQDN when DNS failure suspected
+      - id: CMD-CRYPTO-PKI
+        device_role: session_border
+        command: show crypto pki certificates
+        cost: low
+        privilege: show
+        optional: true
+        guidance: Collect when TLS handshake failure suspected
+
+    logs:
+      - id: LOG-SIP-DEBUG
+        requirement_id: EVD-REQ-SIP-DEBUG
+        log_type: sip_trace
+        device_role: session_border
+        command: debug ccsip messages
+        cost: medium
+        requires_approval: false
+        guidance: >
+          Enable debug, place one failing outbound call, capture output, disable debug.
+          Do not leave debug running on production CUBE.
+
+  parsers:
+    findings:
+      - id: PARSE-SIP-CODE
+        applies_to: [sip_trace]
+        signal_type: sip_response_code
+        extract:
+          pattern: 'SIP/2.0 (?P<code>\d{3})'
+        emit_finding: FIND-SIP-CODE
+      - id: PARSE-RESP-ORIGIN
+        applies_to: [sip_trace]
+        signal_type: response_origin
+        extract:
+          pattern: '(?i)(local|remote)'
+        emit_finding: FIND-RESP-ORIGIN
+      - id: PARSE-REG-STATE
+        applies_to: [cli_output]
+        signal_type: registration_state
+        extract:
+          pattern: '(?i)(UP|DOWN|REGISTERED|NO REGISTERED)'
+        emit_finding: FIND-REG-STATE
+      - id: PARSE-NO-DIAL-PEER
+        applies_to: [sip_trace, cli_output]
+        signal_type: dial_peer_match
+        extract:
+          pattern: '(?i)(no matching dial-peer|cannot find dial-peer|not matched)'
+        emit_finding: FIND-NO-DIAL-PEER
+      - id: PARSE-SDP-MISMATCH
+        applies_to: [sip_trace]
+        signal_type: sdp_mismatch
+        extract:
+          pattern: '(?i)(488|Not Acceptable Here|m=audio.*0)'
+        emit_finding: FIND-SDP-MISMATCH
+      - id: PARSE-DNS-FAIL
+        applies_to: [cli_output, sip_trace]
+        signal_type: dns_failure
+        extract:
+          pattern: '(?i)(DNS lookup failed|unable to resolve|name resolution failed)'
+        emit_finding: FIND-DNS-FAIL
+      - id: PARSE-TLS-FAIL
+        applies_to: [sip_trace, cli_output]
+        signal_type: tls_handshake_failure
+        extract:
+          pattern: '(?i)(TLS handshake failed|certificate expired|unable to verify certificate|SSL error)'
+        emit_finding: FIND-TLS-FAIL
+      - id: PARSE-TRANSFORM
+        applies_to: [sip_trace, config_excerpt]
+        signal_type: translation_mismatch
+        extract:
+          pattern: '(?i)(translation-rule|called number changed|digit strip)'
+        emit_finding: FIND-TRANSFORM-MISMATCH
+      - id: PARSE-CALLER-REJECT
+        applies_to: [sip_trace]
+        signal_type: caller_id_rejection
+        extract:
+          pattern: '(?i)(403 Forbidden|caller ID|CLIP|identity rejected)'
+        emit_finding: FIND-CALLERID-REJECT
+      - id: PARSE-FRAUD-BLOCK
+        applies_to: [sip_trace]
+        signal_type: provider_block
+        extract:
+          pattern: '(?i)(fraud|geographic block|destination barred|premium blocked)'
+        emit_finding: FIND-FRAUD-BLOCK
+
+  extensions:
+    evidence_examples:
+      - id: EX-LOCAL-404
+        description: SIP 404 generated locally on CUBE
+        findings: [FIND-SIP-CODE, FIND-RESP-ORIGIN]
+        values:
+          FIND-SIP-CODE: "404"
+          FIND-RESP-ORIGIN: local
+        supports: [HYP-DP-001, HYP-TRANS-001]
+        tac_note: Do not blame provider until local origin is ruled in or out
+      - id: EX-REMOTE-503
+        description: SIP 503 received from provider
+        findings: [FIND-SIP-CODE, FIND-RESP-ORIGIN]
+        values:
+          FIND-SIP-CODE: "503"
+          FIND-RESP-ORIGIN: remote
+        supports: [HYP-PROVIDER-001, HYP-FRAUD-001]
+      - id: EX-488-SDP
+        description: SIP 488 with SDP codec mismatch
+        findings: [FIND-SIP-CODE, FIND-SDP-MISMATCH]
+        values:
+          FIND-SIP-CODE: "488"
+        supports: [HYP-CODEC-001]
+      - id: EX-408-TIMEOUT
+        description: SIP 408 timeout — no timely response
+        findings: [FIND-SIP-CODE]
+        values:
+          FIND-SIP-CODE: "408"
+        supports: [HYP-NETWORK-001, HYP-DNS-001]
+      - id: EX-DNS-FAIL
+        description: DNS failure resolving provider FQDN
+        findings: [FIND-DNS-FAIL]
+        supports: [HYP-DNS-001]
+      - id: EX-TLS-FAIL
+        description: TLS handshake failure to provider
+        findings: [FIND-TLS-FAIL]
+        supports: [HYP-TLS-001]
+      - id: EX-NO-DIAL-PEER
+        description: No matching outbound dial-peer for called number
+        findings: [FIND-NO-DIAL-PEER]
+        supports: [HYP-DP-001]
+      - id: EX-TRANSFORM
+        description: Translation rule changed called number unexpectedly
+        findings: [FIND-TRANSFORM-MISMATCH]
+        supports: [HYP-TRANS-001]
+
+  hypotheses:
+    - id: HYP-DP-001
+      title: Dial-peer mismatch or missing outbound dial-peer
+      category: routing
+      initial_status: candidate
+      default_rank: 1
+      investigation_priority: high
+    - id: HYP-TRANS-001
+      title: Translation rule issue distorting called number
+      category: routing
+      initial_status: candidate
+      default_rank: 2
+    - id: HYP-PROVIDER-001
+      title: Provider routing issue or carrier rejection
+      category: provider
+      initial_status: candidate
+      default_rank: 3
+    - id: HYP-TRUNK-001
+      title: SIP trunk unavailable or unregistered
+      category: provider
+      initial_status: candidate
+      default_rank: 4
+    - id: HYP-CODEC-001
+      title: Codec or SDP negotiation mismatch
+      category: media
+      initial_status: candidate
+      default_rank: 5
+    - id: HYP-DNS-001
+      title: DNS resolution failure for provider destination
+      category: network
+      initial_status: candidate
+      default_rank: 6
+    - id: HYP-TLS-001
+      title: TLS or certificate issue on provider SIP trunk
+      category: security
+      initial_status: candidate
+      default_rank: 7
+    - id: HYP-NETWORK-001
+      title: Firewall, ACL, or network timeout on signaling path
+      category: network
+      initial_status: candidate
+      default_rank: 8
+    - id: HYP-CALLERID-001
+      title: Calling number or caller ID rejected by provider
+      category: provider
+      initial_status: candidate
+      default_rank: 9
+    - id: HYP-FRAUD-001
+      title: Provider fraud filter or geographic destination blocking
+      category: provider
+      initial_status: candidate
+      default_rank: 10
+
+  rules:
+    evidence:
+      - id: EV-RULE-LOCAL-404
+        name: local_404_routing
+        when:
+          all:
+            - finding: FIND-SIP-CODE
+              equals: "404"
+            - finding: FIND-RESP-ORIGIN
+              equals: local
+        supports: [HYP-DP-001, HYP-TRANS-001]
+        contradicts: [HYP-PROVIDER-001, HYP-FRAUD-001]
+        interpretation: Local 404 on CUBE indicates dial-peer, translation, or local routing issue
+
+      - id: EV-RULE-NO-DIAL-PEER
+        name: no_matching_dial_peer
+        when:
+          finding: FIND-NO-DIAL-PEER
+          equals: true
+        supports: [HYP-DP-001]
+        contradicts: [HYP-PROVIDER-001]
+        interpretation: No matching outbound dial-peer for destination number class
+
+      - id: EV-RULE-TRANSFORM
+        name: translation_distortion
+        when:
+          finding: FIND-TRANSFORM-MISMATCH
+          equals: true
+        supports: [HYP-TRANS-001]
+        interpretation: Called number altered by translation rule before provider routing
+
+      - id: EV-RULE-REMOTE-503
+        name: provider_503_rejection
+        when:
+          all:
+            - finding: FIND-SIP-CODE
+              equals: "503"
+            - finding: FIND-RESP-ORIGIN
+              equals: remote
+        supports: [HYP-PROVIDER-001, HYP-FRAUD-001]
+        contradicts: [HYP-DP-001, HYP-TRUNK-001]
+        interpretation: Remote 503 indicates provider-side rejection or service issue
+
+      - id: EV-RULE-TRUNK-DOWN
+        name: trunk_not_registered
+        when:
+          finding: FIND-REG-STATE
+          in: [DOWN, "NO REGISTERED"]
+        supports: [HYP-TRUNK-001]
+        contradicts: [HYP-DP-001]
+        interpretation: SIP trunk not registered — fix trunk before dial-peer analysis
+
+      - id: EV-RULE-TRUNK-UP
+        name: trunk_registered
+        when:
+          finding: FIND-REG-STATE
+          in: [UP, REGISTERED]
+        contradicts: [HYP-TRUNK-001]
+        interpretation: SIP trunk registration active
+
+      - id: EV-RULE-488
+        name: codec_mismatch_488
+        when:
+          any:
+            - finding: FIND-SIP-CODE
+              equals: "488"
+            - finding: FIND-SDP-MISMATCH
+              equals: true
+        supports: [HYP-CODEC-001]
+        strategy_hint: media-first
+        interpretation: 488 or SDP mismatch suggests codec negotiation failure
+
+      - id: EV-RULE-408
+        name: timeout_408
+        when:
+          finding: FIND-SIP-CODE
+          equals: "408"
+        supports: [HYP-NETWORK-001, HYP-DNS-001]
+        strategy_hint: network-first
+        interpretation: 408 suggests timeout — investigate network, firewall, DNS
+
+      - id: EV-RULE-DNS-FAIL
+        name: dns_resolution_failure
+        when:
+          finding: FIND-DNS-FAIL
+          equals: true
+        supports: [HYP-DNS-001]
+        contradicts: [HYP-DP-001]
+        interpretation: DNS failure prevents provider destination resolution
+
+      - id: EV-RULE-TLS-FAIL
+        name: tls_handshake_failure
+        when:
+          finding: FIND-TLS-FAIL
+          equals: true
+        supports: [HYP-TLS-001]
+        strategy_hint: security-first
+        interpretation: TLS or certificate problem on provider SIP session
+
+      - id: EV-RULE-CALLERID
+        name: caller_id_rejected
+        when:
+          any:
+            - finding: FIND-CALLERID-REJECT
+              equals: true
+            - finding: FIND-SIP-CODE
+              equals: "403"
+        supports: [HYP-CALLERID-001]
+        interpretation: Provider rejected call based on calling number or identity policy
+
+      - id: EV-RULE-FRAUD-BLOCK
+        name: fraud_geographic_block
+        when:
+          finding: FIND-FRAUD-BLOCK
+          equals: true
+        supports: [HYP-FRAUD-001]
+        interpretation: Provider fraud or geographic destination block in effect
+
+      - id: EV-RULE-ELIM-PROVIDER-ON-LOCAL
+        name: eliminate_provider_on_local_origin
+        when:
+          finding: FIND-RESP-ORIGIN
+          equals: local
+        contradicts: [HYP-PROVIDER-001, HYP-FRAUD-001, HYP-CALLERID-001]
+        interpretation: Local response origin — provider rejection hypotheses deprioritized until disproven
+
+    confidence:
+      policies:
+        - id: CONF-POL-STRONG
+          description: Score 95+ reserved for conclusions with multiple independent supporting signals
+          min_score: 95
+          requires:
+            - all_mandatory_evidence_collected
+            - leading_hypothesis_has_supporting_evidence
+            - no_active_contradicting_evidence
+            - at_least_two_independent_supporting_findings
+        - id: CONF-POL-ACTION-REQUIRED
+          description: Below 85 — must recommend next best action; cannot confirm root cause
+          when_score_below: 85
+          action: recommend_next_best_action
+          blocks: RESOLUTION
+
+      gates:
+        - id: CONF-GATE-ROOT
+          name: root_cause_declare
+          threshold: 85
+          requires:
+            - all_mandatory_evidence_collected
+            - leading_hypothesis_has_supporting_evidence
+            - no_major_contradicting_evidence
+            - at_least_one_confirming_parser_finding
+          blocks: RESOLUTION
+          on_fail: emit_next_best_action
+
+        - id: CONF-GATE-STRONG
+          name: high_confidence_confirm
+          threshold: 95
+          requires:
+            - all_mandatory_evidence_collected
+            - at_least_two_independent_supporting_findings
+            - no_active_contradicting_evidence
+            - engineer_acknowledged
+          blocks: null
+          note: Recommended before executive escalation or case closure on critical severity
+
+        - id: CONF-GATE-CLOSE
+          name: case_close
+          threshold: 80
+          requires:
+            - all_mandatory_verification_passed
+            - root_cause_declared
+          blocks: CLOSED
+
+      adjustments:
+        - id: CONF-ADJ-LOCAL-404
+          when:
+            all:
+              - finding: FIND-SIP-CODE
+                equals: "404"
+              - finding: FIND-RESP-ORIGIN
+                equals: local
+          boost_hypothesis: HYP-DP-001
+          score_delta: 12
+          reason: Local 404 strongly suggests CUBE routing investigation path
+
+        - id: CONF-ADJ-NO-DP
+          when:
+            finding: FIND-NO-DIAL-PEER
+            equals: true
+          boost_hypothesis: HYP-DP-001
+          score_delta: 18
+          reason: Explicit no matching dial-peer signal
+
+        - id: CONF-ADJ-TRUNK-UP
+          when:
+            finding: FIND-REG-STATE
+            in: [UP, REGISTERED]
+          boost_hypothesis: HYP-DP-001
+          score_delta: 5
+          penalize_hypothesis: HYP-TRUNK-001
+          score_delta_penalty: 30
+          reason: Trunk registered — trunk-down hypothesis unlikely
+
+        - id: CONF-ADJ-REMOTE-503
+          when:
+            all:
+              - finding: FIND-SIP-CODE
+                equals: "503"
+              - finding: FIND-RESP-ORIGIN
+                equals: remote
+          boost_hypothesis: HYP-PROVIDER-001
+          score_delta: 20
+          reason: Remote 503 supports provider routing investigation
+
+        - id: CONF-ADJ-488
+          when:
+            finding: FIND-SIP-CODE
+            equals: "488"
+          boost_hypothesis: HYP-CODEC-001
+          score_delta: 15
+          reason: 488 indicates media negotiation path
+
+        - id: CONF-ADJ-CONTRADICTION
+          when:
+            active_contradicting_evidence: true
+          score_cap: 70
+          reason: Active contradicting evidence caps confidence until resolved
+
+    decision:
+      - id: DEC-RULE-ELIM-TRUNK
+        type: elimination
+        when:
+          finding: FIND-REG-STATE
+          in: [UP, REGISTERED]
+        eliminates: HYP-TRUNK-001
+        reason: SIP UA status shows provider trunk registered
+        alternatives:
+          - alternative: SIP trunk unavailable
+            rejection_reason: show sip-ua status reports peer UP/REGISTERED
+
+      - id: DEC-RULE-ELIM-PROVIDER-LOCAL-404
+        type: elimination
+        when:
+          all:
+            - finding: FIND-SIP-CODE
+              equals: "404"
+            - finding: FIND-RESP-ORIGIN
+              equals: local
+        eliminates: HYP-PROVIDER-001
+        reason: 404 generated locally on CUBE, not by ITSP
+        alternatives:
+          - alternative: Provider routing rejection
+            rejection_reason: Response origin is local; provider did not generate 404
+
+      - id: DEC-RULE-ELIM-DNS
+        type: elimination
+        when:
+          all:
+            - finding: FIND-DNS-FAIL
+              equals: false
+            - dns_lookup_success: true
+        eliminates: HYP-DNS-001
+        reason: Provider FQDN resolves successfully
+        alternatives:
+          - alternative: DNS issue
+            rejection_reason: DNS lookup output shows successful resolution
+
+      - id: DEC-RULE-ELIM-CODEC
+        type: elimination
+        when:
+          all:
+            - finding: FIND-SIP-CODE
+              not_equals: "488"
+            - finding: FIND-SDP-MISMATCH
+              equals: false
+            - call_failed_pre_connect: true
+        eliminates: HYP-CODEC-001
+        reason: Failure occurs before codec negotiation phase
+        alternatives:
+          - alternative: Codec mismatch
+            rejection_reason: No 488 and no SDP mismatch; call fails before media negotiation
+
+      - id: DEC-RULE-ELIM-TLS
+        type: elimination
+        when:
+          all:
+            - topology.provider_transport
+              in: [udp, tcp]
+            - finding: FIND-TLS-FAIL
+              equals: false
+        eliminates: HYP-TLS-001
+        reason: Plain SIP transport in use; TLS not applicable
+        alternatives:
+          - alternative: TLS certificate failure
+            rejection_reason: Provider trunk uses UDP/TCP, not TLS
+
+    next_best_action:
+      - id: NBA-PHASE-INTAKE
+        when:
+          phase: INTAKE
+          unanswered_required_questions: true
+        recommend:
+          action_type: ask_question
+          source: intake
+        priority: 1
+        rationale: Complete intake before collecting device evidence
+
+      - id: NBA-PHASE-TOPOLOGY
+        when:
+          phase: DISCOVERY
+          topology_incomplete: true
+        recommend:
+          action_type: ask_question
+          question_ids: [Q-INT-006, Q-INT-007]
+        priority: 1
+        rationale: Establish scope and provider before CUBE commands
+
+      - id: NBA-001-SIP-UA
+        when:
+          phase: COLLECTION
+          evidence_missing: EVD-REQ-SIP-UA
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-SIP-UA
+        priority: 1
+        rationale: Low-cost trunk status check eliminates or confirms trunk-down branch
+
+      - id: NBA-002-DIAL-PEER-SUM
+        when:
+          phase: COLLECTION
+          evidence_missing: EVD-REQ-DIAL-PEER-SUM
+          evidence_present: EVD-REQ-SIP-UA
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-DIAL-PEER-SUM
+        priority: 2
+        rationale: Identify dial-peer match behavior before deep config review
+
+      - id: NBA-003-SIP-DEBUG
+        when:
+          phase: COLLECTION
+          evidence_missing: EVD-REQ-SIP-DEBUG
+          evidence_present: EVD-REQ-SIP-UA
+        recommend:
+          action_type: collect_evidence
+          log_id: LOG-SIP-DEBUG
+        priority: 3
+        rationale: SIP debug discriminates routing, provider, media, and security branches
+
+      - id: NBA-004-DIAL-PEER-CFG
+        when:
+          phase: INVESTIGATION
+          any_hypothesis_active: [HYP-DP-001, HYP-TRANS-001]
+          evidence_missing: EVD-REQ-DIAL-PEER-CFG
+          finding_present: FIND-SIP-CODE
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-DIAL-PEER-RUN
+        priority: 1
+        rationale: Dial-peer config required before confirming routing root cause
+
+      - id: NBA-005-TRANS-CFG
+        when:
+          phase: INVESTIGATION
+          hypothesis_active: HYP-TRANS-001
+          evidence_missing: EVD-REQ-TRANS-CFG
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-TRANS-RULES
+        priority: 2
+        rationale: Translation rules required to confirm digit manipulation root cause
+
+      - id: NBA-006-CALL-ACTIVE
+        when:
+          phase: INVESTIGATION
+          hypothesis_active: HYP-DP-001
+          evidence_missing: EVD-REQ-CALL-ACTIVE
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-CALL-ACTIVE
+        priority: 3
+        rationale: Confirm live dial-peer match during failing call attempt
+
+      - id: NBA-007-DNS
+        when:
+          phase: INVESTIGATION
+          any_hypothesis_active: [HYP-DNS-001, HYP-NETWORK-001]
+          finding: FIND-SIP-CODE
+          equals: "408"
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-DNS-TEST
+        priority: 1
+        rationale: DNS verification required for timeout branch
+
+      - id: NBA-008-TLS
+        when:
+          phase: INVESTIGATION
+          hypothesis_active: HYP-TLS-001
+        recommend:
+          action_type: collect_evidence
+          command_id: CMD-CRYPTO-PKI
+        priority: 1
+        rationale: Certificate validation required for TLS branch
+
+      - id: NBA-LOW-CONFIDENCE
+        when:
+          confidence_score_below: 85
+          phase: INVESTIGATION
+        recommend:
+          action_type: evaluate_next_discriminating_evidence
+        priority: 0
+        rationale: Confidence below 85 — continue investigation; do not confirm root cause
+
+    questions:
+      - id: Q-RULE-MOBILE
+        when:
+          phase: INVESTIGATION
+          hypothesis_active: HYP-DP-001
+          fact_missing: affected_scope.destination_classes
+        ask: Q-DISC-MOBILE
+        priority: 1
+      - id: Q-RULE-CALLERID
+        when:
+          phase: INVESTIGATION
+          any_hypothesis_active: [HYP-CALLERID-001, HYP-FRAUD-001]
+        ask: Q-DISC-CALLERID
+        priority: 1
+      - id: Q-RULE-INTL
+        when:
+          phase: INVESTIGATION
+          hypothesis_active: HYP-FRAUD-001
+        ask: Q-DISC-INTL
+        priority: 2
+
+  question_bank:
+    - id: Q-DISC-MOBILE
+      text: Are failing calls limited to mobile numbers, landline, international, or all outbound?
+      category: discrimination
+      target_field: affected_scope.destination_classes
+      information_gain: 0.90
+      discriminates: [HYP-DP-001, HYP-PROVIDER-001, HYP-FRAUD-001]
+    - id: Q-DISC-CALLERID
+      text: Has the outbound caller ID presentation changed recently, or is it private/blocked?
+      category: discrimination
+      target_field: known_facts.caller_id_policy
+      information_gain: 0.82
+      discriminates: [HYP-CALLERID-001, HYP-PROVIDER-001]
+    - id: Q-DISC-INTL
+      text: Are international or premium destinations specifically blocked while domestic works?
+      category: discrimination
+      target_field: affected_scope.destination_classes
+      information_gain: 0.85
+      discriminates: [HYP-FRAUD-001, HYP-DP-001]
+
+  cost_model:
+    levels:
+      low:
+        multiplier: 1
+        requires_approval: false
+      medium:
+        multiplier: 3
+        requires_approval: false
+      high:
+        multiplier: 8
+        requires_approval: true
+      critical:
+        multiplier: 25
+        requires_approval: true
+    action_types:
+      ask_question: low
+      show_command: low
+      debug_log: medium
+      packet_capture: high
+      service_restart: critical
+      config_change: critical
+    selection:
+      prefer_lower_cost: true
+      minimum_information_gain: 0.30
+      defer_above: high
+      block_without_approval: critical
+
+  resolution:
+    - id: RES-DIAL-PEER-FIX
+      title: Correct or add outbound dial-peer
+      description: Add or correct dial-peer covering failing destination prefix or number class
+      applies_to_hypothesis: HYP-DP-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-DIAL-PEER
+    - id: RES-TRANS-FIX
+      title: Correct translation rule
+      description: Fix translation rule that distorts called or calling number
+      applies_to_hypothesis: HYP-TRANS-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-TRANS
+    - id: RES-TRUNK-FIX
+      title: Restore SIP trunk registration
+      description: Correct credentials, destination, or network path preventing trunk registration
+      applies_to_hypothesis: HYP-TRUNK-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-TRUNK
+    - id: RES-CODEC-FIX
+      title: Align codec policy with provider
+      description: Adjust allowed codec list or transcoding policy on CUBE/provider trunk
+      applies_to_hypothesis: HYP-CODEC-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-CODEC
+    - id: RES-DNS-FIX
+      title: Correct DNS resolution path
+      description: Fix DNS server, name entry, or dial-peer session-target FQDN resolution
+      applies_to_hypothesis: HYP-DNS-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-DNS
+    - id: RES-TLS-FIX
+      title: Correct TLS certificate or trust configuration
+      description: Renew certificate, fix trustpoint, or align TLS version with provider
+      applies_to_hypothesis: HYP-TLS-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-TLS
+    - id: RES-NETWORK-FIX
+      title: Correct firewall or ACL blocking signaling
+      description: Open required SIP/RTP pinholes or remove blocking ACL rule
+      applies_to_hypothesis: HYP-NETWORK-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-NETWORK
+    - id: RES-PROVIDER-ESCALATE
+      title: Escalate to ITSP for routing or policy issue
+      description: Open carrier ticket with SIP traces for provider routing, CLIP, or fraud block
+      applies_to_hypothesis: HYP-PROVIDER-001
+      requires_approval: false
+      verification_required: true
+    - id: RES-CALLERID-FIX
+      title: Correct presented caller ID
+      description: Align outbound CLI with provider-accepted number range or attestation policy
+      applies_to_hypothesis: HYP-CALLERID-001
+      requires_approval: true
+      verification_required: true
+      rollback_ref: RBK-CALLERID
+    - id: RES-FRAUD-ESCALATE
+      title: Request provider fraud/geographic block review
+      description: Request ITSP remove erroneous fraud or geographic destination block
+      applies_to_hypothesis: HYP-FRAUD-001
+      requires_approval: false
+      verification_required: true
+
+  verification:
+    steps:
+      - id: VER-LOCAL
+        name: test_local_outbound
+        description: Place outbound call to local landline PSTN number
+        expected: Call connects with two-way audio
+        mandatory: true
+      - id: VER-MOBILE
+        name: test_mobile_outbound
+        description: Place outbound call to mobile number in affected class
+        expected: Call connects with two-way audio
+        mandatory: true
+      - id: VER-INTL
+        name: test_international_outbound
+        description: Place outbound call to international number if in scope
+        expected: Call connects or failure documented as out of scope with waiver
+        mandatory: false
+      - id: VER-INBOUND
+        name: test_inbound_regression
+        description: Confirm inbound PSTN calls still work
+        expected: Inbound call connects with two-way audio
+        mandatory: true
+      - id: VER-NO-ERRORS
+        name: confirm_no_new_cube_errors
+        description: Review show logging for new SIP, dial-peer, or TLS errors
+        expected: No new errors since resolution applied
+        mandatory: true
+      - id: VER-TRUNK-STATUS
+        name: confirm_trunk_registered
+        description: Confirm show sip-ua status shows provider trunk UP
+        expected: SIP peer registered and stable
+        mandatory: true
+
+  rollback:
+    - id: RBK-DIAL-PEER
+      applies_to: RES-DIAL-PEER-FIX
+      description: Restore previous dial-peer configuration
+      steps:
+        - Restore dial-peer configuration from backup or change record
+        - Run show dial-peer voice summary to confirm prior state
+        - Place test call to verify rollback
+      requires_approval: true
+    - id: RBK-TRANS
+      applies_to: RES-TRANS-FIX
+      description: Restore previous translation rules
+      steps:
+        - Restore translation-rule configuration from backup
+        - Verify called number transformation with test call
+      requires_approval: true
+    - id: RBK-TRUNK
+      applies_to: RES-TRUNK-FIX
+      description: Restore previous SIP trunk configuration
+      steps:
+        - Restore credentials, registrar, or session-target settings
+        - Confirm sip-ua registration state
+      requires_approval: true
+    - id: RBK-CODEC
+      applies_to: RES-CODEC-FIX
+      description: Restore previous codec policy
+      steps:
+        - Restore voice service or dial-peer codec lists
+        - Verify call setup with test call
+      requires_approval: true
+    - id: RBK-DNS
+      applies_to: RES-DNS-FIX
+      description: Restore previous DNS or FQDN configuration
+      steps:
+        - Restore session-target or DNS settings
+        - Verify resolution and trunk stability
+      requires_approval: true
+    - id: RBK-TLS
+      applies_to: RES-TLS-FIX
+      description: Restore previous TLS profile or certificate configuration
+      steps:
+        - Restore trustpoint and TLS profile settings
+        - Verify handshake and trunk registration
+      requires_approval: true
+    - id: RBK-NETWORK
+      applies_to: RES-NETWORK-FIX
+      description: Restore previous firewall or ACL configuration
+      steps:
+        - Revert ACL or firewall rule change
+        - Confirm signaling path with test call
+      requires_approval: true
+    - id: RBK-CALLERID
+      applies_to: RES-CALLERID-FIX
+      description: Restore previous caller ID presentation configuration
+      steps:
+        - Restore CLIP/CLIR or calling number transformation settings
+        - Verify with provider-accepted test call
+      requires_approval: true
+
+  preventive_actions:
+    - id: PREV-DP-CHECKLIST
+      title: Dial-peer change checklist
+      description: >
+        After any dial-peer edit, validate coverage for local, mobile, international,
+        and premium destination classes before closing change window
+    - id: PREV-POST-CHANGE-TEST
+      title: Post-change outbound test script
+      description: >
+        Run local, mobile, and inbound regression test calls after every CUBE
+        configuration change
+    - id: PREV-DEBUG-DISCIPLINE
+      title: Debug session discipline
+      description: >
+        Always disable debug ccsip messages after capture; document debug window
+        in change record
+    - id: PREV-PROVIDER-COMMS
+      title: Provider change notification
+      description: >
+        Confirm ITSP routing, CLIP, and fraud policy changes are coordinated
+        before customer cutover
+
+  report:
+    sections:
+      - id: executive_summary
+        title: Executive Summary
+        required: true
+      - id: technical_summary
+        title: Technical Summary
+        required: true
+      - id: root_cause_analysis
+        title: Root Cause Analysis
+        required: true
+      - id: investigation_timeline
+        title: Investigation Timeline
+        required: true
+      - id: evidence_appendix
+        title: Evidence Appendix
+        required: true
+      - id: elimination_narrative
+        title: Hypothesis Elimination Narrative
+        required: true
+      - id: confidence_summary
+        title: Confidence Assessment
+        required: true
+      - id: preventive_actions
+        title: Preventive Actions
+        required: true
+
+  learning:
+    capture_fields:
+      - symptoms
+      - topology_pattern
+      - platforms
+      - evidence_signatures
+      - root_cause_category
+      - resolution_summary
+      - verification_passed
+      - lessons_learned
+    anonymize:
+      - hostname
+      - ip_address
+      - phone_number
+      - customer_name
+      - provider_account_id
+    lesson_templates:
+      - After dial-peer edits, validate all destination classes including mobile and international
+      - Local 404 on CUBE with registered trunk strongly indicates routing or translation gap
+      - Confirm SIP response origin before escalating to ITSP
+      - Do not confirm root cause until mandatory evidence and confidence gate pass
+      - Disable SIP debug after capture to avoid production performance impact
