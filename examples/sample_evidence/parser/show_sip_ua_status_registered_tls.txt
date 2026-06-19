@@ -1,0 +1,6 @@
+cube-edge-01#show sip-ua status
+SIP-UA Status: enabled
+ Registrar Host: sip:pstn.carrier.com
+ Transport Type: TLS
+ PSTN Trunk 10: registered
+ Session Agents: 1 active

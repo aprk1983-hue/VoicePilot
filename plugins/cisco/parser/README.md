@@ -1,10 +1,14 @@
 # Cisco Parser Pack
 
-Future home of Cisco IOS / IOS-XE / CUBE CLI parsers for VoicePilot.
+Cisco IOS / IOS-XE / CUBE CLI parsers for VoicePilot.
 
-## Scope
+## Implemented
 
-This directory will contain vendor-specific implementations of the core `CommandParser` interface. **No parsing logic exists yet** — this sprint establishes the plugin boundary only.
+| Command | Parser | Status |
+|---------|--------|--------|
+| `show sip-ua status` | `CiscoShowSipUaStatusParser` | Implemented |
+
+See [docs/parsers/cisco-show-sip-ua-status.md](../../../docs/parsers/cisco-show-sip-ua-status.md).
 
 ## Planned Commands
 
@@ -13,7 +17,7 @@ Initial Cisco CUBE / voice troubleshooting targets:
 | Command | Parser (planned) |
 |---------|------------------|
 | `show version` | `ShowVersionParser` |
-| `show sip-ua status` | `ShowSipUaStatusParser` |
+| `show sip-ua status` | `CiscoShowSipUaStatusParser` | Done |
 | `show dial-peer voice summary` | `ShowDialPeerVoiceSummaryParser` |
 | `show running-config` | `ShowRunningConfigParser` |
 | `debug ccsip messages` | `DebugCcsipMessagesParser` |
@@ -40,14 +44,14 @@ Cisco parsers:
 - Never import or mutate `Case`
 - Return `ParserResult` only
 
-## Registration (future)
+## Registration
 
 ```python
 from parser.parser_registry import ParserRegistry
-from plugins.cisco.parser.show_sip_ua_status import ShowSipUaStatusParser
+from plugins.cisco.parser import register_cisco_parsers
 
-def register_cisco_parsers(registry: ParserRegistry) -> None:
-    registry.register(ShowSipUaStatusParser())
+registry = ParserRegistry()
+register_cisco_parsers(registry)
 ```
 
 ## Related
