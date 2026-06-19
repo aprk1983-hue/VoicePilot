@@ -170,6 +170,7 @@ class AnalysisFinding:
     signal: str
     detected_at: datetime
     detail: str | None = None
+    metadata: JsonDict | None = None
 
     @classmethod
     def create(
@@ -181,6 +182,7 @@ class AnalysisFinding:
         *,
         detail: str | None = None,
         detected_at: datetime | None = None,
+        metadata: JsonDict | None = None,
     ) -> AnalysisFinding:
         """Factory for a v1 analysis finding."""
         return cls(
@@ -191,6 +193,7 @@ class AnalysisFinding:
             signal=signal,
             detected_at=detected_at or _utc_now(),
             detail=detail,
+            metadata=metadata,
         )
 
 

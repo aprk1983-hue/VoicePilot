@@ -2,10 +2,10 @@
 
 ## Case Overview
 
-- **Case ID:** CASE-7269df65c96c
+- **Case ID:** CASE-afd045b137e9
 - **Playbook ID:** VP-CUBE-0001
 - **Final State:** CLOSED
-- **Closed At:** 2026-06-19T15:32:03.803621+00:00
+- **Closed At:** 2026-06-19T15:38:32.039207+00:00
 
 ## Symptom
 
@@ -14,13 +14,13 @@ outbound, PSTN, external, off-net
 ## Root Cause Assessment
 
 - **Top Hypothesis:** CUBE SIP user agent disabled
-- **Hypothesis ID:** HYP-a0f0b9013746
+- **Hypothesis ID:** HYP-8710e32d2dca
 - **Confidence:** 90%
 
 ## Evidence Findings
 
 - `show dial-peer voice summary`: **dial_peer_config_present**
-- `show sip-ua status`: **sip_ua_disabled**
+- `show sip-ua status`: **sip_ua_disabled** — SIP user agent is disabled
 - `debug ccsip messages`: **sip_503_detected**
 
 ## Recommendation
@@ -40,7 +40,7 @@ Likely root cause identified: CUBE SIP user agent disabled Likely root cause: CU
 
 ## Learning Record
 
-- **Learning Record ID:** LRN-e358401bd5df
+- **Learning Record ID:** LRN-db6472349174
 - **Root Cause:** CUBE SIP user agent disabled
 - **Reusable Pattern:** VP-CUBE-0001:HYP-SIP-UA-DISABLED
 - **Lessons Learned:** Playbook VP-CUBE-0001 investigation verified 'CUBE SIP user agent disabled'. Always collect correlated CLI evidence and verification before closure. Next focus: Review voice service voip configuration on CUBE.
@@ -48,11 +48,11 @@ Likely root cause identified: CUBE SIP user agent disabled Likely root cause: CU
 ## Timeline
 
 0. [intake] symptom_onset: Symptom onset recorded: 2026-06-10
-1. [2026-06-19T15:32:03.803246+00:00] question_answered: Answered question Q-INT-001
-2. [2026-06-19T15:32:03.803262+00:00] question_answered: Answered question Q-INT-002
-3. [2026-06-19T15:32:03.803274+00:00] question_answered: Answered question Q-INT-003
-4. [2026-06-19T15:32:03.803284+00:00] question_answered: Answered question Q-INT-004
-5. [2026-06-19T15:32:03.803294+00:00] question_answered: Answered question Q-INT-005
-6. [2026-06-19T15:32:03.803371+00:00] evidence_collected: Collected CLI evidence for: show dial-peer voice summary
-7. [2026-06-19T15:32:03.803389+00:00] evidence_collected: Collected CLI evidence for: show sip-ua status
-8. [2026-06-19T15:32:03.803403+00:00] evidence_collected: Collected CLI evidence for: debug ccsip messages
+1. [2026-06-19T15:38:32.038692+00:00] question_answered: Answered question Q-INT-001
+2. [2026-06-19T15:38:32.038709+00:00] question_answered: Answered question Q-INT-002
+3. [2026-06-19T15:38:32.038720+00:00] question_answered: Answered question Q-INT-003
+4. [2026-06-19T15:38:32.038730+00:00] question_answered: Answered question Q-INT-004
+5. [2026-06-19T15:38:32.038741+00:00] question_answered: Answered question Q-INT-005
+6. [2026-06-19T15:38:32.038818+00:00] evidence_collected: Collected CLI evidence for: show dial-peer voice summary
+7. [2026-06-19T15:38:32.038835+00:00] evidence_collected: Collected CLI evidence for: show sip-ua status
+8. [2026-06-19T15:38:32.038851+00:00] evidence_collected: Collected CLI evidence for: debug ccsip messages

@@ -8,6 +8,11 @@ from typing import Callable
 
 from domain.enums import InvestigationState
 from domain.models import AnalysisFinding, Case, Evidence
+from parser.parser_context import ParserContext
+from parser.parser_engine import ParserEngine
+from parser.parser_exceptions import VoicePilotParserError
+from parser.parser_result import ParserResult
+from shared.types import JsonDict
 
 Analyzer = Callable[[str], list[str]]
 
@@ -24,6 +29,8 @@ SIP_CODE_PATTERNS: tuple[tuple[str, str], ...] = (
 )
 
 COMMAND_ANALYZERS: dict[str, Analyzer] = {}
+FINDING_SOURCE_PARSER = "parser"
+FINDING_SOURCE_V1 = "v1_pattern_match"
 
 
 @dataclass(frozen=True)
@@ -36,7 +43,10 @@ class AnalysisSummary:
 
 
 class AnalysisEngine:
-    """v1 deterministic pattern matcher for pasted CLI evidence."""
+    """Deterministic evidence analysis with parser-first and v1 pattern fallback."""
+
+    def __init__(self, parser_engine: ParserEngine | None = None) -> None:
+        self._parser_engine = parser_engine
 
     def analyze(self, case: Case) -> list[AnalysisFinding]:
         """Analyze all collected evidence and return findings."""
@@ -48,6 +58,16 @@ class AnalysisEngine:
                 continue
 
             command = _normalize_command(evidence.source.command or "")
+            parser_findings = self._analyze_with_parser(case, evidence, command)
+            if parser_findings is not None:
+                self._append_findings(
+                    findings,
+                    parser_findings,
+                    seen_signals,
+                    evidence,
+                )
+                continue
+
             analyzer = COMMAND_ANALYZERS.get(command)
             if analyzer is None:
                 continue
@@ -62,11 +82,55 @@ class AnalysisEngine:
                         evidence_id=evidence.evidence_id,
                         command=command,
                         signal=signal,
+                        metadata={"source": FINDING_SOURCE_V1},
                     )
                 )
                 evidence.parser_finding_ids.append(findings[-1].finding_id)
 
         return findings
+
+    def _analyze_with_parser(
+        self,
+        case: Case,
+        evidence: Evidence,
+        command: str,
+    ) -> list[AnalysisFinding] | None:
+        """Try parser-based analysis. Return None to fall back to v1 patterns."""
+        if self._parser_engine is None or not command:
+            return None
+
+        vendor = _resolve_vendor(case)
+        if not self._parser_engine.registry.has_parser(vendor, command):
+            return None
+
+        context = _build_parser_context(case, evidence, vendor)
+        try:
+            result = self._parser_engine.parse(
+                evidence.raw_text or "",
+                context,
+                command=command,
+            )
+        except VoicePilotParserError:
+            return None
+
+        if not result.is_valid:
+            return None
+
+        return _findings_from_parser_result(case, evidence, command, result)
+
+    def _append_findings(
+        self,
+        findings: list[AnalysisFinding],
+        new_findings: list[AnalysisFinding],
+        seen_signals: set[str],
+        evidence: Evidence,
+    ) -> None:
+        for finding in new_findings:
+            if finding.signal in seen_signals:
+                continue
+            seen_signals.add(finding.signal)
+            findings.append(finding)
+            evidence.parser_finding_ids.append(finding.finding_id)
 
 
 def analyze_sip_ua_status(text: str) -> list[str]:
@@ -142,6 +206,55 @@ def format_analysis_summary(summary: AnalysisSummary) -> str:
 
 def _normalize_command(command: str) -> str:
     return " ".join(command.strip().lower().split())
+
+
+def _resolve_vendor(case: Case) -> str:
+    return case.platform.vendor.strip().lower()
+
+
+def _build_parser_context(case: Case, evidence: Evidence, vendor: str) -> ParserContext:
+    platform = case.platform.products[0] if case.platform.products else None
+    return ParserContext(
+        vendor=vendor,
+        case_id=case.case_id,
+        device_id=evidence.source.device_id,
+        platform=platform,
+        hostname=None,
+        collection_timestamp=evidence.collected_at,
+    )
+
+
+def _findings_from_parser_result(
+    case: Case,
+    evidence: Evidence,
+    command: str,
+    result: ParserResult,
+) -> list[AnalysisFinding]:
+    findings: list[AnalysisFinding] = []
+    for parser_finding in result.findings:
+        findings.append(
+            AnalysisFinding.create(
+                case_id=case.case_id,
+                evidence_id=evidence.evidence_id,
+                command=command,
+                signal=parser_finding.signal,
+                detail=parser_finding.detail,
+                metadata=_parser_finding_metadata(result, parser_finding.signal),
+            )
+        )
+    return findings
+
+
+def _parser_finding_metadata(result: ParserResult, signal: str) -> JsonDict:
+    return {
+        "source": FINDING_SOURCE_PARSER,
+        "parser_version": result.parser_version,
+        "parser_confidence": result.confidence,
+        "signal": signal,
+        "structured_data": dict(result.structured_data),
+        "parser_metadata": dict(result.metadata),
+        "parser_warnings": list(result.warnings),
+    }
 
 
 def _register_analyzers() -> None:

@@ -13,6 +13,7 @@ from runtime.analysis_engine import (
     build_analysis_summary,
     format_analysis_summary,
 )
+from runtime.parser_bootstrap import build_default_parser_engine
 from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
@@ -49,6 +50,7 @@ from runtime.plugin_registry import PluginRegistry
 from runtime.state_machine import InvestigationStateMachine
 from shared.config import RuntimeConfig
 from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
+from parser.parser_engine import ParserEngine
 from shared.types import CaseId
 
 
@@ -66,6 +68,7 @@ class RuntimeEngine:
         playbook_repository: PlaybookRepository,
         plugin_registry: PluginRegistry | None = None,
         playbook_catalog: PlaybookCatalog | None = None,
+        parser_engine: ParserEngine | None = None,
         logger: LoggerPort | None = None,
     ) -> None:
         self._config = config
@@ -93,6 +96,7 @@ class RuntimeEngine:
             logger=logger,
         )
         self._logger = logger
+        self._parser_engine = parser_engine
 
         # TODO: Register real engine implementations and wire execution pipeline.
         self._engine_registry.register_defaults()
@@ -218,7 +222,7 @@ class RuntimeEngine:
     def analyze_case(self, case_id: CaseId) -> AnalysisSummary:
         """Analyze collected evidence, attach findings, and move to HYPOTHESIS."""
         case = self._case_manager.load_case(case_id)
-        engine = AnalysisEngine()
+        engine = AnalysisEngine(parser_engine=self._get_parser_engine())
         findings = engine.analyze(case)
         case.analysis_findings = findings
         self._case_manager.save_case(case)
@@ -375,6 +379,13 @@ class RuntimeEngine:
             )
 
         return build_learning_closure_summary(case, learning_record)
+
+    def _get_parser_engine(self) -> ParserEngine | None:
+        """Return configured parser engine or bootstrap Cisco parsers by default."""
+        if self._parser_engine is not None:
+            return self._parser_engine
+        self._parser_engine = build_default_parser_engine()
+        return self._parser_engine
 
     def generate_report(self, case_id: CaseId) -> IncidentReport:
         """Generate a readable incident report for a closed case."""

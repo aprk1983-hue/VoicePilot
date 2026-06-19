@@ -22,7 +22,7 @@ dev = [
 voicepilot = "cli.voicepilot_cli:main"
 
 [tool.pytest.ini_options]
-pythonpath = ["core", "sdk"]
+pythonpath = ["core", "sdk", "."]
 testpaths = ["tests"]
 addopts = "-ra"
 
