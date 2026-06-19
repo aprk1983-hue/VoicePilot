@@ -10,6 +10,7 @@ from domain.models import InvestigationTurn
 from runtime.analysis_engine import (
     AnalysisEngine,
     AnalysisSummary,
+    FINDING_SOURCE_PARSER,
     build_analysis_summary,
     format_analysis_summary,
 )
@@ -23,6 +24,7 @@ from runtime.correlation_engine import (
     CorrelationSummary,
     format_correlation_summary,
 )
+from runtime.decision_log_engine import DecisionLogEngine, parser_display_name
 from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
 from runtime.learning_engine import (
     LearningClosureSummary,
@@ -102,6 +104,7 @@ class RuntimeEngine:
         )
         self._logger = logger
         self._parser_engine = parser_engine
+        self._decision_log = DecisionLogEngine()
 
         # TODO: Register real engine implementations and wire execution pipeline.
         self._engine_registry.register_defaults()
@@ -145,6 +148,11 @@ class RuntimeEngine:
     def engine_registry(self) -> EngineRegistry:
         """Brain engine registry."""
         return self._engine_registry
+
+    @property
+    def decision_log_engine(self) -> DecisionLogEngine:
+        """Append-only decision log engine."""
+        return self._decision_log
 
     def start(self) -> None:
         """Initialize runtime kernel and warm playbook catalog."""
@@ -230,6 +238,7 @@ class RuntimeEngine:
         engine = AnalysisEngine(parser_engine=self._get_parser_engine())
         findings = engine.analyze(case)
         case.analysis_findings = findings
+        self._log_analysis_decisions(case, findings)
         self._case_manager.save_case(case)
 
         if case.status == InvestigationState.ANALYSIS:
@@ -258,6 +267,8 @@ class RuntimeEngine:
         engine = HypothesisEngine()
         hypotheses = engine.generate(case)
         case.hypotheses = hypotheses
+        for hypothesis in hypotheses:
+            self._decision_log.append_hypothesis_created(case, hypothesis=hypothesis)
         self._case_manager.save_case(case)
         self._case_manager.transition_state(case_id, InvestigationState.INVESTIGATION)
         case = self._case_manager.load_case(case_id)
@@ -275,8 +286,12 @@ class RuntimeEngine:
     def correlate_case(self, case_id: CaseId) -> CorrelationSummary:
         """Correlate findings, adjust hypothesis confidence, and store results."""
         case = self._case_manager.load_case(case_id)
+        confidence_before = {
+            hypothesis.hypothesis_id: hypothesis.confidence for hypothesis in case.hypotheses
+        }
         engine = CorrelationEngine()
         summary = engine.correlate(case)
+        self._log_correlation_decisions(case, confidence_before)
         self._case_manager.save_case(case)
 
         if self._logger:
@@ -302,6 +317,7 @@ class RuntimeEngine:
         engine = RecommendationEngine()
         recommendation = engine.generate(case)
         case.recommendations.append(recommendation)
+        self._log_recommendation_decision(case, recommendation)
         self._case_manager.save_case(case)
 
         confidence = recommendation.confidence or 0.0
@@ -356,6 +372,7 @@ class RuntimeEngine:
             )
 
         summary = engine.apply_results(case, submissions, actor=actor)
+        self._log_verification_decisions(case)
         self._case_manager.save_case(case)
 
         if summary.outcome == OUTCOME_FAILED:
@@ -386,12 +403,15 @@ class RuntimeEngine:
         engine = LearningEngine()
         learning_record = engine.create_learning_record(case)
         case.learning_record = learning_record
+        self._decision_log.append_learning(case, learning_record=learning_record)
         case.resolution_summary = learning_record.resolution_summary
         case.root_cause_id = learning_record.hypothesis_id
         case.closed_at = learning_record.created_at
         self._case_manager.save_case(case)
         self._case_manager.transition_state(case_id, InvestigationState.CLOSED)
         case = self._case_manager.load_case(case_id)
+        self._decision_log.append_case_closed(case)
+        self._case_manager.save_case(case)
 
         if self._logger:
             self._logger.info(
@@ -430,6 +450,86 @@ class RuntimeEngine:
             )
 
         return report
+
+    def _log_analysis_decisions(self, case, findings) -> None:
+        for finding in findings:
+            metadata = finding.metadata or {}
+            if metadata.get("source") == FINDING_SOURCE_PARSER:
+                parser_id = metadata.get("parser_id")
+                parser_id_str = parser_id if isinstance(parser_id, str) else None
+                self._decision_log.append_parser_decision(
+                    case,
+                    parser_name=parser_display_name(parser_id_str),
+                    parser_id=parser_id_str,
+                    signal=finding.signal,
+                    evidence_id=finding.evidence_id,
+                    command=finding.command,
+                    finding_id=finding.finding_id,
+                )
+            else:
+                self._decision_log.append_analysis_decision(case, finding=finding)
+
+    def _log_correlation_decisions(
+        self,
+        case,
+        confidence_before: dict[str, float],
+    ) -> None:
+        hypotheses_by_id = {hypothesis.hypothesis_id: hypothesis for hypothesis in case.hypotheses}
+        for correlation in case.correlation_results:
+            before = after = None
+            hypothesis = None
+            if correlation.hypothesis_id:
+                hypothesis = hypotheses_by_id.get(correlation.hypothesis_id)
+                if hypothesis is not None:
+                    after = hypothesis.confidence
+                    before = confidence_before.get(correlation.hypothesis_id)
+            self._decision_log.append_correlation_decision(
+                case,
+                correlation=correlation,
+                confidence_before=before,
+                confidence_after=after,
+            )
+            if (
+                hypothesis is not None
+                and before is not None
+                and after is not None
+                and before != after
+            ):
+                self._decision_log.append_confidence_change(
+                    case,
+                    hypothesis=hypothesis,
+                    confidence_before=before,
+                    confidence_after=after,
+                    trigger=correlation.correlation_type,
+                    rule_name=correlation.rule_id,
+                    correlation_id=correlation.correlation_id,
+                )
+
+    def _log_recommendation_decision(self, case, recommendation) -> None:
+        if not case.hypotheses:
+            return
+        selected = min(case.hypotheses, key=lambda hypothesis: hypothesis.rank or 999)
+        rejected = [
+            hypothesis
+            for hypothesis in case.hypotheses
+            if hypothesis.hypothesis_id != selected.hypothesis_id
+        ]
+        self._decision_log.append_recommendation(
+            case,
+            recommendation=recommendation,
+            selected_hypothesis=selected,
+            rejected_hypotheses=rejected,
+        )
+
+    def _log_verification_decisions(self, case) -> None:
+        for verification in case.verifications:
+            if not verification.result_status:
+                continue
+            self._decision_log.append_verification(
+                case,
+                verification=verification,
+                outcome=verification.result_status,
+            )
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

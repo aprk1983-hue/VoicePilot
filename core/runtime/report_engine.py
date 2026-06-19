@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from domain.enums import InvestigationState
-from domain.models import Case, CorrelationResult, Hypothesis, Recommendation
+from domain.models import Case, CorrelationResult, DecisionLogEntry, Hypothesis, Recommendation
+from runtime.decision_log_engine import _finding_labels, _timeline_category
 from runtime.analysis_engine import (
     format_finding_source_label,
     summarize_structured_data,
@@ -42,6 +43,20 @@ class ReportCorrelation:
 
 
 @dataclass(frozen=True)
+class ReportDecision:
+    """Decision log entry included in an incident report."""
+
+    timestamp: str
+    category: str
+    title: str
+    description: str
+    confidence_before: float | None
+    confidence_after: float | None
+    evidence_names: tuple[str, ...]
+    rejected_hypotheses: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ReportVerification:
     """Verification step included in an incident report."""
 
@@ -74,6 +89,7 @@ class IncidentReport:
     confidence: float | None
     findings: tuple[ReportFinding, ...]
     correlations: tuple[ReportCorrelation, ...]
+    decisions: tuple[ReportDecision, ...]
     recommendation_summary: str | None
     recommendation_actions: tuple[str, ...]
     verification_outcome: str | None
@@ -135,6 +151,7 @@ def build_incident_report(case: Case) -> IncidentReport:
             for finding in case.analysis_findings
         ),
         correlations=tuple(_build_report_correlations(case.correlation_results)),
+        decisions=tuple(_build_report_decisions(case.decision_log)),
         recommendation_summary=_format_recommendation_summary(recommendation),
         recommendation_actions=tuple(recommendation.recommended_actions) if recommendation else (),
         verification_outcome=_verification_outcome(case),
@@ -213,6 +230,30 @@ def format_incident_report(report: IncidentReport) -> str:
     else:
         lines.append("_No correlation results recorded._")
 
+    lines.extend(["", "## Decision Timeline", ""])
+    if report.decisions:
+        for index, decision in enumerate(report.decisions):
+            if index > 0:
+                lines.append("")
+                lines.append("↓")
+                lines.append("")
+            lines.append(decision.timestamp)
+            lines.append(decision.category)
+            lines.append(decision.title)
+            if decision.description and decision.description != decision.title:
+                lines.append(decision.description)
+            if decision.confidence_before is not None and decision.confidence_after is not None:
+                lines.append(
+                    "Confidence: "
+                    f"{int(decision.confidence_before)} → {int(decision.confidence_after)}"
+                )
+            if decision.evidence_names:
+                lines.append(f"Evidence: {', '.join(decision.evidence_names)}")
+            if decision.rejected_hypotheses:
+                lines.append(f"Rejected: {', '.join(decision.rejected_hypotheses)}")
+    else:
+        lines.append("_No decision log entries recorded._")
+
     lines.extend(["", "## Recommendation", ""])
     if report.recommendation_summary:
         lines.append(report.recommendation_summary)
@@ -258,6 +299,28 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No timeline events recorded._")
 
     return "\n".join(lines)
+
+
+def _build_report_decisions(entries: list[DecisionLogEntry]) -> list[ReportDecision]:
+    ordered = sorted(entries, key=lambda item: item.timestamp)
+    report_decisions: list[ReportDecision] = []
+    for entry in ordered:
+        evidence_names = tuple(_finding_labels(entry))
+        if not evidence_names and entry.supporting_findings:
+            evidence_names = tuple(entry.supporting_findings)
+        report_decisions.append(
+            ReportDecision(
+                timestamp=entry.timestamp.strftime("%H:%M:%S"),
+                category=_timeline_category(entry),
+                title=entry.title,
+                description=entry.description,
+                confidence_before=entry.confidence_before,
+                confidence_after=entry.confidence_after,
+                evidence_names=evidence_names,
+                rejected_hypotheses=entry.rejected_hypotheses,
+            )
+        )
+    return report_decisions
 
 
 def _build_report_correlations(

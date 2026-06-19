@@ -78,3 +78,6 @@ class TestDemoRunner:
         assert "sip_ua_disabled_confirmed" in content
         assert "+8 confidence" in content
         assert "Evidence: sip_ua_disabled, sip_ua_disabled_by_config" in content
+        assert "## Decision Timeline" in content
+        assert "CiscoShowSipUaStatusParser" in content
+        assert "sip_ua_disabled_confirmed" in content

@@ -18,7 +18,8 @@ from runtime.evidence_collection import (
     initialize_evidence_collection,
     submit_evidence,
 )
-from runtime.exceptions import PlaybookIdNotFoundError
+from runtime.decision_log_engine import format_decision_timeline
+from runtime.exceptions import PlaybookIdNotFoundError, CaseNotFoundError
 from runtime.intake_summary import write_intake_summary
 from runtime.correlation_engine import format_correlation_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
@@ -103,7 +104,13 @@ def run_evidence_collection(
 
         raw_text = read_multiline_paste(input_provider)
         case = runtime.case_manager.load_case(case_id)
-        submit_evidence(case, runtime.case_manager, request.command, raw_text)
+        submit_evidence(
+            case,
+            runtime.case_manager,
+            request.command,
+            raw_text,
+            decision_log=runtime.decision_log_engine,
+        )
 
         case = runtime.case_manager.load_case(case_id)
         request = get_next_evidence_request(case)
@@ -288,6 +295,22 @@ def run_investigation(
     return 0
 
 
+def cmd_decisions(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot decisions <case_id>``."""
+    runtime = build_runtime_engine(
+        Path(args.plugins_root) if args.plugins_root else None
+    )
+    runtime.start()
+    try:
+        case = runtime.case_manager.load_case(args.case_id)
+    except CaseNotFoundError:
+        print(f"Error: Case not found: {args.case_id}")
+        return 1
+
+    print(format_decision_timeline(case.decision_log))
+    return 0
+
+
 def cmd_investigate(args: argparse.Namespace) -> int:
     """Handle ``voicepilot investigate <playbook_id>``."""
     return run_investigation(
@@ -320,6 +343,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override plugins directory (default: repo plugins/)",
     )
     investigate.set_defaults(func=cmd_investigate)
+
+    decisions = subparsers.add_parser(
+        "decisions",
+        help="Print the decision log timeline for a case",
+    )
+    decisions.add_argument(
+        "case_id",
+        help="Case ID (e.g. CASE-abc123)",
+    )
+    decisions.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    decisions.set_defaults(func=cmd_decisions)
 
     return parser
 

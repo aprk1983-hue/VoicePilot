@@ -63,6 +63,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
         runtime_engine.case_manager,
         "show dial-peer voice summary",
         "dial-peer 1 voip up",
+        decision_log=runtime_engine.decision_log_engine,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(
@@ -70,6 +71,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
         runtime_engine.case_manager,
         "show sip-ua status",
         "SIP-UA Status: disabled",
+        decision_log=runtime_engine.decision_log_engine,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(
@@ -77,6 +79,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
         runtime_engine.case_manager,
         "show run | sec voice service voip",
         "voice service voip\n no sip\n",
+        decision_log=runtime_engine.decision_log_engine,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(
@@ -84,6 +87,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
         runtime_engine.case_manager,
         "debug ccsip messages",
         "SIP/2.0 503 Service Unavailable",
+        decision_log=runtime_engine.decision_log_engine,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     runtime_engine.analyze_case(case.case_id)
@@ -147,6 +151,10 @@ class TestReportEngine:
         assert "sip_ua_disabled_confirmed" in markdown
         assert "+8 confidence" in markdown
         assert "Evidence: sip_ua_disabled, sip_ua_disabled_by_config" in markdown
+        assert "## Decision Timeline" in markdown
+        assert "CiscoShowSipUaStatusParser" in markdown
+        assert "sip_ua_disabled_confirmed" in markdown
+        assert any(decision.title == "sip_ua_disabled_confirmed" for decision in report.decisions)
 
     def test_report_without_correlations_still_works(self) -> None:
         from domain.enums import InvestigationState, Severity
@@ -169,8 +177,11 @@ class TestReportEngine:
         markdown = format_incident_report(report)
 
         assert report.correlations == ()
+        assert report.decisions == ()
         assert "## Correlation Reasoning" in markdown
+        assert "## Decision Timeline" in markdown
         assert "_No correlation results recorded._" in markdown
+        assert "_No decision log entries recorded._" in markdown
         assert "# VoicePilot Incident Report" in markdown
 
     def test_report_engine_builds_report_directly(self, runtime_engine: RuntimeEngine) -> None:

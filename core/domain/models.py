@@ -8,6 +8,7 @@ from typing import Any
 from uuid import uuid4
 
 from domain.enums import (
+    DecisionLogEntryType,
     DecisionType,
     EvidenceStatus,
     HypothesisStatus,
@@ -30,6 +31,7 @@ from shared.constants import (
     ID_PREFIX_CONFIDENCE,
     ID_PREFIX_CORRELATION,
     ID_PREFIX_DECISION,
+    ID_PREFIX_DECISION_LOG,
     ID_PREFIX_DEVICE,
     ID_PREFIX_EVIDENCE,
     ID_PREFIX_FINDING,
@@ -288,6 +290,33 @@ class Hypothesis:
             status=status,
             category=category,
         )
+
+
+@dataclass(frozen=True)
+class DecisionLogEntry:
+    """Immutable append-only audit record for an investigation decision."""
+
+    entry_id: str
+    timestamp: datetime
+    case_id: str
+    stage: str
+    decision_type: DecisionLogEntryType
+    title: str
+    description: str
+    confidence_before: float | None = None
+    confidence_after: float | None = None
+    confidence_delta: float | None = None
+    trigger: str | None = None
+    supporting_findings: tuple[str, ...] = ()
+    supporting_correlations: tuple[str, ...] = ()
+    supporting_evidence: tuple[str, ...] = ()
+    rejected_hypotheses: tuple[str, ...] = ()
+    selected_hypothesis: str | None = None
+    rule_name: str | None = None
+    engine: str = "decision-log-engine"
+    severity: str | None = None
+    user_visible: bool = True
+    metadata: JsonDict = field(default_factory=dict)
 
 
 @dataclass
@@ -594,6 +623,7 @@ class Case:
     evidence: list[Evidence] = field(default_factory=list)
     analysis_findings: list[AnalysisFinding] = field(default_factory=list)
     correlation_results: list[CorrelationResult] = field(default_factory=list)
+    decision_log: list[DecisionLogEntry] = field(default_factory=list)
     hypotheses: list[Hypothesis] = field(default_factory=list)
     decisions: list[Decision] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)

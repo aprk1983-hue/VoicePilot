@@ -61,6 +61,24 @@ class DecisionType(str, Enum):
     ESCALATION = "escalation"
 
 
+class DecisionLogEntryType(str, Enum):
+    """Append-only audit decision types for the investigation decision log."""
+
+    QUESTION_SELECTED = "question_selected"
+    EVIDENCE_COLLECTED = "evidence_collected"
+    PARSER_RESULT = "parser_result"
+    ANALYSIS_RESULT = "analysis_result"
+    CORRELATION = "correlation"
+    HYPOTHESIS_CREATED = "hypothesis_created"
+    HYPOTHESIS_REJECTED = "hypothesis_rejected"
+    CONFIDENCE_INCREASED = "confidence_increased"
+    CONFIDENCE_DECREASED = "confidence_decreased"
+    RECOMMENDATION_SELECTED = "recommendation_selected"
+    VERIFICATION_COMPLETED = "verification_completed"
+    LEARNING_CREATED = "learning_created"
+    CASE_CLOSED = "case_closed"
+
+
 class QuestionStatus(str, Enum):
     """Status of an investigative question."""
 

@@ -13,6 +13,7 @@ from shared.constants import ID_PREFIX_TIMELINE
 
 if TYPE_CHECKING:
     from runtime.case_manager import CaseManager
+    from runtime.decision_log_engine import DecisionLogEngine
 
 
 def _utc_now() -> datetime:
@@ -72,10 +73,15 @@ def submit_evidence(
     case_manager: CaseManager,
     command: str,
     raw_text: str,
+    *,
+    decision_log: DecisionLogEngine | None = None,
 ) -> EvidenceSubmission:
     """Save pasted CLI output as case evidence and advance collection state."""
     evidence = Evidence.create_cli_paste(case.case_id, command, raw_text)
     case.evidence.append(evidence)
+
+    if decision_log is not None:
+        decision_log.append_evidence_collected(case, evidence=evidence, command=command)
 
     collection = case.metadata.setdefault("evidence_collection", {})
     collected: list[str] = collection.setdefault("collected_commands", [])
