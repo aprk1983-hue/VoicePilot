@@ -1,4 +1,4 @@
-"""VoicePilot CLI v1 — terminal intake investigation."""
+"""VoicePilot CLI v1 — terminal intake investigation and evidence collection."""
 
 from __future__ import annotations
 
@@ -11,6 +11,12 @@ from domain.enums import InvestigationState
 from domain.models import InvestigationTurn
 from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
 from infrastructure.yaml_loader import YamlLoader
+from runtime.evidence_collection import (
+    format_evidence_request,
+    get_next_evidence_request,
+    initialize_evidence_collection,
+    submit_evidence,
+)
 from runtime.exceptions import PlaybookIdNotFoundError
 from runtime.intake_summary import write_intake_summary
 from runtime.runtime_engine import RuntimeEngine
@@ -20,6 +26,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 InputProvider = Callable[[], str]
 OutputWriter = Callable[[str], None]
+END_MARKER = "END"
 
 
 def default_plugins_root() -> Path:
@@ -51,6 +58,50 @@ def format_question(turn: InvestigationTurn) -> str:
     return f"[{turn.question_id}] {turn.prompt}"
 
 
+def read_multiline_paste(input_provider: InputProvider, *, end_marker: str = END_MARKER) -> str:
+    """Read pasted command output until ``end_marker`` on its own line."""
+    lines: list[str] = []
+    while True:
+        line = input_provider()
+        if line.strip() == end_marker:
+            break
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def run_evidence_collection(
+    case_id: str,
+    runtime: RuntimeEngine,
+    playbook_id: str,
+    input_provider: InputProvider,
+    output_writer: OutputWriter,
+) -> int:
+    """Collect required CLI evidence via multi-line paste."""
+    case = runtime.case_manager.load_case(case_id)
+    playbook = runtime.playbook_catalog.get(playbook_id)
+    request = initialize_evidence_collection(case, runtime.case_manager, playbook)
+
+    if request is None:
+        return 0
+
+    while request is not None:
+        for line in format_evidence_request(request).splitlines():
+            output_writer(line)
+        output_writer(f"(paste output; type {END_MARKER} on its own line to finish)")
+
+        raw_text = read_multiline_paste(input_provider)
+        case = runtime.case_manager.load_case(case_id)
+        submit_evidence(case, runtime.case_manager, request.command, raw_text)
+
+        case = runtime.case_manager.load_case(case_id)
+        request = get_next_evidence_request(case)
+        if request is None:
+            output_writer("Evidence collection complete. Next phase: ANALYSIS.")
+            break
+
+    return 0
+
+
 def run_investigation(
     playbook_id: str,
     input_provider: InputProvider,
@@ -58,8 +109,9 @@ def run_investigation(
     *,
     plugins_root: Path | None = None,
     engine: RuntimeEngine | None = None,
+    collect_evidence: bool = True,
 ) -> int:
-    """Run the intake investigation loop.
+    """Run the intake investigation loop and optional evidence collection.
 
     Args:
         playbook_id: Cataloged playbook ID (e.g. ``VP-CUBE-0001``).
@@ -67,6 +119,7 @@ def run_investigation(
         output_writer: Callable receiving output lines.
         plugins_root: Optional plugins directory override.
         engine: Optional pre-built runtime engine for tests.
+        collect_evidence: When ``True``, continue into evidence collection after intake.
 
     Returns:
         Process exit code (``0`` on success, ``1`` on playbook error).
@@ -97,6 +150,14 @@ def run_investigation(
             case = runtime.case_manager.load_case(turn.case_id)
             playbook = runtime.playbook_catalog.get(playbook_id)
             write_intake_summary(case, output_writer, playbook=playbook)
+            if collect_evidence:
+                return run_evidence_collection(
+                    turn.case_id,
+                    runtime,
+                    playbook_id,
+                    input_provider,
+                    output_writer,
+                )
             return 0
 
         output_writer(format_question(turn))

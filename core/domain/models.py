@@ -94,10 +94,67 @@ class Evidence:
     collected_at: datetime
     quality: EvidenceQuality
     status: EvidenceStatus = EvidenceStatus.SUBMITTED
+    source_type: str | None = None
+    raw_text: str | None = None
     source_artifact_id: str | None = None
     parser_finding_ids: list[str] = field(default_factory=list)
     supports_hypothesis_ids: list[str] = field(default_factory=list)
     contradicts_hypothesis_ids: list[str] = field(default_factory=list)
+
+    @classmethod
+    def create_cli_paste(
+        cls,
+        case_id: str,
+        command: str,
+        raw_text: str,
+        *,
+        collected_at: datetime | None = None,
+    ) -> Evidence:
+        """Factory for engineer-pasted CLI command output."""
+        timestamp = collected_at or _utc_now()
+        return cls(
+            evidence_id=_new_id(ID_PREFIX_EVIDENCE),
+            case_id=case_id,
+            type="cli_output",
+            title=f"CLI paste: {command}",
+            source=EvidenceSource(
+                origin="cli_paste",
+                collector="engineer",
+                command=command,
+            ),
+            collected_at=timestamp,
+            quality=EvidenceQuality(
+                completeness=1.0,
+                freshness=1.0,
+                reliability=1.0,
+                parseability=1.0,
+                overall=1.0,
+            ),
+            source_type="cli_paste",
+            raw_text=raw_text,
+        )
+
+
+@dataclass(frozen=True)
+class EvidenceRequest:
+    """Prompt for the next required CLI evidence artifact."""
+
+    case_id: str
+    command: str
+    sequence: int
+    total: int
+
+
+@dataclass(frozen=True)
+class EvidenceSubmission:
+    """Result of submitting pasted command output."""
+
+    case_id: str
+    command: str
+    source_type: str
+    raw_text: str
+    collected_at: datetime
+    evidence_id: str
 
 
 @dataclass
