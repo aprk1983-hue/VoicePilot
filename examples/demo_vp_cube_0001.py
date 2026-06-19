@@ -11,6 +11,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = Path(__file__).resolve().parent
 SAMPLE_EVIDENCE_DIR = EXAMPLES_ROOT / "sample_evidence" / "vp_cube_0001"
+REPORT_PATH = EXAMPLES_ROOT / "output" / "vp_cube_0001_report.md"
 
 PLAYBOOK_ID = "VP-CUBE-0001"
 
@@ -43,6 +44,7 @@ class DemoResult:
     case_id: str | None
     final_state: str | None
     learning_record_id: str | None
+    report_path: Path | None = None
 
 
 def build_demo_inputs(
@@ -105,6 +107,7 @@ def run_demo(
     case_id: str | None = None
     final_state: str | None = None
     learning_record_id: str | None = None
+    report_path: Path | None = None
 
     if runtime.case_manager.list_cases():
         case_id = runtime.case_manager.list_cases()[-1]
@@ -114,12 +117,14 @@ def run_demo(
             learning_record_id = case.learning_record.learning_record_id
 
         _print_final_lifecycle(case, writer)
+        report_path = _write_incident_report(runtime, case_id, writer)
 
     return DemoResult(
         exit_code=exit_code,
         case_id=case_id,
         final_state=final_state,
         learning_record_id=learning_record_id,
+        report_path=report_path,
     )
 
 
@@ -150,6 +155,20 @@ def _print_final_lifecycle(case, output_writer: Callable[[str], None]) -> None:
     if case.status == InvestigationState.CLOSED:
         output_writer("")
         output_writer("Demo finished successfully: case CLOSED with learning record.")
+
+
+def _write_incident_report(runtime, case_id: str, output_writer: Callable[[str], None]) -> Path:
+    from runtime.report_engine import format_incident_report
+
+    report = runtime.generate_report(case_id)
+    markdown = format_incident_report(report)
+
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(markdown + "\n", encoding="utf-8")
+
+    output_writer("")
+    output_writer(f"Incident report saved: {REPORT_PATH}")
+    return REPORT_PATH
 
 
 def main() -> int:

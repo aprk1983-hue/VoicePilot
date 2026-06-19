@@ -42,3 +42,28 @@ class TestDemoRunner:
         assert "Demo finished successfully: case CLOSED with learning record." in output
         assert "Likely Root Cause:" in "\n".join(output)
         assert "Case closed." in output
+        assert "=== Incident Report ===" in output
+
+    def test_demo_writes_report_file(self, tmp_path: Path) -> None:
+        report_path = tmp_path / "vp_cube_0001_report.md"
+        output: list[str] = []
+
+        import examples.demo_vp_cube_0001 as demo_module
+
+        original_report_path = demo_module.REPORT_PATH
+        demo_module.REPORT_PATH = report_path
+        try:
+            result = run_demo(output_writer=output.append)
+        finally:
+            demo_module.REPORT_PATH = original_report_path
+
+        assert result.report_path == report_path
+        assert report_path.exists()
+
+        content = report_path.read_text(encoding="utf-8")
+        assert "# VoicePilot Incident Report" in content
+        assert "CUBE SIP user agent disabled" in content
+        assert "90%" in content
+        assert "sip_ua_disabled" in content
+        assert "Learning Record" in content
+        assert "Verification" in content

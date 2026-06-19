@@ -14,6 +14,7 @@ Runs a complete deterministic investigation for **Outbound Calls Fail** without 
 6. Recommendation (likely root cause at >= 85% confidence)
 7. Verification checklist (all steps passed)
 8. Learning record creation and case closure
+9. Incident report generation and Markdown export
 
 ### Run
 
@@ -44,6 +45,14 @@ examples/sample_evidence/vp_cube_0001/
 ```
 
 The SIP-UA sample triggers `sip_ua_disabled`, producing a high-confidence likely root cause recommendation (90%) so the demo reaches `RESOLUTION`, `VERIFICATION`, `LEARNING`, and `CLOSED`.
+
+### Report Output
+
+After closure, the demo writes a Markdown incident report to:
+
+```
+examples/output/vp_cube_0001_report.md
+```
 
 ### Programmatic Use
 

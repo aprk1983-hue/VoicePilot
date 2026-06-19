@@ -24,6 +24,7 @@ from runtime.learning_engine import (
     build_learning_closure_summary,
 )
 from runtime.recommendation_engine import RecommendationEngine, RecommendationSummary, build_recommendation_summary
+from runtime.report_engine import IncidentReport, ReportEngine
 from runtime.verification_engine import (
     OUTCOME_COMPLETE,
     OUTCOME_FAILED,
@@ -374,6 +375,28 @@ class RuntimeEngine:
             )
 
         return build_learning_closure_summary(case, learning_record)
+
+    def generate_report(self, case_id: CaseId) -> IncidentReport:
+        """Generate a readable incident report for a closed case."""
+        case = self._case_manager.load_case(case_id)
+        if case.status != InvestigationState.CLOSED:
+            raise InvalidInvestigationStateError(
+                case_id,
+                InvestigationState.CLOSED.value,
+                case.status.value,
+            )
+
+        engine = ReportEngine()
+        report = engine.generate(case)
+
+        if self._logger:
+            self._logger.info(
+                "Incident report generated",
+                case_id=case_id,
+                playbook_id=report.playbook_id,
+            )
+
+        return report
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

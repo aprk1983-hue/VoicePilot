@@ -22,6 +22,7 @@ from runtime.exceptions import PlaybookIdNotFoundError
 from runtime.intake_summary import write_intake_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
 from runtime.learning_engine import format_learning_closure_summary
+from runtime.report_engine import format_incident_report
 from runtime.recommendation_engine import format_recommendation_summary
 from runtime.runtime_engine import RuntimeEngine
 from runtime.verification_engine import (
@@ -197,9 +198,15 @@ def run_case_closure(
     runtime: RuntimeEngine,
     output_writer: OutputWriter,
 ) -> int:
-    """Create learning record and close the case."""
+    """Create learning record, close the case, and print the incident report."""
     closure = runtime.close_case_with_learning(case_id)
     for line in format_learning_closure_summary(closure).splitlines():
+        output_writer(line)
+
+    report = runtime.generate_report(case_id)
+    output_writer("")
+    output_writer("=== Incident Report ===")
+    for line in format_incident_report(report).splitlines():
         output_writer(line)
     return 0
 
