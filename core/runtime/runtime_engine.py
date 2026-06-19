@@ -18,6 +18,11 @@ from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
+from runtime.correlation_engine import (
+    CorrelationEngine,
+    CorrelationSummary,
+    format_correlation_summary,
+)
 from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
 from runtime.learning_engine import (
     LearningClosureSummary,
@@ -266,6 +271,23 @@ class RuntimeEngine:
             )
 
         return build_hypothesis_summary(case, hypotheses)
+
+    def correlate_case(self, case_id: CaseId) -> CorrelationSummary:
+        """Correlate findings, adjust hypothesis confidence, and store results."""
+        case = self._case_manager.load_case(case_id)
+        engine = CorrelationEngine()
+        summary = engine.correlate(case)
+        self._case_manager.save_case(case)
+
+        if self._logger:
+            self._logger.info(
+                "Case correlation complete",
+                case_id=case_id,
+                correlation_count=summary.correlation_count,
+                hypotheses_updated=summary.hypotheses_updated,
+            )
+
+        return summary
 
     def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
         """Generate a recommendation from the top hypothesis."""

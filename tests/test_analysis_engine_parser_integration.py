@@ -61,6 +61,7 @@ def _case_with_evidence(
     runtime_engine: RuntimeEngine,
     *,
     sip_ua_text: str,
+    voip_config_text: str = "voice service voip\n sip\n",
     debug_text: str = "SIP/2.0 503 Service Unavailable",
 ) -> str:
     turn = runtime_engine.start_investigation(PLAYBOOK_ID)
@@ -83,6 +84,13 @@ def _case_with_evidence(
         runtime_engine.case_manager,
         "show sip-ua status",
         sip_ua_text,
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        voip_config_text,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(

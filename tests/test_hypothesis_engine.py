@@ -80,6 +80,13 @@ def _case_in_hypothesis(runtime_engine: RuntimeEngine, *, debug_output: str) -> 
     submit_evidence(
         case,
         runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        "voice service voip\n sip\n",
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
         "debug ccsip messages",
         debug_output,
     )

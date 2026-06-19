@@ -26,6 +26,7 @@ INTAKE_ANSWERS = [
 PARSER_EVIDENCE_FILES = (
     "show_dial_peer_voice_summary_normal.txt",
     "show_sip_ua_status_disabled.txt",
+    "show_run_voice_service_voip_disabled.txt",
     "debug_ccsip_503.txt",
 )
 

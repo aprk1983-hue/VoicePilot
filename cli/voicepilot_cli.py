@@ -20,6 +20,7 @@ from runtime.evidence_collection import (
 )
 from runtime.exceptions import PlaybookIdNotFoundError
 from runtime.intake_summary import write_intake_summary
+from runtime.correlation_engine import format_correlation_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
 from runtime.learning_engine import format_learning_closure_summary
 from runtime.report_engine import format_incident_report
@@ -135,6 +136,19 @@ def run_hypothesis_generation(
     """Generate ranked hypotheses and print the summary."""
     summary = runtime.generate_hypotheses(case_id)
     for line in format_hypothesis_summary(summary).splitlines():
+        output_writer(line)
+    return run_correlation(case_id, runtime, input_provider, output_writer)
+
+
+def run_correlation(
+    case_id: str,
+    runtime: RuntimeEngine,
+    input_provider: InputProvider,
+    output_writer: OutputWriter,
+) -> int:
+    """Correlate findings and print the summary."""
+    summary = runtime.correlate_case(case_id)
+    for line in format_correlation_summary(summary).splitlines():
         output_writer(line)
     return run_recommendation_generation(case_id, runtime, input_provider, output_writer)
 

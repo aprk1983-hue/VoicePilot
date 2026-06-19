@@ -28,6 +28,7 @@ from domain.value_objects import (
 from shared.constants import (
     ID_PREFIX_CASE,
     ID_PREFIX_CONFIDENCE,
+    ID_PREFIX_CORRELATION,
     ID_PREFIX_DECISION,
     ID_PREFIX_DEVICE,
     ID_PREFIX_EVIDENCE,
@@ -194,6 +195,46 @@ class AnalysisFinding:
             detected_at=detected_at or _utc_now(),
             detail=detail,
             metadata=metadata,
+        )
+
+
+@dataclass
+class CorrelationResult:
+    """Cross-finding correlation produced by the correlation engine."""
+
+    correlation_id: str
+    case_id: str
+    correlation_type: str
+    rule_id: str
+    explanation: str
+    finding_codes: list[str] = field(default_factory=list)
+    confidence_delta: float = 0.0
+    hypothesis_id: str | None = None
+    metadata: JsonDict = field(default_factory=dict)
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        correlation_type: str,
+        rule_id: str,
+        explanation: str,
+        *,
+        finding_codes: list[str] | None = None,
+        confidence_delta: float = 0.0,
+        hypothesis_id: str | None = None,
+        metadata: JsonDict | None = None,
+    ) -> CorrelationResult:
+        return cls(
+            correlation_id=_new_id(ID_PREFIX_CORRELATION),
+            case_id=case_id,
+            correlation_type=correlation_type,
+            rule_id=rule_id,
+            explanation=explanation,
+            finding_codes=list(finding_codes or []),
+            confidence_delta=confidence_delta,
+            hypothesis_id=hypothesis_id,
+            metadata=dict(metadata or {}),
         )
 
 
@@ -552,6 +593,7 @@ class Case:
     schema_version: str = "1.0"
     evidence: list[Evidence] = field(default_factory=list)
     analysis_findings: list[AnalysisFinding] = field(default_factory=list)
+    correlation_results: list[CorrelationResult] = field(default_factory=list)
     hypotheses: list[Hypothesis] = field(default_factory=list)
     decisions: list[Decision] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)

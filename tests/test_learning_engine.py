@@ -75,12 +75,20 @@ def _case_in_learning(runtime_engine: RuntimeEngine):
     submit_evidence(
         case,
         runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        "voice service voip\n no sip\n",
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
         "debug ccsip messages",
         "SIP/2.0 503 Service Unavailable",
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     runtime_engine.analyze_case(case.case_id)
     runtime_engine.generate_hypotheses(case.case_id)
+    runtime_engine.correlate_case(case.case_id)
     runtime_engine.generate_recommendation(case.case_id)
     case = runtime_engine.case_manager.load_case(case.case_id)
 
@@ -130,7 +138,7 @@ class TestLearningEngine:
         assert record is not None
 
         assert record.root_cause == "CUBE SIP user agent disabled"
-        assert record.confidence == 90.0
+        assert record.confidence == 98.0
         assert record.playbook_id == PLAYBOOK_ID
         assert "sip_ua_disabled" in record.evidence_summary
         assert record.evidence_finding_ids

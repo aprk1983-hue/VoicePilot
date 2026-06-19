@@ -75,12 +75,20 @@ def _closed_case(runtime_engine: RuntimeEngine):
     submit_evidence(
         case,
         runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        "voice service voip\n no sip\n",
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
         "debug ccsip messages",
         "SIP/2.0 503 Service Unavailable",
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     runtime_engine.analyze_case(case.case_id)
     runtime_engine.generate_hypotheses(case.case_id)
+    runtime_engine.correlate_case(case.case_id)
     runtime_engine.generate_recommendation(case.case_id)
     case = runtime_engine.case_manager.load_case(case.case_id)
 
@@ -116,7 +124,7 @@ class TestReportEngine:
         markdown = format_incident_report(report)
 
         assert report.top_hypothesis_title == "CUBE SIP user agent disabled"
-        assert report.confidence == 90.0
+        assert report.confidence == 98.0
         assert any(finding.signal == "sip_ua_disabled" for finding in report.findings)
         assert report.recommendation_summary
         assert report.verification_outcome == "all_steps_passed"
@@ -126,7 +134,7 @@ class TestReportEngine:
         assert report.learning_reusable_pattern.startswith("VP-CUBE-0001:")
 
         assert "CUBE SIP user agent disabled" in markdown
-        assert "90%" in markdown
+        assert "98%" in markdown
         assert "sip_ua_disabled" in markdown
         assert "parser:cisco_show_sip_ua_status" in markdown
         assert "sip_ua_enabled=False" in markdown

@@ -83,12 +83,20 @@ def _case_in_resolution(runtime_engine: RuntimeEngine) -> Case:
     submit_evidence(
         case,
         runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        "voice service voip\n no sip\n",
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
         "debug ccsip messages",
         "SIP/2.0 503 Service Unavailable",
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     runtime_engine.analyze_case(case.case_id)
     runtime_engine.generate_hypotheses(case.case_id)
+    runtime_engine.correlate_case(case.case_id)
     runtime_engine.generate_recommendation(case.case_id)
     return runtime_engine.case_manager.load_case(case.case_id)
 
@@ -114,6 +122,13 @@ def _case_in_investigation_with_next_best(runtime_engine: RuntimeEngine) -> Case
         runtime_engine.case_manager,
         "show sip-ua status",
         "SIP User Agent Status: enabled",
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        "voice service voip\n sip\n",
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(

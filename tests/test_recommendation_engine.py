@@ -59,6 +59,7 @@ def _case_in_investigation(
     *,
     dial_peer_output: str,
     sip_ua_output: str,
+    voip_config_output: str = "voice service voip\n sip\n",
     debug_output: str,
 ) -> Case:
     turn = runtime_engine.start_investigation(PLAYBOOK_ID)
@@ -81,6 +82,13 @@ def _case_in_investigation(
         runtime_engine.case_manager,
         "show sip-ua status",
         sip_ua_output,
+    )
+    case = runtime_engine.case_manager.load_case(case.case_id)
+    submit_evidence(
+        case,
+        runtime_engine.case_manager,
+        "show run | sec voice service voip",
+        voip_config_output,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
     submit_evidence(

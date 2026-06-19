@@ -32,6 +32,7 @@ INTAKE_ANSWERS = [
 REQUIRED_COMMANDS = [
     "show dial-peer voice summary",
     "show sip-ua status",
+    "show run | sec voice service voip",
     "debug ccsip messages",
 ]
 
@@ -74,7 +75,7 @@ class TestEvidenceCollection:
         assert request is not None
         assert request.command == "show dial-peer voice summary"
         assert request.sequence == 1
-        assert request.total == 3
+        assert request.total == 4
 
     def test_evidence_is_saved_on_case(self, runtime_engine: RuntimeEngine) -> None:
         case = _complete_intake(runtime_engine)
@@ -131,5 +132,5 @@ class TestEvidenceCollection:
 
         case = runtime_engine.case_manager.load_case(case.case_id)
         assert case.status == InvestigationState.ANALYSIS
-        assert len(case.evidence) == 3
+        assert len(case.evidence) == 4
         assert get_next_evidence_request(case) is None

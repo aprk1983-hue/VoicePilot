@@ -13,6 +13,7 @@ VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
 VP_CUBE_0001_ALL_FAIL_EVIDENCE = [
     "show dial-peer voice summary",
     "show sip-ua status",
+    "show run | sec voice service voip",
     "debug ccsip messages",
 ]
 

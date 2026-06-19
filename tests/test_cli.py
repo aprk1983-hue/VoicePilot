@@ -25,10 +25,15 @@ INTAKE_ANSWERS = [
     "all destinations",
     "yes",
 ]
+VOICE_SERVICE_VOIP_ENABLED = "voice service voip\n sip\n"
+VOICE_SERVICE_VOIP_DISABLED = "voice service voip\n no sip\n"
 EVIDENCE_INPUTS = [
     "dial-peer 1 voip up",
     "END",
     "SIP UAS registered",
+    "END",
+    "voice service voip",
+    " sip",
     "END",
     "SIP/2.0 404 Not Found",
     "END",
@@ -132,12 +137,14 @@ class TestRunInvestigation:
         assert any(line == "Findings:" for line in output)
         assert any("sip_404_detected (parser:cisco_debug_ccsip_messages)" in line for line in output)
         assert "Hypothesis generation complete. Next phase: INVESTIGATION." in output
+        assert "Correlation complete." in "\n".join(output)
+        assert "Correlations:" in "\n".join(output)
         assert any("Routing / dial-peer issue" in line for line in output)
 
         case_id = next(line.split(":", 1)[1].strip() for line in output if line.startswith("Case:"))
         case = runtime_engine.case_manager.load_case(case_id)
         assert case.status == InvestigationState.INVESTIGATION
-        assert len(case.evidence) == 3
+        assert len(case.evidence) == 4
         assert any(finding.signal == "sip_404_detected" for finding in case.analysis_findings)
         assert any(h.title == "Routing / dial-peer issue" for h in case.hypotheses)
         assert any(line.startswith("Recommended Next Action:") for line in output)
@@ -152,6 +159,9 @@ class TestRunInvestigation:
             "dial-peer 1 voip up",
             "END",
             "SIP-UA Status: disabled",
+            "END",
+            "voice service voip",
+            " no sip",
             "END",
             "SIP/2.0 503 Service Unavailable",
             "END",
@@ -173,6 +183,8 @@ class TestRunInvestigation:
         )
 
         assert code == 0
+        assert "Correlation complete." in "\n".join(output)
+        assert "sip_ua_disabled_confirmed (+8 confidence)" in "\n".join(output)
         assert "Likely Root Cause:" in "\n".join(output)
         assert "Verification Checklist:" in "\n".join(output)
         assert "Verification complete. Next phase: LEARNING." in output

@@ -31,6 +31,7 @@ class TestDemoRunner:
         assert any("destination-pattern" in line for line in inputs)
         assert any("SIP-UA Status: disabled" in line for line in inputs)
         assert any("503 Service Unavailable" in line for line in inputs)
+        assert any("no sip" in line for line in inputs)
 
     def test_demo_runs_to_closed_state(self) -> None:
         output: list[str] = []
@@ -65,8 +66,9 @@ class TestDemoRunner:
         content = report_path.read_text(encoding="utf-8")
         assert "# VoicePilot Incident Report" in content
         assert "CUBE SIP user agent disabled" in content
-        assert "90%" in content
+        assert "98%" in content
         assert "sip_ua_disabled" in content
+        assert "sip_ua_disabled_by_config" in content
         assert "parser:cisco_show_sip_ua_status" in content
         assert "parser:cisco_debug_ccsip_messages" in content
         assert "sip_ua_enabled=False" in content
