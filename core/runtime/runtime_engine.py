@@ -18,6 +18,11 @@ from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
 from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
+from runtime.learning_engine import (
+    LearningClosureSummary,
+    LearningEngine,
+    build_learning_closure_summary,
+)
 from runtime.recommendation_engine import RecommendationEngine, RecommendationSummary, build_recommendation_summary
 from runtime.verification_engine import (
     OUTCOME_COMPLETE,
@@ -340,6 +345,35 @@ class RuntimeEngine:
             outcome=summary.outcome,
             message=summary.message,
         )
+
+    def close_case_with_learning(self, case_id: CaseId) -> LearningClosureSummary:
+        """Create a learning record and close a verified case."""
+        case = self._case_manager.load_case(case_id)
+        if case.status != InvestigationState.LEARNING:
+            raise InvalidInvestigationStateError(
+                case_id,
+                InvestigationState.LEARNING.value,
+                case.status.value,
+            )
+
+        engine = LearningEngine()
+        learning_record = engine.create_learning_record(case)
+        case.learning_record = learning_record
+        case.resolution_summary = learning_record.resolution_summary
+        case.root_cause_id = learning_record.hypothesis_id
+        case.closed_at = learning_record.created_at
+        self._case_manager.save_case(case)
+        self._case_manager.transition_state(case_id, InvestigationState.CLOSED)
+        case = self._case_manager.load_case(case_id)
+
+        if self._logger:
+            self._logger.info(
+                "Case closed with learning record",
+                case_id=case_id,
+                learning_record_id=learning_record.learning_record_id,
+            )
+
+        return build_learning_closure_summary(case, learning_record)
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

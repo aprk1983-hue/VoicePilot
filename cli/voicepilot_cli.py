@@ -21,9 +21,11 @@ from runtime.evidence_collection import (
 from runtime.exceptions import PlaybookIdNotFoundError
 from runtime.intake_summary import write_intake_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
+from runtime.learning_engine import format_learning_closure_summary
 from runtime.recommendation_engine import format_recommendation_summary
 from runtime.runtime_engine import RuntimeEngine
 from runtime.verification_engine import (
+    OUTCOME_COMPLETE,
     VerificationResultSubmission,
     format_verification_checklist,
     format_verification_summary,
@@ -184,6 +186,21 @@ def run_verification(
 
     summary = runtime.submit_verification(case_id, submissions)
     output_writer(format_verification_summary(summary))
+
+    if summary.outcome == OUTCOME_COMPLETE:
+        return run_case_closure(case_id, runtime, output_writer)
+    return 0
+
+
+def run_case_closure(
+    case_id: str,
+    runtime: RuntimeEngine,
+    output_writer: OutputWriter,
+) -> int:
+    """Create learning record and close the case."""
+    closure = runtime.close_case_with_learning(case_id)
+    for line in format_learning_closure_summary(closure).splitlines():
+        output_writer(line)
     return 0
 
 

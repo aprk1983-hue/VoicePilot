@@ -33,6 +33,7 @@ from shared.constants import (
     ID_PREFIX_EVIDENCE,
     ID_PREFIX_FINDING,
     ID_PREFIX_HYPOTHESIS,
+    ID_PREFIX_LEARNING,
     ID_PREFIX_QUESTION,
     ID_PREFIX_RECOMMENDATION,
     ID_PREFIX_STEP,
@@ -438,6 +439,66 @@ class ConfidenceScore:
 
 
 @dataclass
+class LearningRecord:
+    """Structured post-closure learning artifact for organizational reuse."""
+
+    learning_record_id: str
+    case_id: str
+    playbook_id: str | None
+    symptom: str
+    root_cause: str
+    confidence: float
+    evidence_summary: str
+    resolution_summary: str
+    verification_summary: str
+    lessons_learned: str
+    reusable_pattern: str
+    final_outcome: str
+    created_at: datetime = field(default_factory=_utc_now)
+    hypothesis_id: str | None = None
+    recommendation_id: str | None = None
+    evidence_finding_ids: list[str] = field(default_factory=list)
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        playbook_id: str | None,
+        symptom: str,
+        root_cause: str,
+        confidence: float,
+        evidence_summary: str,
+        resolution_summary: str,
+        verification_summary: str,
+        lessons_learned: str,
+        reusable_pattern: str,
+        final_outcome: str,
+        *,
+        hypothesis_id: str | None = None,
+        recommendation_id: str | None = None,
+        evidence_finding_ids: list[str] | None = None,
+    ) -> LearningRecord:
+        """Factory for a structured learning record."""
+        return cls(
+            learning_record_id=_new_id(ID_PREFIX_LEARNING),
+            case_id=case_id,
+            playbook_id=playbook_id,
+            symptom=symptom,
+            root_cause=root_cause,
+            confidence=confidence,
+            evidence_summary=evidence_summary,
+            resolution_summary=resolution_summary,
+            verification_summary=verification_summary,
+            lessons_learned=lessons_learned,
+            reusable_pattern=reusable_pattern,
+            final_outcome=final_outcome,
+            hypothesis_id=hypothesis_id,
+            recommendation_id=recommendation_id,
+            evidence_finding_ids=list(evidence_finding_ids or []),
+        )
+
+
+@dataclass
 class Playbook:
     """Loaded DSL playbook definition."""
 
@@ -498,6 +559,7 @@ class Case:
     devices: list[Device] = field(default_factory=list)
     investigation_steps: list[InvestigationStep] = field(default_factory=list)
     confidence_scores: list[ConfidenceScore] = field(default_factory=list)
+    learning_record: LearningRecord | None = None
     metadata: JsonDict = field(default_factory=dict)
 
     @classmethod

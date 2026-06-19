@@ -176,10 +176,13 @@ class TestRunInvestigation:
         assert "Likely Root Cause:" in "\n".join(output)
         assert "Verification Checklist:" in "\n".join(output)
         assert "Verification complete. Next phase: LEARNING." in output
+        assert "Case closed." in output
+        assert "Learning record created." in output
 
         case_id = next(line.split(":", 1)[1].strip() for line in output if line.startswith("Case:"))
         case = runtime_engine.case_manager.load_case(case_id)
-        assert case.status == InvestigationState.LEARNING
+        assert case.status == InvestigationState.CLOSED
+        assert case.learning_record is not None
         assert len(case.verifications) == 3
 
     def test_unknown_playbook_returns_non_zero(self, runtime_engine: RuntimeEngine) -> None:
