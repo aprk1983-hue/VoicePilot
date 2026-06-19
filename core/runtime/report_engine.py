@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from domain.enums import InvestigationState
-from domain.models import Case, Hypothesis, Recommendation
+from domain.models import Case, CorrelationResult, Hypothesis, Recommendation
 from runtime.analysis_engine import (
     format_finding_source_label,
     summarize_structured_data,
@@ -28,6 +28,17 @@ class ReportFinding:
     detail: str | None
     source: str | None = None
     structured_summary: str | None = None
+
+
+@dataclass(frozen=True)
+class ReportCorrelation:
+    """Correlation result included in an incident report."""
+
+    rule_id: str
+    correlation_type: str
+    confidence_delta: float
+    explanation: str
+    evidence_names: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -62,6 +73,7 @@ class IncidentReport:
     top_hypothesis_id: str | None
     confidence: float | None
     findings: tuple[ReportFinding, ...]
+    correlations: tuple[ReportCorrelation, ...]
     recommendation_summary: str | None
     recommendation_actions: tuple[str, ...]
     verification_outcome: str | None
@@ -122,6 +134,7 @@ def build_incident_report(case: Case) -> IncidentReport:
             )
             for finding in case.analysis_findings
         ),
+        correlations=tuple(_build_report_correlations(case.correlation_results)),
         recommendation_summary=_format_recommendation_summary(recommendation),
         recommendation_actions=tuple(recommendation.recommended_actions) if recommendation else (),
         verification_outcome=_verification_outcome(case),
@@ -186,6 +199,20 @@ def format_incident_report(report: IncidentReport) -> str:
     else:
         lines.append("_No analysis findings recorded._")
 
+    lines.extend(["", "## Correlation Reasoning", ""])
+    if report.correlations:
+        for correlation in report.correlations:
+            impact = _format_confidence_impact(correlation.confidence_delta)
+            lines.append(
+                f"- **{correlation.rule_id}** — {correlation.correlation_type}{impact}"
+            )
+            lines.append(f"  {correlation.explanation}")
+            if correlation.evidence_names:
+                evidence = ", ".join(correlation.evidence_names)
+                lines.append(f"  Evidence: {evidence}")
+    else:
+        lines.append("_No correlation results recorded._")
+
     lines.extend(["", "## Recommendation", ""])
     if report.recommendation_summary:
         lines.append(report.recommendation_summary)
@@ -231,6 +258,29 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No timeline events recorded._")
 
     return "\n".join(lines)
+
+
+def _build_report_correlations(
+    correlations: list[CorrelationResult],
+) -> list[ReportCorrelation]:
+    return [
+        ReportCorrelation(
+            rule_id=correlation.rule_id,
+            correlation_type=correlation.correlation_type,
+            confidence_delta=correlation.confidence_delta,
+            explanation=correlation.explanation,
+            evidence_names=tuple(correlation.finding_codes),
+        )
+        for correlation in correlations
+    ]
+
+
+def _format_confidence_impact(delta: float) -> str:
+    if delta == 0.0:
+        return ""
+    value = int(delta)
+    sign = "+" if value > 0 else ""
+    return f", {sign}{value} confidence"
 
 
 def _top_hypothesis(case: Case) -> Hypothesis | None:

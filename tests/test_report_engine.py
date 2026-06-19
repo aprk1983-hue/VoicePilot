@@ -140,6 +140,38 @@ class TestReportEngine:
         assert "sip_ua_enabled=False" in markdown
         assert "Verification" in markdown
         assert "Learning Record" in markdown
+        assert "## Correlation Reasoning" in markdown
+        assert any(
+            correlation.rule_id == "sip_ua_disabled_confirmed" for correlation in report.correlations
+        )
+        assert "sip_ua_disabled_confirmed" in markdown
+        assert "+8 confidence" in markdown
+        assert "Evidence: sip_ua_disabled, sip_ua_disabled_by_config" in markdown
+
+    def test_report_without_correlations_still_works(self) -> None:
+        from domain.enums import InvestigationState, Severity
+        from domain.models import Case
+        from domain.value_objects import AffectedScope, PlatformRef, SymptomSummary
+
+        case = Case(
+            case_id="CASE-NO-CORR",
+            title="test",
+            status=InvestigationState.CLOSED,
+            severity=Severity.HIGH,
+            business_impact="test",
+            symptom=SymptomSummary(summary="outbound calls fail"),
+            affected_scope=AffectedScope(),
+            platform=PlatformRef(vendor="cisco"),
+            playbook_id=PLAYBOOK_ID,
+        )
+
+        report = build_incident_report(case)
+        markdown = format_incident_report(report)
+
+        assert report.correlations == ()
+        assert "## Correlation Reasoning" in markdown
+        assert "_No correlation results recorded._" in markdown
+        assert "# VoicePilot Incident Report" in markdown
 
     def test_report_engine_builds_report_directly(self, runtime_engine: RuntimeEngine) -> None:
         case = _closed_case(runtime_engine)

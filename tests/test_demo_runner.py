@@ -74,3 +74,7 @@ class TestDemoRunner:
         assert "sip_ua_enabled=False" in content
         assert "Learning Record" in content
         assert "Verification" in content
+        assert "## Correlation Reasoning" in content
+        assert "sip_ua_disabled_confirmed" in content
+        assert "+8 confidence" in content
+        assert "Evidence: sip_ua_disabled, sip_ua_disabled_by_config" in content
