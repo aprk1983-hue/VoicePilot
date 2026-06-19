@@ -7,6 +7,12 @@ from typing import Any
 from domain.enums import InvestigationState
 from domain.interfaces import CaseRepository, LoggerPort, PlaybookRepository
 from domain.models import InvestigationTurn
+from runtime.analysis_engine import (
+    AnalysisEngine,
+    AnalysisSummary,
+    build_analysis_summary,
+    format_analysis_summary,
+)
 from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
@@ -191,6 +197,27 @@ class RuntimeEngine:
             return turn
 
         return build_investigation_turn(case, None)
+
+    def analyze_case(self, case_id: CaseId) -> AnalysisSummary:
+        """Analyze collected evidence, attach findings, and move to HYPOTHESIS."""
+        case = self._case_manager.load_case(case_id)
+        engine = AnalysisEngine()
+        findings = engine.analyze(case)
+        case.analysis_findings = findings
+        self._case_manager.save_case(case)
+
+        if case.status == InvestigationState.ANALYSIS:
+            self._case_manager.transition_state(case_id, InvestigationState.HYPOTHESIS)
+            case = self._case_manager.load_case(case_id)
+
+        if self._logger:
+            self._logger.info(
+                "Case analysis complete",
+                case_id=case_id,
+                findings=[finding.signal for finding in findings],
+            )
+
+        return build_analysis_summary(case, findings)
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

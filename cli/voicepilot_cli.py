@@ -11,6 +11,7 @@ from domain.enums import InvestigationState
 from domain.models import InvestigationTurn
 from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
 from infrastructure.yaml_loader import YamlLoader
+from runtime.analysis_engine import format_analysis_summary
 from runtime.evidence_collection import (
     format_evidence_request,
     get_next_evidence_request,
@@ -99,6 +100,18 @@ def run_evidence_collection(
             output_writer("Evidence collection complete. Next phase: ANALYSIS.")
             break
 
+    return run_analysis(case_id, runtime, output_writer)
+
+
+def run_analysis(
+    case_id: str,
+    runtime: RuntimeEngine,
+    output_writer: OutputWriter,
+) -> int:
+    """Run deterministic analysis and print findings."""
+    summary = runtime.analyze_case(case_id)
+    for line in format_analysis_summary(summary).splitlines():
+        output_writer(line)
     return 0
 
 

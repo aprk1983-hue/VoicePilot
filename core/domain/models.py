@@ -31,6 +31,7 @@ from shared.constants import (
     ID_PREFIX_DECISION,
     ID_PREFIX_DEVICE,
     ID_PREFIX_EVIDENCE,
+    ID_PREFIX_FINDING,
     ID_PREFIX_HYPOTHESIS,
     ID_PREFIX_QUESTION,
     ID_PREFIX_RECOMMENDATION,
@@ -155,6 +156,41 @@ class EvidenceSubmission:
     raw_text: str
     collected_at: datetime
     evidence_id: str
+
+
+@dataclass(frozen=True)
+class AnalysisFinding:
+    """Deterministic signal extracted from collected evidence."""
+
+    finding_id: str
+    case_id: str
+    evidence_id: str
+    command: str
+    signal: str
+    detected_at: datetime
+    detail: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        evidence_id: str,
+        command: str,
+        signal: str,
+        *,
+        detail: str | None = None,
+        detected_at: datetime | None = None,
+    ) -> AnalysisFinding:
+        """Factory for a v1 analysis finding."""
+        return cls(
+            finding_id=_new_id(ID_PREFIX_FINDING),
+            case_id=case_id,
+            evidence_id=evidence_id,
+            command=command,
+            signal=signal,
+            detected_at=detected_at or _utc_now(),
+            detail=detail,
+        )
 
 
 @dataclass
@@ -346,6 +382,7 @@ class Case:
     resolution_summary: str | None = None
     schema_version: str = "1.0"
     evidence: list[Evidence] = field(default_factory=list)
+    analysis_findings: list[AnalysisFinding] = field(default_factory=list)
     hypotheses: list[Hypothesis] = field(default_factory=list)
     decisions: list[Decision] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)
