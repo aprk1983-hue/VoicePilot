@@ -58,3 +58,28 @@ class EngineAlreadyRegisteredError(VoicePilotRuntimeError):
     def __init__(self, engine_name: str) -> None:
         super().__init__(f"Engine already registered: {engine_name}")
         self.engine_name = engine_name
+
+
+class PluginManifestNotFoundError(VoicePilotRuntimeError):
+    """Raised when a plugin directory has no ``manifest.yaml``."""
+
+    def __init__(self, plugin_path: str) -> None:
+        super().__init__(f"Plugin manifest not found: {plugin_path}")
+        self.plugin_path = plugin_path
+
+
+class PluginManifestValidationError(VoicePilotRuntimeError):
+    """Raised when a plugin manifest fails validation."""
+
+    def __init__(self, message: str, plugin_path: str, errors: list[str] | None = None) -> None:
+        super().__init__(message)
+        self.plugin_path = plugin_path
+        self.errors = errors or []
+
+
+class PluginNotFoundError(VoicePilotRuntimeError):
+    """Raised when a plugin name is not registered."""
+
+    def __init__(self, plugin_name: str) -> None:
+        super().__init__(f"Plugin not found: {plugin_name}")
+        self.plugin_name = plugin_name

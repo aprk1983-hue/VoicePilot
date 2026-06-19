@@ -8,6 +8,7 @@ Plugins extend VoicePilot Core with vendor-specific investigation assets and opt
 ┌─────────────────────────────────────────┐
 │           VoicePilot Core               │
 │  runtime · domain · application         │
+│       PluginRegistry                    │
 └───────────────────┬─────────────────────┘
                     │ SDK contracts
         ┌───────────┼───────────┐
@@ -28,15 +29,24 @@ plugins/
     knowledge/             # Optional — future knowledge packs
 ```
 
-## How Plugins Load (Future)
+## How Plugins Load
 
-1. Core scans `plugins/` (and configured extra paths)
-2. Reads `manifest.yaml` into `PluginManifest`
-3. Instantiates `VoicePilotPlugin` implementation
-4. Registers `PlaybookProvider` paths with `PlaybookLoader`
-5. Binds playbooks to cases via `PlaybookEngine`
+1. `PluginRegistry` scans `plugins/` (configurable root path)
+2. Reads each `manifest.yaml` into `PluginManifest` (SDK)
+3. Validates required fields (`name`, `display_name`, `version`, `vendor`, `plugin_type`)
+4. Exposes playbook entry paths via `list_playbook_paths()`
+5. `PlaybookLoader` loads `.vpb.yaml` files by path (today) or via future `PlaybookProvider`
 
-**Current sprint:** manifest + file layout only; dynamic loader is TODO.
+```python
+from pathlib import Path
+from runtime.plugin_registry import PluginRegistry
+
+registry = PluginRegistry(Path("plugins"))
+registry.discover()
+paths = registry.list_playbook_paths_for("cisco")
+```
+
+Directories without `manifest.yaml` are skipped during discovery.
 
 ## Official Plugins
 
@@ -53,15 +63,19 @@ Third-party plugins use the same SDK contracts. They should:
 - Keep playbooks as `.vpb.yaml` per [DSL spec](../docs/dsl/voicepilot-dsl.md)
 - Respect evidence-first investigation rules
 
+Install to an additional plugins path configured on `PluginRegistry` (future: multiple roots).
+
 ## Marketplace Concept (Future)
 
 - Certified plugin bundles with version compatibility matrix
 - Customer-private plugin registries for air-gapped deployments
-- Capability-based discovery: "I need CUBE outbound playbooks"
+- Capability-based discovery: `registry.find_by_capability("cube_playbooks")`
+- Signed manifests and trust levels before registration
 - Revenue share model for partner-authored plugins
 
 ## Related
 
+- [Plugin Registry spec](../docs/sprint-1/plugin-registry.md)
 - [SDK](../sdk/README.md)
 - [Cisco plugin](cisco/README.md)
 - [DSL specification](../docs/dsl/voicepilot-dsl.md)
