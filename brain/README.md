@@ -104,9 +104,15 @@ Question   Evidence  Reasoning Confidence Playbook Topology  Knowledge   Cost
 |--------|------|
 | [Report Engine](report-engine/README.md) | Enterprise incident and RCA documentation |
 
+## Canonical Data Model Dependency
+
+All Brain engines communicate through typed canonical objects defined in the [VoicePilot Canonical Data Model](../docs/data-model/canonical-data-model.md). The **Case** object is the root aggregate. Engines do not exchange free text as system of record — they read and write structured objects including Evidence, Hypothesis, Decision, Question, Topology, TimelineEvent, Recommendation, ConfidenceScore, InvestigationGraph, and related artifacts.
+
+The Investigation Engine is the sole mutation authority for Case-scoped objects. Child objects always carry a `case_id` reference. Evidence links to source artifacts (LogArtifact, Configuration). Hypotheses declare supporting and contradicting evidence. Decisions document rejected alternatives. Recommendations include verification and rollback guidance where applicable. Root cause confirmation requires evidence linkage and a passing confidence gate.
+
 ## Case State — Single Source of Truth
 
-All engines read from and write to the canonical Case State through the Investigation Engine. No engine maintains conflicting parallel state.
+All engines read from and write to the canonical Case State through the Investigation Engine. No engine maintains conflicting parallel state. The Case State fields below map to the canonical object model.
 
 ```yaml
 case_id:
@@ -175,5 +181,5 @@ Each module document contains: Purpose, Responsibilities, Inputs, Outputs, Inter
 
 ---
 
-*VoicePilot Brain Architecture — Sprint 0, Day 2*
+*VoicePilot Brain Architecture — Sprint 0, Day 3*
 *Review status: Draft for Distinguished Engineer review*
