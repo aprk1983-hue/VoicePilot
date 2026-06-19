@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from shared.types import JsonDict
+
+if TYPE_CHECKING:
+    from model.voice_graph import VoiceObject
 
 
 @dataclass(frozen=True)
@@ -36,6 +40,7 @@ class ParserResult:
     metadata: JsonDict = field(default_factory=dict)
     structured_data: JsonDict = field(default_factory=dict)
     findings: list[ParserFinding] = field(default_factory=list)
+    voice_objects: list[VoiceObject] = field(default_factory=list)
     confidence: float = 0.0
 
     @property

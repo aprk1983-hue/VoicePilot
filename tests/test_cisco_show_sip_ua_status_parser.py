@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "core") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "core"))
 
+from model.sip_ua import SipUA
 from parser.parser_context import ParserContext
 from parser.parser_engine import ParserEngine
 from parser.parser_registry import ParserRegistry
@@ -32,6 +33,7 @@ def parser_context() -> ParserContext:
     return ParserContext(
         vendor="cisco",
         case_id="CASE-cisco-parser",
+        evidence_id="EVD-cisco-parser",
         device_id="DEV-cube-01",
         platform="CUBE",
         ios_version="17.9.1",
@@ -186,3 +188,75 @@ class TestCiscoShowSipUaStatusParser:
     def test_validate_reports_empty_output(self, parser: CiscoShowSipUaStatusParser) -> None:
         errors = parser.validate({"raw_status_lines": []})
         assert errors
+
+
+class TestCiscoShowSipUaStatusParserCvom:
+    def _sip_ua(self, result) -> SipUA:
+        assert len(result.voice_objects) == 1
+        sip_ua = result.voice_objects[0]
+        assert isinstance(sip_ua, SipUA)
+        return sip_ua
+
+    def test_parser_creates_sip_ua_object(
+        self,
+        parser: CiscoShowSipUaStatusParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_sip_ua_status_enabled.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        sip_ua = self._sip_ua(result)
+
+        assert sip_ua.object_type == "sip_ua"
+        assert sip_ua.source_parser == "cisco_show_sip_ua_status"
+        assert sip_ua.source_command == "show sip-ua status"
+        assert sip_ua.source_evidence_id == "EVD-cisco-parser"
+        assert sip_ua.hostname == "cube-edge-01"
+        assert sip_ua.confidence == result.confidence
+        assert sip_ua.id.startswith("VOBJ-")
+
+    def test_sip_ua_enabled_false_for_disabled_sample(
+        self,
+        parser: CiscoShowSipUaStatusParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_sip_ua_status_disabled.txt").read_text(encoding="utf-8")
+        sip_ua = self._sip_ua(parser.parse(raw, parser_context))
+
+        assert sip_ua.enabled is False
+        assert sip_ua.registered is False
+
+    def test_sip_ua_registered_true_for_registered_sample(
+        self,
+        parser: CiscoShowSipUaStatusParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_sip_ua_status_registered_tls.txt").read_text(encoding="utf-8")
+        sip_ua = self._sip_ua(parser.parse(raw, parser_context))
+
+        assert sip_ua.enabled is True
+        assert sip_ua.registered is True
+        assert sip_ua.registrar == "sip:pstn.carrier.com"
+
+    def test_sip_ua_transport_tls_for_tls_sample(
+        self,
+        parser: CiscoShowSipUaStatusParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_sip_ua_status_registered_tls.txt").read_text(encoding="utf-8")
+        sip_ua = self._sip_ua(parser.parse(raw, parser_context))
+
+        assert sip_ua.transport == "tls"
+        assert sip_ua.tls is True
+
+    def test_parser_result_voice_object_provenance(
+        self,
+        parser: CiscoShowSipUaStatusParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_sip_ua_status_enabled.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        sip_ua = self._sip_ua(result)
+
+        assert result.voice_objects[0] is sip_ua
+        assert sip_ua.vendor == "cisco"
+        assert sip_ua.platform == "CUBE"

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from shared.types import CaseId, DeviceId, JsonDict
+from shared.types import CaseId, DeviceId, EvidenceId, JsonDict
 
 
 def _utc_now() -> datetime:
@@ -22,6 +22,7 @@ class ParserContext:
 
     vendor: str
     case_id: CaseId
+    evidence_id: EvidenceId | None = None
     device_id: DeviceId | None = None
     platform: str | None = None
     ios_version: str | None = None

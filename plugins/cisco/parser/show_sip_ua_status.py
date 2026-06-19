@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from model.sip_ua import SipUA
 from parser.interfaces import CommandParser
 from parser.parser_context import ParserContext
 from parser.parser_result import ParserFinding, ParserResult
@@ -11,6 +12,7 @@ from shared.types import JsonDict
 
 COMMAND = "show sip-ua status"
 VENDOR = "cisco"
+PARSER_ID = "cisco_show_sip_ua_status"
 PARSER_VERSION = "1.0.0"
 
 _DETECT_MARKERS: tuple[str, ...] = (
@@ -63,6 +65,16 @@ class CiscoShowSipUaStatusParser(CommandParser):
 
         hostname = _extract_hostname(raw_text) or context.hostname
         confidence = _calculate_confidence(structured_data, errors)
+        voice_objects = (
+            self.extract_voice_objects(
+                structured_data,
+                context,
+                hostname=hostname,
+                confidence=confidence,
+            )
+            if not errors
+            else []
+        )
 
         return ParserResult(
             command=self.command,
@@ -75,6 +87,7 @@ class CiscoShowSipUaStatusParser(CommandParser):
             metadata=metadata,
             structured_data=structured_data,
             findings=findings,
+            voice_objects=voice_objects,
             confidence=confidence,
         )
 
@@ -154,6 +167,34 @@ class CiscoShowSipUaStatusParser(CommandParser):
             )
 
         return findings
+
+    def extract_voice_objects(
+        self,
+        structured_data: JsonDict,
+        context: ParserContext,
+        *,
+        hostname: str | None,
+        confidence: float,
+    ) -> list[SipUA]:
+        """Build canonical SipUA object from structured SIP-UA status data."""
+        transport = structured_data.get("transport")
+        transport_value = None if transport == _TRANSPORT_UNKNOWN else transport
+
+        sip_ua = SipUA.create(
+            vendor=context.vendor,
+            platform=context.platform or "unknown",
+            hostname=hostname or context.hostname or "unknown",
+            source_parser=PARSER_ID,
+            source_command=self.command,
+            source_evidence_id=context.evidence_id or "",
+            enabled=structured_data.get("sip_ua_enabled"),
+            registered=structured_data.get("registration_state") == _REGISTRATION_REGISTERED,
+            registrar=structured_data.get("registrar_host"),
+            transport=transport_value,
+            tls=transport == _TRANSPORT_TLS,
+            confidence=confidence,
+        )
+        return [sip_ua]
 
     def extract_metadata(
         self,

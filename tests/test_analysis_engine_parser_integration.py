@@ -152,6 +152,9 @@ class TestAnalysisEngineParserIntegration:
         assert sip_finding.metadata is not None
         assert sip_finding.metadata["source"] == FINDING_SOURCE_PARSER
         assert sip_finding.metadata["structured_data"]["sip_ua_enabled"] is False
+        assert "related_voice_object_ids" in sip_finding.metadata
+        assert len(sip_finding.metadata["related_voice_object_ids"]) == 1
+        assert sip_finding.metadata["related_voice_object_ids"][0].startswith("VOBJ-")
 
     def test_debug_ccsip_uses_parser_for_503(
         self,
@@ -219,6 +222,8 @@ class TestAnalysisEngineParserIntegration:
         assert sip_finding.metadata is not None
         assert sip_finding.metadata["source"] == FINDING_SOURCE_PARSER
         assert sip_finding.metadata["structured_data"]["sip_ua_enabled"] is False
+        assert "related_voice_object_ids" in sip_finding.metadata
+        assert sip_finding.metadata["related_voice_object_ids"]
 
         debug_finding = next(f for f in case.analysis_findings if f.signal == "sip_503_detected")
         assert debug_finding.metadata is not None

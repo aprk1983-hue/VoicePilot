@@ -282,6 +282,7 @@ def _build_parser_context(case: Case, evidence: Evidence, vendor: str) -> Parser
     return ParserContext(
         vendor=vendor,
         case_id=case.case_id,
+        evidence_id=evidence.evidence_id,
         device_id=evidence.source.device_id,
         platform=platform,
         hostname=None,
@@ -312,7 +313,8 @@ def _findings_from_parser_result(
 
 def _parser_finding_metadata(result: ParserResult, signal: str, command: str) -> JsonDict:
     normalized_command = _normalize_command(command)
-    return {
+    voice_object_ids = [obj.id for obj in result.voice_objects]
+    metadata: JsonDict = {
         "source": FINDING_SOURCE_PARSER,
         "parser_id": PARSER_ID_BY_COMMAND.get(normalized_command),
         "parser_version": result.parser_version,
@@ -322,6 +324,9 @@ def _parser_finding_metadata(result: ParserResult, signal: str, command: str) ->
         "parser_metadata": dict(result.metadata),
         "parser_warnings": list(result.warnings),
     }
+    if voice_object_ids:
+        metadata["related_voice_object_ids"] = voice_object_ids
+    return metadata
 
 
 def _register_analyzers() -> None:
