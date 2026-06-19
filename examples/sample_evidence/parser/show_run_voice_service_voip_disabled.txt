@@ -1,0 +1,3 @@
+cube-edge-01#show run | sec voice service voip
+voice service voip
+ no sip

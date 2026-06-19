@@ -19,6 +19,7 @@ Analyzer = Callable[[str], list[str]]
 SIP_UA_STATUS_COMMAND = "show sip-ua status"
 DIAL_PEER_SUMMARY_COMMAND = "show dial-peer voice summary"
 CCSIP_DEBUG_COMMAND = "debug ccsip messages"
+SHOW_RUN_VOICE_SERVICE_VOIP_COMMAND = "show run | sec voice service voip"
 
 SIP_CODE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("404 Not Found", "sip_404_detected"),
@@ -36,6 +37,7 @@ PARSER_ID_BY_COMMAND: dict[str, str] = {
     SIP_UA_STATUS_COMMAND: "cisco_show_sip_ua_status",
     DIAL_PEER_SUMMARY_COMMAND: "cisco_show_dial_peer_voice_summary",
     CCSIP_DEBUG_COMMAND: "cisco_debug_ccsip_messages",
+    SHOW_RUN_VOICE_SERVICE_VOIP_COMMAND: "cisco_show_run_voice_service_voip",
 }
 
 
@@ -233,8 +235,12 @@ def summarize_structured_data(metadata: JsonDict | None) -> str | None:
         return None
 
     parts: list[str] = []
-    if "sip_ua_enabled" in structured_data:
+    if structured_data.get("sip_ua_enabled") is not None:
         parts.append(f"sip_ua_enabled={structured_data['sip_ua_enabled']}")
+    if structured_data.get("sip_ua_disabled_by_config") is not None:
+        parts.append(
+            f"sip_ua_disabled_by_config={structured_data['sip_ua_disabled_by_config']}"
+        )
     if structured_data.get("registration_state"):
         parts.append(f"registration_state={structured_data['registration_state']}")
     if structured_data.get("response_codes"):

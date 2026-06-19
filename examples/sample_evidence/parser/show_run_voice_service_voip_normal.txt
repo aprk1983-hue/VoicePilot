@@ -1,0 +1,11 @@
+cube-edge-01#show run | sec voice service voip
+voice service voip
+ ip address trusted list
+  ipv4 10.1.1.0 255.255.255.0
+ sip
+  bind control source-interface GigabitEthernet0/0/0
+  bind media source-interface GigabitEthernet0/0/0
+  allow-connections sip to sip
+  no supplementary-service sip moved-temporarily
+  no supplementary-service sip refer
+  options-ping
