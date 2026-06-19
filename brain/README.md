@@ -104,6 +104,10 @@ Question   Evidence  Reasoning Confidence Playbook Topology  Knowledge   Cost
 |--------|------|
 | [Report Engine](report-engine/README.md) | Enterprise incident and RCA documentation |
 
+## VoicePilot DSL Dependency
+
+Investigation playbooks are authored in the [VoicePilot DSL](../docs/dsl/voicepilot-dsl.md) (`.vpb.yaml`). The **Playbook Engine** loads DSL playbooks, validates them, and binds them to active cases. At runtime, DSL definitions are materialized into canonical objects: **Case** (symptom defaults, playbook binding), **Question** (intake and discrimination), **Evidence** (requirements and artifacts), **Hypothesis** (seeds), **Recommendation** and **InvestigationStep** (next-best-action and collection), **Verification** (checklist steps), and **Report** (section templates). Rule blocks drive **Decision**, **ConfidenceScore**, and **InvestigationGraph** edge creation through the Reasoning, Decision, Confidence, and Evidence engines.
+
 ## Canonical Data Model Dependency
 
 All Brain engines communicate through typed canonical objects defined in the [VoicePilot Canonical Data Model](../docs/data-model/canonical-data-model.md). The **Case** object is the root aggregate. Engines do not exchange free text as system of record — they read and write structured objects including Evidence, Hypothesis, Decision, Question, Topology, TimelineEvent, Recommendation, ConfidenceScore, InvestigationGraph, and related artifacts.
@@ -181,5 +185,5 @@ Each module document contains: Purpose, Responsibilities, Inputs, Outputs, Inter
 
 ---
 
-*VoicePilot Brain Architecture — Sprint 0, Day 3*
+*VoicePilot Brain Architecture — Sprint 0, Day 4*
 *Review status: Draft for Distinguished Engineer review*
