@@ -94,6 +94,9 @@ class TestRunInvestigation:
 
         assert code == 0
         assert "Intake complete. Next phase: DISCOVERY." in output
+        assert "--- Intake Summary ---" in "\n".join(output)
+        assert any("show dial-peer voice summary" in line for line in output)
+        assert any("Recommended Strategy:" in line for line in output)
 
         case_id = next(line.split(":", 1)[1].strip() for line in output if line.startswith("Case:"))
         case = runtime_engine.case_manager.load_case(case_id)

@@ -12,6 +12,7 @@ from domain.models import InvestigationTurn
 from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
 from infrastructure.yaml_loader import YamlLoader
 from runtime.exceptions import PlaybookIdNotFoundError
+from runtime.intake_summary import write_intake_summary
 from runtime.runtime_engine import RuntimeEngine
 from shared.config import RuntimeConfig
 
@@ -93,6 +94,9 @@ def run_investigation(
 
         if turn.state == InvestigationState.DISCOVERY:
             output_writer("Intake complete. Next phase: DISCOVERY.")
+            case = runtime.case_manager.load_case(turn.case_id)
+            playbook = runtime.playbook_catalog.get(playbook_id)
+            write_intake_summary(case, output_writer, playbook=playbook)
             return 0
 
         output_writer(format_question(turn))
