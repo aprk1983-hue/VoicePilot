@@ -2,7 +2,7 @@
 
 **Category:** Cisco CUBE  
 **Topology:** Cisco CUCM → Cisco CUBE → ITSP  
-**DSL Source:** [`playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml`](../../playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml)  
+**DSL Source:** [`plugins/cisco/playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml`](../../plugins/cisco/playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml)  
 **DSL Version:** 1.0.0  
 **Status:** Active
 

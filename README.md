@@ -1,13 +1,38 @@
-# VoicePilot AI
+# VoicePilot
 
-VoicePilot is an AI Voice Operations Engineer that helps enterprise voice engineers investigate, diagnose, verify, and resolve voice issues faster.
+VoicePilot is an AI Voice Operations Engineer platform for structured voice incident investigation.
 
-## Motto
+## Platform Layout
 
-Never Assume. Always Investigate.
+```
+VoicePilot/
+├── core/           # Platform kernel (runtime, domain, application, infrastructure)
+├── sdk/            # Plugin SDK (manifests, interfaces, provider contracts)
+├── plugins/        # Official and third-party plugins
+├── tests/          # Platform test suite
+├── cli/            # CLI (future)
+├── api/            # HTTP API (future)
+├── backend/        # Compatibility shim (deprecated)
+├── brain/          # Architecture documentation
+└── docs/           # Specifications (DSL, data model, playbooks)
+```
 
-## First MVP
+## Quick Start (Tests)
 
-Cisco CUCM -> Cisco CUBE -> ITSP
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+```
 
-Scenario: Outbound PSTN calls fail.
+## Architecture
+
+| Layer | Description |
+|-------|-------------|
+| **Core** | Vendor-neutral investigation runtime |
+| **SDK** | Plugin contract for extending core |
+| **Plugins** | Cisco and future vendor packs |
+| **Brain** | Engine architecture (documentation) |
+
+See [core/README.md](core/README.md), [sdk/README.md](sdk/README.md), and [plugins/README.md](plugins/README.md).

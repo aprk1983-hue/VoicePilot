@@ -1,0 +1,16 @@
+name: cisco
+display_name: Cisco Voice Plugin
+version: 0.1.0
+vendor: VoicePilot
+plugin_type: vendor
+description: Official Cisco voice investigation playbooks for CUBE, CUCM, and SIP troubleshooting.
+capabilities:
+  - cube_playbooks
+  - cucm_playbooks_future
+  - sip_troubleshooting
+supported_platforms:
+  - Cisco CUBE
+  - Cisco CUCM
+entry_points:
+  playbooks:
+    - playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml

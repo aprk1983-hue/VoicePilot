@@ -12,7 +12,9 @@ from runtime.exceptions import PlaybookNotFoundError, PlaybookValidationError
 
 
 PLAYBOOK_PATH = (
-    Path(__file__).resolve().parents[2]
+    Path(__file__).resolve().parents[1]
+    / "plugins"
+    / "cisco"
     / "playbooks"
     / "cube"
     / "vp-cube-0001-outbound-calls-fail.vpb.yaml"

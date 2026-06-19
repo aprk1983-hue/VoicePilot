@@ -17,7 +17,7 @@ class RuntimeConfig:
         schema_version: Canonical data model schema version.
     """
 
-    playbooks_path: Path = field(default_factory=lambda: Path("playbooks"))
+    playbooks_path: Path = field(default_factory=lambda: Path("plugins"))
     cases_path: Path = field(default_factory=lambda: Path("data/cases"))
     log_level: str = "INFO"
     schema_version: str = "1.0"
