@@ -3,6 +3,7 @@
 from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
+from runtime.playbook_catalog import PlaybookCatalog
 from runtime.playbook_loader import PlaybookLoader
 from runtime.plugin_registry import PluginRegistry
 from runtime.runtime_engine import RuntimeEngine
@@ -13,6 +14,7 @@ __all__ = [
     "EngineRegistry",
     "EventBus",
     "InvestigationStateMachine",
+    "PlaybookCatalog",
     "PlaybookLoader",
     "PluginRegistry",
     "RuntimeEngine",

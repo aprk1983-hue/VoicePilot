@@ -83,3 +83,22 @@ class PluginNotFoundError(VoicePilotRuntimeError):
     def __init__(self, plugin_name: str) -> None:
         super().__init__(f"Plugin not found: {plugin_name}")
         self.plugin_name = plugin_name
+
+
+class PlaybookIdNotFoundError(VoicePilotRuntimeError):
+    """Raised when a playbook ID is not present in the catalog."""
+
+    def __init__(self, playbook_id: str) -> None:
+        super().__init__(f"Playbook ID not found in catalog: {playbook_id}")
+        self.playbook_id = playbook_id
+
+
+class PlaybookCatalogLoadError(VoicePilotRuntimeError):
+    """Raised when a plugin playbook fails to load into the catalog."""
+
+    def __init__(self, plugin_name: str, path: str, message: str) -> None:
+        super().__init__(
+            f"Failed to load playbook for plugin '{plugin_name}' from {path}: {message}"
+        )
+        self.plugin_name = plugin_name
+        self.path = path

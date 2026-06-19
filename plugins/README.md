@@ -7,8 +7,8 @@ Plugins extend VoicePilot Core with vendor-specific investigation assets and opt
 ```
 ┌─────────────────────────────────────────┐
 │           VoicePilot Core               │
-│  runtime · domain · application         │
-│       PluginRegistry                    │
+│  PluginRegistry  →  PlaybookCatalog     │
+│       PlaybookLoader                    │
 └───────────────────┬─────────────────────┘
                     │ SDK contracts
         ┌───────────┼───────────┐
@@ -31,22 +31,28 @@ plugins/
 
 ## How Plugins Load
 
-1. `PluginRegistry` scans `plugins/` (configurable root path)
-2. Reads each `manifest.yaml` into `PluginManifest` (SDK)
-3. Validates required fields (`name`, `display_name`, `version`, `vendor`, `plugin_type`)
-4. Exposes playbook entry paths via `list_playbook_paths()`
-5. `PlaybookLoader` loads `.vpb.yaml` files by path (today) or via future `PlaybookProvider`
+1. **`PluginRegistry`** scans `plugins/` and reads each `manifest.yaml`
+2. **`PlaybookCatalog`** calls `list_playbook_paths()` on registered plugins
+3. **`PlaybookLoader`** loads each `.vpb.yaml` into domain `Playbook` objects
+4. Runtime looks up playbooks by ID (e.g. `VP-CUBE-0001`) or by plugin name (`cisco`)
 
 ```python
 from pathlib import Path
+from infrastructure.filesystem import FilesystemPlaybookRepository
+from infrastructure.yaml_loader import YamlLoader
+from runtime.playbook_catalog import PlaybookCatalog
+from runtime.playbook_loader import PlaybookLoader
 from runtime.plugin_registry import PluginRegistry
 
 registry = PluginRegistry(Path("plugins"))
-registry.discover()
-paths = registry.list_playbook_paths_for("cisco")
+loader = PlaybookLoader(FilesystemPlaybookRepository(YamlLoader()))
+catalog = PlaybookCatalog(registry, loader)
+
+catalog.load_all()
+playbook = catalog.get("VP-CUBE-0001")
 ```
 
-Directories without `manifest.yaml` are skipped during discovery.
+No hardcoded playbook paths are required in core — paths come from plugin manifests.
 
 ## Official Plugins
 
@@ -59,11 +65,9 @@ Directories without `manifest.yaml` are skipped during discovery.
 Third-party plugins use the same SDK contracts. They should:
 
 - Never modify `core/` source
-- Declare capabilities explicitly in `manifest.yaml`
+- Declare playbook `entry_points` in `manifest.yaml`
 - Keep playbooks as `.vpb.yaml` per [DSL spec](../docs/dsl/voicepilot-dsl.md)
 - Respect evidence-first investigation rules
-
-Install to an additional plugins path configured on `PluginRegistry` (future: multiple roots).
 
 ## Marketplace Concept (Future)
 
@@ -71,11 +75,11 @@ Install to an additional plugins path configured on `PluginRegistry` (future: mu
 - Customer-private plugin registries for air-gapped deployments
 - Capability-based discovery: `registry.find_by_capability("cube_playbooks")`
 - Signed manifests and trust levels before registration
-- Revenue share model for partner-authored plugins
 
 ## Related
 
-- [Plugin Registry spec](../docs/sprint-1/plugin-registry.md)
+- [Playbook Catalog](../docs/sprint-1/playbook-catalog.md)
+- [Plugin Registry](../docs/sprint-1/plugin-registry.md)
 - [SDK](../sdk/README.md)
 - [Cisco plugin](cisco/README.md)
 - [DSL specification](../docs/dsl/voicepilot-dsl.md)

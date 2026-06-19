@@ -10,26 +10,45 @@ The runtime package is the VoicePilot execution kernel. It orchestrates case lif
 | `case_manager.py` | Case aggregate CRUD and state transitions |
 | `playbook_loader.py` | Load and structurally validate `.vpb.yaml` playbooks |
 | `plugin_registry.py` | Discover plugins and expose manifest playbook entry points |
+| `playbook_catalog.py` | Load plugin playbooks into a searchable catalog |
 | `state_machine.py` | Investigation lifecycle transition validation |
 | `event_bus.py` | In-process domain event pub/sub |
 | `engine_registry.py` | Brain engine registration (no implementations) |
 | `exceptions.py` | Runtime-specific exceptions |
 
-## Plugin Registry
+## Plugin → Playbook Flow
 
-`PluginRegistry` scans `plugins/<name>/manifest.yaml`, validates required fields, and registers `PluginManifest` objects from the SDK.
+```
+PluginRegistry.discover()
+        │
+        ▼
+list_playbook_paths() / list_playbook_paths_for(name)
+        │
+        ▼
+PlaybookCatalog.load_all()
+        │
+        ▼
+PlaybookLoader.load(path)  →  Playbook objects indexed by ID
+```
 
 ```python
 from pathlib import Path
+from infrastructure.filesystem import FilesystemPlaybookRepository
+from infrastructure.yaml_loader import YamlLoader
+from runtime.playbook_catalog import PlaybookCatalog
+from runtime.playbook_loader import PlaybookLoader
 from runtime.plugin_registry import PluginRegistry
 
 registry = PluginRegistry(plugins_root=Path("plugins"))
-registry.discover()
-cisco = registry.get("cisco")
-playbook_paths = registry.list_playbook_paths()
+loader = PlaybookLoader(FilesystemPlaybookRepository(YamlLoader()))
+catalog = PlaybookCatalog(registry, loader)
+
+catalog.load_all()
+playbook = catalog.get("VP-CUBE-0001")
+cisco_playbooks = catalog.list_for_plugin("cisco")
 ```
 
-See [Plugin Registry spec](../../docs/sprint-1/plugin-registry.md).
+See [Plugin Registry](../../docs/sprint-1/plugin-registry.md) and [Playbook Catalog](../../docs/sprint-1/playbook-catalog.md).
 
 ## Design Notes
 
@@ -39,6 +58,6 @@ See [Plugin Registry spec](../../docs/sprint-1/plugin-registry.md).
 
 ## TODO
 
-- Wire `RuntimeEngine.start()` to `PluginRegistry.discover()`
+- Wire `RuntimeEngine.start()` to `PlaybookCatalog.load_all()`
 - Replace placeholder engine registrations with real engine classes
 - Implement investigation execution pipeline
