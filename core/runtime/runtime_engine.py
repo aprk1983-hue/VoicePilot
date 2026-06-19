@@ -18,6 +18,7 @@ from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
 from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
+from runtime.recommendation_engine import RecommendationEngine, RecommendationSummary, build_recommendation_summary
 from runtime.intake_flow import (
     attach_flow_state,
     build_case_intake,
@@ -33,6 +34,7 @@ from runtime.playbook_loader import PlaybookLoader
 from runtime.plugin_registry import PluginRegistry
 from runtime.state_machine import InvestigationStateMachine
 from shared.config import RuntimeConfig
+from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
 from shared.types import CaseId
 
 
@@ -246,6 +248,36 @@ class RuntimeEngine:
             )
 
         return build_hypothesis_summary(case, hypotheses)
+
+    def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
+        """Generate a recommendation from the top hypothesis."""
+        case = self._case_manager.load_case(case_id)
+        if case.status != InvestigationState.INVESTIGATION:
+            raise InvalidInvestigationStateError(
+                case_id,
+                InvestigationState.INVESTIGATION.value,
+                case.status.value,
+            )
+
+        engine = RecommendationEngine()
+        recommendation = engine.generate(case)
+        case.recommendations.append(recommendation)
+        self._case_manager.save_case(case)
+
+        confidence = recommendation.confidence or 0.0
+        if confidence >= DEFAULT_CONFIDENCE_THRESHOLD:
+            self._case_manager.transition_state(case_id, InvestigationState.RESOLUTION)
+            case = self._case_manager.load_case(case_id)
+
+        if self._logger:
+            self._logger.info(
+                "Recommendation generated",
+                case_id=case_id,
+                action_type=recommendation.action_type,
+                confidence=confidence,
+            )
+
+        return build_recommendation_summary(case, recommendation)
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

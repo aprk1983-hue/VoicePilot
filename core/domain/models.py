@@ -286,7 +286,7 @@ class Question:
 
 @dataclass
 class Recommendation:
-    """Proposed next investigative action."""
+    """Proposed next investigative action or likely root cause recommendation."""
 
     recommendation_id: str
     case_id: str
@@ -297,11 +297,58 @@ class Recommendation:
     information_gain: float
     priority_rank: int
     status: RecommendationStatus = RecommendationStatus.RECOMMENDED
+    confidence: float | None = None
+    likely_root_cause: str | None = None
+    evidence_summary: list[str] = field(default_factory=list)
+    recommended_actions: list[str] = field(default_factory=list)
     requires_engineer_approval: bool = False
     verification_steps: list[str] = field(default_factory=list)
     rollback_steps: list[str] = field(default_factory=list)
+    hypothesis_id: str | None = None
     target_device_id: str | None = None
     command: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        action_type: str,
+        description: str,
+        rationale: str,
+        *,
+        confidence: float | None = None,
+        likely_root_cause: str | None = None,
+        evidence_summary: list[str] | None = None,
+        recommended_actions: list[str] | None = None,
+        verification_steps: list[str] | None = None,
+        rollback_steps: list[str] | None = None,
+        hypothesis_id: str | None = None,
+        command: str | None = None,
+        priority_rank: int = 1,
+        cost_level: str = "low",
+        information_gain: float = 0.0,
+        requires_engineer_approval: bool = False,
+    ) -> Recommendation:
+        """Factory for an investigation recommendation."""
+        return cls(
+            recommendation_id=_new_id(ID_PREFIX_RECOMMENDATION),
+            case_id=case_id,
+            action_type=action_type,
+            description=description,
+            rationale=rationale,
+            cost_level=cost_level,
+            information_gain=information_gain,
+            priority_rank=priority_rank,
+            confidence=confidence,
+            likely_root_cause=likely_root_cause,
+            evidence_summary=list(evidence_summary or []),
+            recommended_actions=list(recommended_actions or []),
+            verification_steps=list(verification_steps or []),
+            rollback_steps=list(rollback_steps or []),
+            hypothesis_id=hypothesis_id,
+            command=command,
+            requires_engineer_approval=requires_engineer_approval,
+        )
 
 
 @dataclass

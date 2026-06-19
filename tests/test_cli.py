@@ -140,6 +140,9 @@ class TestRunInvestigation:
         assert len(case.evidence) == 3
         assert any(finding.signal == "sip_404_detected" for finding in case.analysis_findings)
         assert any(h.title == "Routing / dial-peer issue" for h in case.hypotheses)
+        assert any(line.startswith("Recommended Next Action:") for line in output)
+        assert any("show run | sec dial-peer" in line for line in output)
+        assert len(case.recommendations) == 1
 
     def test_unknown_playbook_returns_non_zero(self, runtime_engine: RuntimeEngine) -> None:
         output: list[str] = []

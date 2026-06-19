@@ -21,6 +21,7 @@ from runtime.evidence_collection import (
 from runtime.exceptions import PlaybookIdNotFoundError
 from runtime.intake_summary import write_intake_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
+from runtime.recommendation_engine import format_recommendation_summary
 from runtime.runtime_engine import RuntimeEngine
 from shared.config import RuntimeConfig
 
@@ -124,6 +125,18 @@ def run_hypothesis_generation(
     """Generate ranked hypotheses and print the summary."""
     summary = runtime.generate_hypotheses(case_id)
     for line in format_hypothesis_summary(summary).splitlines():
+        output_writer(line)
+    return run_recommendation_generation(case_id, runtime, output_writer)
+
+
+def run_recommendation_generation(
+    case_id: str,
+    runtime: RuntimeEngine,
+    output_writer: OutputWriter,
+) -> int:
+    """Generate recommendation from top hypothesis and print the summary."""
+    summary = runtime.generate_recommendation(case_id)
+    for line in format_recommendation_summary(summary).splitlines():
         output_writer(line)
     return 0
 
