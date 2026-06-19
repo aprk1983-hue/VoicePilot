@@ -145,7 +145,7 @@ class TestAnalysisEngineParserIntegration:
         assert sip_finding.metadata["source"] == FINDING_SOURCE_PARSER
         assert sip_finding.metadata["structured_data"]["sip_ua_enabled"] is False
 
-    def test_fallback_detects_sip_503_from_debug_ccsip(
+    def test_debug_ccsip_uses_parser_for_503(
         self,
         parser_engine,
     ) -> None:
@@ -153,8 +153,9 @@ class TestAnalysisEngineParserIntegration:
         from domain.models import Case, Evidence
         from domain.value_objects import AffectedScope, EvidenceQuality, EvidenceSource, PlatformRef, SymptomSummary
 
+        raw = (SAMPLE_DIR / "debug_ccsip_503.txt").read_text(encoding="utf-8")
         case = Case.create(
-            title="Parser fallback",
+            title="Parser integration",
             symptom=SymptomSummary(summary="outbound calls fail"),
             severity=Severity.HIGH,
             business_impact="test",
@@ -181,7 +182,7 @@ class TestAnalysisEngineParserIntegration:
                 parseability=1.0,
                 overall=1.0,
             ),
-            raw_text="SIP/2.0 503 Service Unavailable",
+            raw_text=raw,
         )
         case.evidence.append(evidence)
 
@@ -189,7 +190,8 @@ class TestAnalysisEngineParserIntegration:
         debug_finding = next(f for f in findings if f.signal == "sip_503_detected")
 
         assert debug_finding.metadata is not None
-        assert debug_finding.metadata["source"] == FINDING_SOURCE_V1
+        assert debug_finding.metadata["source"] == FINDING_SOURCE_PARSER
+        assert 503 in debug_finding.metadata["structured_data"]["response_codes"]
 
     def test_analyze_case_stores_parser_generated_findings(
         self,
@@ -212,7 +214,7 @@ class TestAnalysisEngineParserIntegration:
 
         debug_finding = next(f for f in case.analysis_findings if f.signal == "sip_503_detected")
         assert debug_finding.metadata is not None
-        assert debug_finding.metadata["source"] == FINDING_SOURCE_V1
+        assert debug_finding.metadata["source"] == FINDING_SOURCE_PARSER
 
     def test_v1_fallback_when_parser_engine_not_configured(self) -> None:
         from domain.enums import Severity

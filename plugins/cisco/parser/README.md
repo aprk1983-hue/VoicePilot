@@ -7,6 +7,7 @@ Cisco IOS / IOS-XE / CUBE CLI parsers for VoicePilot.
 | Command | Parser | Status |
 |---------|--------|--------|
 | `show sip-ua status` | `CiscoShowSipUaStatusParser` | Implemented |
+| `debug ccsip messages` | `CiscoDebugCcsipMessagesParser` | Implemented |
 
 See [docs/parsers/cisco-show-sip-ua-status.md](../../../docs/parsers/cisco-show-sip-ua-status.md).
 
@@ -18,7 +19,7 @@ Initial Cisco CUBE / voice troubleshooting targets:
 |---------|------------------|
 | `show version` | `ShowVersionParser` |
 | `show sip-ua status` | `CiscoShowSipUaStatusParser` | Done |
-| `show dial-peer voice summary` | `ShowDialPeerVoiceSummaryParser` |
+| `debug ccsip messages` | `CiscoDebugCcsipMessagesParser` | Done |
 | `show running-config` | `ShowRunningConfigParser` |
 | `debug ccsip messages` | `DebugCcsipMessagesParser` |
 | `show call active voice brief` | `ShowCallActiveVoiceBriefParser` |

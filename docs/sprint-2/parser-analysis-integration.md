@@ -67,10 +67,14 @@ If the Cisco plugin pack is not importable, analysis gracefully falls back to v1
 - `structured_data.sip_ua_enabled == False`
 - Finding: `sip_ua_disabled` with parser metadata
 
-**Fallback example:** `debug ccsip messages` with `503 Service Unavailable`
+**Fallback example:** commands without a registered parser (e.g. `show dial-peer voice summary`)
 
-- No Cisco parser registered yet
-- v1 `analyze_ccsip_debug()` emits `sip_503_detected`
+- No Cisco parser registered yet for that command
+- v1 pattern matcher emits signals such as `dial_peer_config_present`
+
+**Parser example:** `debug ccsip messages` with `503 Service Unavailable`
+
+- `CiscoDebugCcsipMessagesParser` emits `sip_503_detected` with parser metadata
 
 ## Design Constraints
 
