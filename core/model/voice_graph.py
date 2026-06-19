@@ -1,0 +1,112 @@
+"""Base voice object and relationship types for CVOM."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+from uuid import uuid4
+
+from shared.constants import ID_PREFIX_VOICE_OBJECT
+from shared.types import JsonDict
+
+# Canonical object type identifiers (vendor-neutral).
+OBJECT_TYPE_DEVICE = "device"
+OBJECT_TYPE_INTERFACE = "interface"
+OBJECT_TYPE_VOICE_SERVICE = "voice_service"
+OBJECT_TYPE_SIP_UA = "sip_ua"
+OBJECT_TYPE_DIAL_PEER = "dial_peer"
+OBJECT_TYPE_CODEC_CLASS = "codec_class"
+OBJECT_TYPE_SERVER_GROUP = "server_group"
+OBJECT_TYPE_TRANSLATION_RULE = "translation_rule"
+OBJECT_TYPE_TRANSLATION_PROFILE = "translation_profile"
+OBJECT_TYPE_PROVIDER = "provider"
+
+
+def new_voice_object_id() -> str:
+    """Generate a unique voice object identifier."""
+    return f"{ID_PREFIX_VOICE_OBJECT}{uuid4().hex[:12]}"
+
+
+@dataclass(frozen=True)
+class VoiceObject:
+    """Base immutable canonical voice object produced by parsers."""
+
+    id: str
+    object_type: str
+    vendor: str
+    platform: str
+    hostname: str
+    name: str
+    description: str
+    source_parser: str
+    source_command: str
+    source_evidence_id: str
+    confidence: float
+    metadata: JsonDict = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.confidence <= 100.0:
+            raise ValueError(f"confidence must be 0–100, got {self.confidence}")
+
+
+@dataclass(frozen=True)
+class VoiceRelationship:
+    """Typed link between two canonical voice objects."""
+
+    relationship_id: str
+    relationship_type: str
+    source_object_id: str
+    target_object_id: str
+    description: str = ""
+    metadata: JsonDict = field(default_factory=dict)
+
+    @classmethod
+    def create(
+        cls,
+        relationship_type: str,
+        source_object_id: str,
+        target_object_id: str,
+        *,
+        description: str = "",
+        metadata: JsonDict | None = None,
+    ) -> VoiceRelationship:
+        return cls(
+            relationship_id=f"VREL-{uuid4().hex[:12]}",
+            relationship_type=relationship_type,
+            source_object_id=source_object_id,
+            target_object_id=target_object_id,
+            description=description,
+            metadata=dict(metadata or {}),
+        )
+
+
+def base_object_fields(
+    *,
+    object_type: str,
+    vendor: str,
+    platform: str,
+    hostname: str,
+    name: str,
+    description: str,
+    source_parser: str,
+    source_command: str,
+    source_evidence_id: str,
+    confidence: float = 100.0,
+    metadata: JsonDict | None = None,
+    object_id: str | None = None,
+) -> dict[str, Any]:
+    """Build common VoiceObject field values for typed subclasses."""
+    return {
+        "id": object_id or new_voice_object_id(),
+        "object_type": object_type,
+        "vendor": vendor,
+        "platform": platform,
+        "hostname": hostname,
+        "name": name,
+        "description": description,
+        "source_parser": source_parser,
+        "source_command": source_command,
+        "source_evidence_id": source_evidence_id,
+        "confidence": confidence,
+        "metadata": dict(metadata or {}),
+    }
