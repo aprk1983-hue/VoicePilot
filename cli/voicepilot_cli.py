@@ -36,15 +36,11 @@ def build_runtime_engine(plugins_root: Path | None = None) -> RuntimeEngine:
     )
 
 
-def format_case_header(turn: InvestigationTurn) -> str:
-    """Format case metadata for terminal output."""
-    return "\n".join(
-        [
-            f"Case:     {turn.case_id}",
-            f"State:    {turn.state.value}",
-            f"Playbook: {turn.context.get('playbook_id')}",
-        ]
-    )
+def write_case_header(turn: InvestigationTurn, output_writer: OutputWriter) -> None:
+    """Write case metadata lines to the output writer."""
+    output_writer(f"Case:     {turn.case_id}")
+    output_writer(f"State:    {turn.state.value}")
+    output_writer(f"Playbook: {turn.context.get('playbook_id')}")
 
 
 def format_question(turn: InvestigationTurn) -> str:
@@ -84,7 +80,7 @@ def run_investigation(
         return 1
 
     output_writer("Investigation started")
-    output_writer(format_case_header(turn))
+    write_case_header(turn, output_writer)
     output_writer(format_question(turn))
 
     while (

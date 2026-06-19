@@ -8,7 +8,10 @@ import pytest
 
 from cli.voicepilot_cli import run_investigation
 from domain.enums import InvestigationState
+from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
+from infrastructure.yaml_loader import YamlLoader
 from runtime.runtime_engine import RuntimeEngine
+from shared.config import RuntimeConfig
 
 PLUGINS_ROOT = Path(__file__).resolve().parents[1] / "plugins"
 PLAYBOOK_ID = "VP-CUBE-0001"
@@ -23,13 +26,8 @@ INTAKE_ANSWERS = [
 
 @pytest.fixture
 def runtime_engine() -> RuntimeEngine:
-    from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
-    from infrastructure.yaml_loader import YamlLoader
-
     engine = RuntimeEngine(
-        config=__import__("shared.config", fromlist=["RuntimeConfig"]).RuntimeConfig(
-            playbooks_path=PLUGINS_ROOT
-        ),
+        config=RuntimeConfig(playbooks_path=PLUGINS_ROOT),
         case_repository=InMemoryCaseRepository(),
         playbook_repository=FilesystemPlaybookRepository(YamlLoader()),
     )
