@@ -18,11 +18,14 @@ dev = [
     "pytest-cov>=4.0",
 ]
 
+[project.scripts]
+voicepilot = "cli.voicepilot_cli:main"
+
 [tool.pytest.ini_options]
 pythonpath = ["core", "sdk"]
 testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.setuptools.packages.find]
-where = ["core", "."]
-include = ["domain*", "runtime*", "application*", "infrastructure*", "shared*", "sdk*"]
+where = ["core", "cli", "."]
+include = ["domain*", "runtime*", "application*", "infrastructure*", "shared*", "sdk*", "cli*"]

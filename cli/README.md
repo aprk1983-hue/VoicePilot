@@ -1,29 +1,62 @@
 # VoicePilot CLI
 
-Command-line interface for VoicePilot (future).
+Terminal interface for VoicePilot investigations.
 
-## Planned Commands
+## v1 Commands
 
 | Command | Purpose |
 |---------|---------|
-| `voicepilot case open` | Open a new investigation case |
-| `voicepilot case show` | Display case state and next action |
-| `voicepilot playbook list` | List playbooks from installed plugins |
-| `voicepilot plugin list` | List installed plugins and capabilities |
-| `voicepilot investigate` | Run investigation loop against a case |
+| `voicepilot investigate <playbook_id>` | Run deterministic intake question loop |
 
-## Status
+## Usage
 
-**Not implemented.** This directory reserves the CLI package layout for a future sprint.
+```bash
+pip install -e .
+voicepilot investigate VP-CUBE-0001
+```
 
-CLI will consume:
+Example session:
 
-- `core/` — runtime kernel
-- `sdk/` — plugin discovery
-- `plugins/` — official and installed plugins
+```
+Investigation started
+Case:     CASE-abc123
+State:    INTAKE
+Playbook: VP-CUBE-0001
+[Q-INT-001] Did outbound PSTN calling ever work in this environment?
+> yes
+[Q-INT-002] When did outbound calling stop working?
+> 2026-06-10
+...
+Intake complete. Next phase: DISCOVERY.
+```
 
-## Design Notes
+## Architecture
 
-- CLI is a thin adapter over application use cases
-- No business logic in CLI layer
-- Engineer remains in control of destructive actions
+The CLI is a thin adapter over `RuntimeEngine` v1:
+
+```
+voicepilot investigate
+        │
+        ▼
+run_investigation(playbook_id, input_provider, output_writer)
+        │
+        ▼
+RuntimeEngine.start_investigation() / submit_answer()
+        │
+        ▼
+PluginRegistry → PlaybookCatalog → intake questions
+```
+
+- No business logic in the CLI layer
+- `run_investigation()` is testable without a real terminal
+- Uses Python standard library `argparse` only
+
+## Planned Commands
+
+| Command | Status |
+|---------|--------|
+| `voicepilot case show` | Future |
+| `voicepilot playbook list` | Future |
+| `voicepilot plugin list` | Future |
+
+See [CLI v1](../docs/sprint-1/cli-v1.md).
