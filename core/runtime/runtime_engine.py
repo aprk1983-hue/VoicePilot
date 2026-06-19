@@ -16,7 +16,8 @@ from runtime.analysis_engine import (
 from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
-from runtime.exceptions import CaseNotFoundError, PlaybookIdNotFoundError, QuestionNotFoundError
+from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
+from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
 from runtime.intake_flow import (
     attach_flow_state,
     build_case_intake,
@@ -218,6 +219,33 @@ class RuntimeEngine:
             )
 
         return build_analysis_summary(case, findings)
+
+    def generate_hypotheses(self, case_id: CaseId) -> HypothesisSummary:
+        """Generate ranked hypotheses and move the case to INVESTIGATION."""
+        case = self._case_manager.load_case(case_id)
+        if case.status != InvestigationState.HYPOTHESIS:
+            raise InvalidInvestigationStateError(
+                case_id,
+                InvestigationState.HYPOTHESIS.value,
+                case.status.value,
+            )
+
+        engine = HypothesisEngine()
+        hypotheses = engine.generate(case)
+        case.hypotheses = hypotheses
+        self._case_manager.save_case(case)
+        self._case_manager.transition_state(case_id, InvestigationState.INVESTIGATION)
+        case = self._case_manager.load_case(case_id)
+
+        if self._logger:
+            self._logger.info(
+                "Hypotheses generated",
+                case_id=case_id,
+                count=len(hypotheses),
+                titles=[hypothesis.title for hypothesis in hypotheses],
+            )
+
+        return build_hypothesis_summary(case, hypotheses)
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

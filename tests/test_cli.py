@@ -131,12 +131,15 @@ class TestRunInvestigation:
         assert "Analysis complete. Next phase: HYPOTHESIS." in output
         assert any(line == "Findings:" for line in output)
         assert any("sip_404_detected" in line for line in output)
+        assert "Hypothesis generation complete. Next phase: INVESTIGATION." in output
+        assert any("Routing / dial-peer issue" in line for line in output)
 
         case_id = next(line.split(":", 1)[1].strip() for line in output if line.startswith("Case:"))
         case = runtime_engine.case_manager.load_case(case_id)
-        assert case.status == InvestigationState.HYPOTHESIS
+        assert case.status == InvestigationState.INVESTIGATION
         assert len(case.evidence) == 3
         assert any(finding.signal == "sip_404_detected" for finding in case.analysis_findings)
+        assert any(h.title == "Routing / dial-peer issue" for h in case.hypotheses)
 
     def test_unknown_playbook_returns_non_zero(self, runtime_engine: RuntimeEngine) -> None:
         output: list[str] = []

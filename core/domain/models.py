@@ -201,13 +201,48 @@ class Hypothesis:
     case_id: str
     title: str
     status: HypothesisStatus = HypothesisStatus.CANDIDATE
+    confidence: float = 0.0
     description: str | None = None
     category: str | None = None
+    explanation: str | None = None
+    next_best_action: str | None = None
     affected_device_ids: list[str] = field(default_factory=list)
     supporting_evidence_ids: list[str] = field(default_factory=list)
     contradicting_evidence_ids: list[str] = field(default_factory=list)
+    supporting_finding_ids: list[str] = field(default_factory=list)
+    contradicting_finding_ids: list[str] = field(default_factory=list)
     rank: int | None = None
     created_at: datetime = field(default_factory=_utc_now)
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        title: str,
+        confidence: float,
+        supporting_finding_ids: list[str],
+        *,
+        explanation: str | None = None,
+        next_best_action: str | None = None,
+        contradicting_finding_ids: list[str] | None = None,
+        rank: int | None = None,
+        status: HypothesisStatus = HypothesisStatus.CANDIDATE,
+        category: str | None = None,
+    ) -> Hypothesis:
+        """Factory for a ranked investigation hypothesis."""
+        return cls(
+            hypothesis_id=_new_id(ID_PREFIX_HYPOTHESIS),
+            case_id=case_id,
+            title=title,
+            confidence=confidence,
+            supporting_finding_ids=list(supporting_finding_ids),
+            contradicting_finding_ids=list(contradicting_finding_ids or []),
+            explanation=explanation,
+            next_best_action=next_best_action,
+            rank=rank,
+            status=status,
+            category=category,
+        )
 
 
 @dataclass

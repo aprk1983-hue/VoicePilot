@@ -102,6 +102,18 @@ class QuestionNotFoundError(VoicePilotRuntimeError):
         self.question_id = question_id
 
 
+class InvalidInvestigationStateError(VoicePilotRuntimeError):
+    """Raised when an operation requires a specific investigation state."""
+
+    def __init__(self, case_id: str, expected: str, actual: str) -> None:
+        super().__init__(
+            f"Case {case_id} must be in state {expected}, but is {actual}"
+        )
+        self.case_id = case_id
+        self.expected = expected
+        self.actual = actual
+
+
 class PlaybookCatalogLoadError(VoicePilotRuntimeError):
     """Raised when a plugin playbook fails to load into the catalog."""
 
