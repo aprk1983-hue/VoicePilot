@@ -128,6 +128,8 @@ class TestReportEngine:
         assert "CUBE SIP user agent disabled" in markdown
         assert "90%" in markdown
         assert "sip_ua_disabled" in markdown
+        assert "parser:cisco_show_sip_ua_status" in markdown
+        assert "sip_ua_enabled=False" in markdown
         assert "Verification" in markdown
         assert "Learning Record" in markdown
 

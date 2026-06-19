@@ -130,7 +130,7 @@ class TestRunInvestigation:
         assert "Evidence collection complete. Next phase: ANALYSIS." in output
         assert "Analysis complete. Next phase: HYPOTHESIS." in output
         assert any(line == "Findings:" for line in output)
-        assert any("sip_404_detected" in line for line in output)
+        assert any("sip_404_detected (parser:cisco_debug_ccsip_messages)" in line for line in output)
         assert "Hypothesis generation complete. Next phase: INVESTIGATION." in output
         assert any("Routing / dial-peer issue" in line for line in output)
 

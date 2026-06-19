@@ -7,6 +7,10 @@ from datetime import datetime
 
 from domain.enums import InvestigationState
 from domain.models import Case, Hypothesis, Recommendation
+from runtime.analysis_engine import (
+    format_finding_source_label,
+    summarize_structured_data,
+)
 from runtime.recommendation_engine import ACTION_LIKELY_ROOT_CAUSE
 from runtime.verification_engine import RESULT_PASSED
 
@@ -22,6 +26,8 @@ class ReportFinding:
     signal: str
     command: str
     detail: str | None
+    source: str | None = None
+    structured_summary: str | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +117,8 @@ def build_incident_report(case: Case) -> IncidentReport:
                 signal=finding.signal,
                 command=finding.command,
                 detail=finding.detail,
+                source=format_finding_source_label(finding.metadata),
+                structured_summary=summarize_structured_data(finding.metadata),
             )
             for finding in case.analysis_findings
         ),
@@ -166,7 +174,15 @@ def format_incident_report(report: IncidentReport) -> str:
     if report.findings:
         for finding in report.findings:
             detail = f" — {finding.detail}" if finding.detail else ""
-            lines.append(f"- `{finding.command}`: **{finding.signal}**{detail}")
+            source = f" ({finding.source})" if finding.source else ""
+            structured = (
+                f" — structured: {finding.structured_summary}"
+                if finding.structured_summary
+                else ""
+            )
+            lines.append(
+                f"- `{finding.command}`: **{finding.signal}**{source}{detail}{structured}"
+            )
     else:
         lines.append("_No analysis findings recorded._")
 

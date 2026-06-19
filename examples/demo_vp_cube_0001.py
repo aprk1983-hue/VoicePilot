@@ -10,7 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = Path(__file__).resolve().parent
-SAMPLE_EVIDENCE_DIR = EXAMPLES_ROOT / "sample_evidence" / "vp_cube_0001"
+PARSER_SAMPLE_DIR = EXAMPLES_ROOT / "sample_evidence" / "parser"
 REPORT_PATH = EXAMPLES_ROOT / "output" / "vp_cube_0001_report.md"
 
 PLAYBOOK_ID = "VP-CUBE-0001"
@@ -23,10 +23,10 @@ INTAKE_ANSWERS = [
     "yes",
 ]
 
-EVIDENCE_FILES = (
-    "show_dial_peer_voice_summary.txt",
-    "show_sip_ua_status.txt",
-    "debug_ccsip_messages.txt",
+PARSER_EVIDENCE_FILES = (
+    "show_dial_peer_voice_summary_normal.txt",
+    "show_sip_ua_status_disabled.txt",
+    "debug_ccsip_503.txt",
 )
 
 VERIFICATION_RESULTS = [
@@ -49,12 +49,12 @@ class DemoResult:
 
 def build_demo_inputs(
     *,
-    sample_evidence_dir: Path = SAMPLE_EVIDENCE_DIR,
+    sample_evidence_dir: Path = PARSER_SAMPLE_DIR,
 ) -> list[str]:
     """Build scripted CLI inputs for the full investigation lifecycle."""
     inputs = list(INTAKE_ANSWERS)
 
-    for filename in EVIDENCE_FILES:
+    for filename in PARSER_EVIDENCE_FILES:
         evidence_path = sample_evidence_dir / filename
         content = evidence_path.read_text(encoding="utf-8").strip()
         if content:
@@ -70,7 +70,7 @@ def build_demo_inputs(
 
 def iter_demo_inputs(
     *,
-    sample_evidence_dir: Path = SAMPLE_EVIDENCE_DIR,
+    sample_evidence_dir: Path = PARSER_SAMPLE_DIR,
 ) -> Iterator[str]:
     """Iterate scripted demo inputs."""
     return iter(build_demo_inputs(sample_evidence_dir=sample_evidence_dir))
@@ -80,9 +80,11 @@ def run_demo(
     *,
     output_writer: Callable[[str], None] | None = None,
     plugins_root: Path | None = None,
-    sample_evidence_dir: Path = SAMPLE_EVIDENCE_DIR,
+    sample_evidence_dir: Path = PARSER_SAMPLE_DIR,
 ) -> DemoResult:
     """Run the full VP-CUBE-0001 investigation demo without manual typing."""
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
     if str(REPO_ROOT / "core") not in sys.path:
         sys.path[:0] = [str(REPO_ROOT / "core"), str(REPO_ROOT / "sdk")]
 

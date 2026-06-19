@@ -32,6 +32,20 @@ COMMAND_ANALYZERS: dict[str, Analyzer] = {}
 FINDING_SOURCE_PARSER = "parser"
 FINDING_SOURCE_V1 = "v1_pattern_match"
 
+PARSER_ID_BY_COMMAND: dict[str, str] = {
+    SIP_UA_STATUS_COMMAND: "cisco_show_sip_ua_status",
+    DIAL_PEER_SUMMARY_COMMAND: "cisco_show_dial_peer_voice_summary",
+    CCSIP_DEBUG_COMMAND: "cisco_debug_ccsip_messages",
+}
+
+
+@dataclass(frozen=True)
+class AnalysisSummaryFinding:
+    """Serializable analysis finding for CLI and runtime consumers."""
+
+    signal: str
+    source_label: str
+
 
 @dataclass(frozen=True)
 class AnalysisSummary:
@@ -39,7 +53,7 @@ class AnalysisSummary:
 
     case_id: str
     state: InvestigationState
-    findings: tuple[str, ...]
+    findings: tuple[AnalysisSummaryFinding, ...]
 
 
 class AnalysisEngine:
@@ -187,8 +201,52 @@ def build_analysis_summary(case: Case, findings: list[AnalysisFinding]) -> Analy
     return AnalysisSummary(
         case_id=case.case_id,
         state=case.status,
-        findings=tuple(finding.signal for finding in findings),
+        findings=tuple(
+            AnalysisSummaryFinding(
+                signal=finding.signal,
+                source_label=format_finding_source_label(finding.metadata),
+            )
+            for finding in findings
+        ),
     )
+
+
+def format_finding_source_label(metadata: JsonDict | None) -> str:
+    """Format a human-readable finding source label."""
+    if not metadata:
+        return FINDING_SOURCE_V1
+    if metadata.get("source") == FINDING_SOURCE_PARSER:
+        parser_id = metadata.get("parser_id")
+        if isinstance(parser_id, str) and parser_id:
+            return f"parser:{parser_id}"
+        return FINDING_SOURCE_PARSER
+    return FINDING_SOURCE_V1
+
+
+def summarize_structured_data(metadata: JsonDict | None) -> str | None:
+    """Build a short readable summary of parser structured data."""
+    if not metadata or metadata.get("source") != FINDING_SOURCE_PARSER:
+        return None
+
+    structured_data = metadata.get("structured_data")
+    if not isinstance(structured_data, dict):
+        return None
+
+    parts: list[str] = []
+    if "sip_ua_enabled" in structured_data:
+        parts.append(f"sip_ua_enabled={structured_data['sip_ua_enabled']}")
+    if structured_data.get("registration_state"):
+        parts.append(f"registration_state={structured_data['registration_state']}")
+    if structured_data.get("response_codes"):
+        parts.append(f"response_codes={structured_data['response_codes']}")
+    if structured_data.get("dial_peer_count") is not None:
+        parts.append(f"dial_peer_count={structured_data['dial_peer_count']}")
+    if structured_data.get("voip_dial_peer_count") is not None:
+        parts.append(f"voip_dial_peer_count={structured_data['voip_dial_peer_count']}")
+    if structured_data.get("down_dial_peer_count"):
+        parts.append(f"down_dial_peer_count={structured_data['down_dial_peer_count']}")
+
+    return ", ".join(parts) if parts else None
 
 
 def format_analysis_summary(summary: AnalysisSummary) -> str:
@@ -198,7 +256,8 @@ def format_analysis_summary(summary: AnalysisSummary) -> str:
         "Findings:",
     ]
     if summary.findings:
-        lines.extend(f"- {signal}" for signal in summary.findings)
+        for finding in summary.findings:
+            lines.append(f"- {finding.signal} ({finding.source_label})")
     else:
         lines.append("- (none)")
     return "\n".join(lines)
@@ -239,15 +298,17 @@ def _findings_from_parser_result(
                 command=command,
                 signal=parser_finding.signal,
                 detail=parser_finding.detail,
-                metadata=_parser_finding_metadata(result, parser_finding.signal),
+                metadata=_parser_finding_metadata(result, parser_finding.signal, command),
             )
         )
     return findings
 
 
-def _parser_finding_metadata(result: ParserResult, signal: str) -> JsonDict:
+def _parser_finding_metadata(result: ParserResult, signal: str, command: str) -> JsonDict:
+    normalized_command = _normalize_command(command)
     return {
         "source": FINDING_SOURCE_PARSER,
+        "parser_id": PARSER_ID_BY_COMMAND.get(normalized_command),
         "parser_version": result.parser_version,
         "parser_confidence": result.confidence,
         "signal": signal,
