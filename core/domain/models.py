@@ -362,9 +362,32 @@ class Verification:
     expected_result: str
     actual_result: str | None = None
     passed: bool | None = None
+    result_status: str | None = None
+    notes: str | None = None
+    required: bool = True
     executed_at: datetime | None = None
     executed_by: str | None = None
     evidence_id: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        case_id: str,
+        step_name: str,
+        description: str,
+        *,
+        required: bool = True,
+        expected_result: str | None = None,
+    ) -> Verification:
+        """Factory for a verification checklist step."""
+        return cls(
+            verification_id=_new_id(ID_PREFIX_VERIFICATION),
+            case_id=case_id,
+            step_name=step_name,
+            description=description,
+            expected_result=expected_result or description,
+            required=required,
+        )
 
 
 @dataclass

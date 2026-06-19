@@ -19,6 +19,14 @@ from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
 from runtime.hypothesis_engine import HypothesisEngine, HypothesisSummary, build_hypothesis_summary
 from runtime.recommendation_engine import RecommendationEngine, RecommendationSummary, build_recommendation_summary
+from runtime.verification_engine import (
+    OUTCOME_COMPLETE,
+    OUTCOME_FAILED,
+    VerificationChecklist,
+    VerificationEngine,
+    VerificationResultSubmission,
+    VerificationSummary,
+)
 from runtime.intake_flow import (
     attach_flow_state,
     build_case_intake,
@@ -278,6 +286,60 @@ class RuntimeEngine:
             )
 
         return build_recommendation_summary(case, recommendation)
+
+    def generate_verification_checklist(self, case_id: CaseId) -> VerificationChecklist | None:
+        """Build a verification checklist for a likely root cause recommendation."""
+        case = self._case_manager.load_case(case_id)
+        if case.status != InvestigationState.RESOLUTION:
+            return None
+
+        engine = VerificationEngine()
+        checklist = engine.generate_checklist(case)
+        if checklist is not None:
+            self._case_manager.save_case(case)
+        return checklist
+
+    def submit_verification(
+        self,
+        case_id: CaseId,
+        submissions: list[VerificationResultSubmission],
+        *,
+        actor: str = "engineer",
+    ) -> VerificationSummary:
+        """Record verification results and advance or regress investigation state."""
+        case = self._case_manager.load_case(case_id)
+        engine = VerificationEngine()
+
+        if case.status == InvestigationState.RESOLUTION:
+            engine.generate_checklist(case)
+            self._case_manager.save_case(case)
+            self._case_manager.transition_state(case_id, InvestigationState.VERIFICATION)
+            case = self._case_manager.load_case(case_id)
+
+        if case.status != InvestigationState.VERIFICATION:
+            raise InvalidInvestigationStateError(
+                case_id,
+                InvestigationState.VERIFICATION.value,
+                case.status.value,
+            )
+
+        summary = engine.apply_results(case, submissions, actor=actor)
+        self._case_manager.save_case(case)
+
+        if summary.outcome == OUTCOME_FAILED:
+            self._case_manager.transition_state(case_id, InvestigationState.RESOLUTION)
+            self._case_manager.transition_state(case_id, InvestigationState.INVESTIGATION)
+            case = self._case_manager.load_case(case_id)
+        elif summary.outcome == OUTCOME_COMPLETE:
+            self._case_manager.transition_state(case_id, InvestigationState.LEARNING)
+            case = self._case_manager.load_case(case_id)
+
+        return VerificationSummary(
+            case_id=case.case_id,
+            state=case.status,
+            outcome=summary.outcome,
+            message=summary.message,
+        )
 
     def _ensure_playbook_catalog(self) -> None:
         """Load plugin playbooks if the catalog is empty."""

@@ -143,6 +143,44 @@ class TestRunInvestigation:
         assert any(line.startswith("Recommended Next Action:") for line in output)
         assert any("show run | sec dial-peer" in line for line in output)
         assert len(case.recommendations) == 1
+        assert "Verification Checklist:" not in "\n".join(output)
+
+    def test_cli_prints_verification_checklist_for_likely_root_cause(
+        self, runtime_engine: RuntimeEngine
+    ) -> None:
+        resolution_inputs = INTAKE_ANSWERS + [
+            "dial-peer 1 voip up",
+            "END",
+            "SIP-UA Status: disabled",
+            "END",
+            "SIP/2.0 503 Service Unavailable",
+            "END",
+            "passed",
+            "",
+            "passed",
+            "",
+            "passed",
+            "",
+        ]
+        output: list[str] = []
+        answers = iter(resolution_inputs)
+
+        code = run_investigation(
+            PLAYBOOK_ID,
+            input_provider=lambda: next(answers),
+            output_writer=output.append,
+            engine=runtime_engine,
+        )
+
+        assert code == 0
+        assert "Likely Root Cause:" in "\n".join(output)
+        assert "Verification Checklist:" in "\n".join(output)
+        assert "Verification complete. Next phase: LEARNING." in output
+
+        case_id = next(line.split(":", 1)[1].strip() for line in output if line.startswith("Case:"))
+        case = runtime_engine.case_manager.load_case(case_id)
+        assert case.status == InvestigationState.LEARNING
+        assert len(case.verifications) == 3
 
     def test_unknown_playbook_returns_non_zero(self, runtime_engine: RuntimeEngine) -> None:
         output: list[str] = []

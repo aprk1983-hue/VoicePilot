@@ -23,6 +23,11 @@ from runtime.intake_summary import write_intake_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
 from runtime.recommendation_engine import format_recommendation_summary
 from runtime.runtime_engine import RuntimeEngine
+from runtime.verification_engine import (
+    VerificationResultSubmission,
+    format_verification_checklist,
+    format_verification_summary,
+)
 from shared.config import RuntimeConfig
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -102,42 +107,83 @@ def run_evidence_collection(
             output_writer("Evidence collection complete. Next phase: ANALYSIS.")
             break
 
-    return run_analysis(case_id, runtime, output_writer)
+    return run_analysis(case_id, runtime, input_provider, output_writer)
 
 
 def run_analysis(
     case_id: str,
     runtime: RuntimeEngine,
+    input_provider: InputProvider,
     output_writer: OutputWriter,
 ) -> int:
     """Run deterministic analysis and print findings."""
     summary = runtime.analyze_case(case_id)
     for line in format_analysis_summary(summary).splitlines():
         output_writer(line)
-    return run_hypothesis_generation(case_id, runtime, output_writer)
+    return run_hypothesis_generation(case_id, runtime, input_provider, output_writer)
 
 
 def run_hypothesis_generation(
     case_id: str,
     runtime: RuntimeEngine,
+    input_provider: InputProvider,
     output_writer: OutputWriter,
 ) -> int:
     """Generate ranked hypotheses and print the summary."""
     summary = runtime.generate_hypotheses(case_id)
     for line in format_hypothesis_summary(summary).splitlines():
         output_writer(line)
-    return run_recommendation_generation(case_id, runtime, output_writer)
+    return run_recommendation_generation(case_id, runtime, input_provider, output_writer)
 
 
 def run_recommendation_generation(
     case_id: str,
     runtime: RuntimeEngine,
+    input_provider: InputProvider,
     output_writer: OutputWriter,
 ) -> int:
     """Generate recommendation from top hypothesis and print the summary."""
     summary = runtime.generate_recommendation(case_id)
     for line in format_recommendation_summary(summary).splitlines():
         output_writer(line)
+
+    case = runtime.case_manager.load_case(case_id)
+    if case.status == InvestigationState.RESOLUTION:
+        return run_verification(case_id, runtime, input_provider, output_writer)
+    return 0
+
+
+def run_verification(
+    case_id: str,
+    runtime: RuntimeEngine,
+    input_provider: InputProvider,
+    output_writer: OutputWriter,
+) -> int:
+    """Present verification checklist and collect engineer results."""
+    checklist = runtime.generate_verification_checklist(case_id)
+    if checklist is None:
+        return 0
+
+    for line in format_verification_checklist(checklist).splitlines():
+        output_writer(line)
+
+    submissions: list[VerificationResultSubmission] = []
+    for item in checklist.items:
+        output_writer(f"Step {item.step_number}: {item.description}")
+        output_writer("Result (passed/failed/not_tested):")
+        status = input_provider().strip()
+        output_writer("Notes (optional):")
+        notes = input_provider().strip()
+        submissions.append(
+            VerificationResultSubmission(
+                verification_id=item.verification_id,
+                status=status,
+                notes=notes,
+            )
+        )
+
+    summary = runtime.submit_verification(case_id, submissions)
+    output_writer(format_verification_summary(summary))
     return 0
 
 
