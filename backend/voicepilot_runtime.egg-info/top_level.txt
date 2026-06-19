@@ -1,0 +1,5 @@
+application
+domain
+infrastructure
+runtime
+shared

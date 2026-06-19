@@ -768,7 +768,7 @@ playbook:
         type: elimination
         when:
           all:
-            - topology.provider_transport
+            - field: topology.provider_transport
               in: [udp, tcp]
             - finding: FIND-TLS-FAIL
               equals: false

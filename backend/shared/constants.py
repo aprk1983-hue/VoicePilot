@@ -1,0 +1,22 @@
+"""Shared constants for the VoicePilot Runtime Kernel."""
+
+from __future__ import annotations
+
+DSL_API_VERSION: str = "voicepilot.io/v1"
+DSL_FILE_EXTENSION: str = ".vpb.yaml"
+DEFAULT_CONFIDENCE_THRESHOLD: int = 85
+HIGH_CONFIDENCE_THRESHOLD: int = 95
+SCHEMA_VERSION: str = "1.0"
+
+ID_PREFIX_CASE: str = "CASE-"
+ID_PREFIX_EVIDENCE: str = "EVD-"
+ID_PREFIX_HYPOTHESIS: str = "HYP-"
+ID_PREFIX_DECISION: str = "DEC-"
+ID_PREFIX_QUESTION: str = "QST-"
+ID_PREFIX_RECOMMENDATION: str = "REC-"
+ID_PREFIX_VERIFICATION: str = "VER-"
+ID_PREFIX_TIMELINE: str = "TLE-"
+ID_PREFIX_TOPOLOGY: str = "TOPO-"
+ID_PREFIX_DEVICE: str = "DEV-"
+ID_PREFIX_STEP: str = "STEP-"
+ID_PREFIX_CONFIDENCE: str = "CONF-"
