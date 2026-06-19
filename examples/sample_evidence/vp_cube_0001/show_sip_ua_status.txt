@@ -1,0 +1,3 @@
+SIP-UA Status: disabled
+ SIP User Agent is not enabled on this CUBE
+ voice service voip sip is administratively down
