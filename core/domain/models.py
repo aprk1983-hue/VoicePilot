@@ -150,6 +150,7 @@ class Question:
     source: str = "playbook"
     target_fields: list[str] = field(default_factory=list)
     information_gain_score: float | None = None
+    required: bool = True
     answer_structured: JsonDict | None = None
     asked_at: datetime | None = None
     answered_at: datetime | None = None
@@ -249,6 +250,21 @@ class Playbook:
     raw_document: JsonDict
     vendor: str | None = None
     category: str | None = None
+
+
+@dataclass
+class InvestigationTurn:
+    """A single turn in the runtime investigation loop presented to the engineer."""
+
+    case_id: str
+    state: InvestigationState
+    prompt: str
+    question_id: str | None
+    expected_response_type: str
+    available_options: list[str]
+    required: bool
+    context: JsonDict
+    next_action_type: str
 
 
 @dataclass

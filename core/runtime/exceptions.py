@@ -93,6 +93,15 @@ class PlaybookIdNotFoundError(VoicePilotRuntimeError):
         self.playbook_id = playbook_id
 
 
+class QuestionNotFoundError(VoicePilotRuntimeError):
+    """Raised when a question ID is not found on a case."""
+
+    def __init__(self, case_id: str, question_id: str) -> None:
+        super().__init__(f"Question {question_id!r} not found on case {case_id}")
+        self.case_id = case_id
+        self.question_id = question_id
+
+
 class PlaybookCatalogLoadError(VoicePilotRuntimeError):
     """Raised when a plugin playbook fails to load into the catalog."""
 
