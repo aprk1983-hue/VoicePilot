@@ -15,6 +15,8 @@ Parsers attach typed objects to a case. The topology engine reads those objects,
 | `topology_builder.py` | Assembles immutable `VoiceTopology` |
 | `dependency_engine.py` | Directed dependency traversal |
 | `topology_queries.py` | High-level topology queries |
+| `impact_models.py` | Impact severity and report models |
+| `impact_engine.py` | Failure/removal/change impact analysis |
 | `topology_exceptions.py` | Topology build and lookup errors |
 
 ## Relationship rules (v1)
@@ -49,6 +51,8 @@ path = engine.explain_dependency_path(topology, dial_peer_id, sip_ua_id)
 
 queries = TopologyQueries()
 dial_peers = queries.find_dial_peers_using_voice_service(topology)
+
+impact = ImpactEngine().analyze_failure(topology, sip_ua_id)
 ```
 
 ## Related
@@ -56,3 +60,4 @@ dial_peers = queries.find_dial_peers_using_voice_service(topology)
 - [CVOM](../model/README.md)
 - [Topology builder v1 spec](../../docs/sprint-5/topology-builder-v1.md)
 - [Dependency engine v1 spec](../../docs/sprint-5/dependency-engine-v1.md)
+- [Impact analysis v1 spec](../../docs/sprint-5/impact-analysis-v1.md)
