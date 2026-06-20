@@ -18,6 +18,7 @@ if str(REPO_ROOT / "core") not in sys.path:
 from domain.enums import InvestigationState, Severity
 from domain.models import Case, Evidence
 from domain.value_objects import AffectedScope, EvidenceQuality, EvidenceSource, PlatformRef, SymptomSummary
+from model.dial_peer import DialPeer
 from parser.parser_context import ParserContext
 from parser.parser_engine import ParserEngine
 from parser.parser_registry import ParserRegistry
@@ -36,6 +37,7 @@ def parser_context() -> ParserContext:
     return ParserContext(
         vendor="cisco",
         case_id="CASE-cisco-dial-peer",
+        evidence_id="EVD-dial-peer-parser",
         device_id="DEV-cube-01",
         platform="CUBE",
         ios_version="17.9.1",
@@ -198,3 +200,102 @@ class TestCiscoShowDialPeerVoiceSummaryParser:
         assert dial_peer_finding.metadata is not None
         assert dial_peer_finding.metadata["source"] == FINDING_SOURCE_PARSER
         assert dial_peer_finding.metadata["structured_data"]["voip_dial_peer_count"] == 2
+        assert "related_voice_object_ids" in dial_peer_finding.metadata
+        assert len(dial_peer_finding.metadata["related_voice_object_ids"]) == 2
+
+
+class TestCiscoShowDialPeerVoiceSummaryParserCvom:
+    def test_parser_creates_dial_peer_objects(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+
+        assert len(result.voice_objects) == 2
+        assert all(isinstance(obj, DialPeer) for obj in result.voice_objects)
+
+    def test_normal_sample_creates_two_dial_peer_objects(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+
+        assert result.structured_data["parsed_dial_peers"]
+        assert len(result.structured_data["parsed_dial_peers"]) == 2
+        assert len(result.voice_objects) == 2
+
+    def test_dial_peer_tags_extracted(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        tags = {str(peer.tag) for peer in result.voice_objects}
+
+        assert tags == {"1", "2"}
+
+    def test_destination_patterns_extracted(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        patterns = {peer.destination_pattern for peer in result.voice_objects}
+
+        assert patterns == {"9T", "8011"}
+
+    def test_session_targets_extracted(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        targets = {peer.session_target for peer in result.voice_objects}
+
+        assert targets == {"ipv4:192.0.2.10", "ipv4:198.51.100.20"}
+
+    def test_down_out_of_service_sample_maps_status(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_down.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        by_tag = {str(peer.tag): peer for peer in result.voice_objects}
+
+        assert by_tag["1"].status == "down"
+        assert by_tag["1"].shutdown is True
+        assert by_tag["2"].status == "out_of_service"
+        assert by_tag["2"].shutdown is True
+
+    def test_voice_object_provenance(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+        peer = result.voice_objects[0]
+
+        assert peer.source_parser == "cisco_show_dial_peer_voice_summary"
+        assert peer.source_command == "show dial-peer voice summary"
+        assert peer.source_evidence_id == "EVD-dial-peer-parser"
+        assert peer.peer_type == "voip"
+        assert peer.id.startswith("VOBJ-")
+
+    def test_empty_sample_has_no_voice_objects(
+        self,
+        parser: CiscoShowDialPeerVoiceSummaryParser,
+        parser_context: ParserContext,
+    ) -> None:
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_empty.txt").read_text(encoding="utf-8")
+        result = parser.parse(raw, parser_context)
+
+        assert result.voice_objects == []

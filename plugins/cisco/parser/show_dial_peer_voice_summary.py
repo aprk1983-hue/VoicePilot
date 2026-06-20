@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from model.dial_peer import DialPeer
 from parser.interfaces import CommandParser
 from parser.parser_context import ParserContext
 from parser.parser_result import ParserFinding, ParserResult
@@ -11,6 +12,7 @@ from shared.types import JsonDict
 
 COMMAND = "show dial-peer voice summary"
 VENDOR = "cisco"
+PARSER_ID = "cisco_show_dial_peer_voice_summary"
 PARSER_VERSION = "1.0.0"
 
 _DETECT_MARKERS: tuple[str, ...] = (
@@ -69,10 +71,17 @@ class CiscoShowDialPeerVoiceSummaryParser(CommandParser):
         findings = self.extract_findings(structured_data, context)
         metadata = self.extract_metadata(structured_data, context)
         confidence = _calculate_confidence(structured_data, errors)
+        hostname = _extract_hostname(raw_text) or context.hostname
+        voice_objects = self.extract_voice_objects(
+            structured_data,
+            context,
+            hostname=hostname,
+            confidence=confidence,
+        )
 
         return ParserResult(
             command=self.command,
-            hostname=_extract_hostname(raw_text) or context.hostname,
+            hostname=hostname,
             platform=context.platform,
             ios_version=context.ios_version,
             parser_version=self.parser_version,
@@ -81,6 +90,7 @@ class CiscoShowDialPeerVoiceSummaryParser(CommandParser):
             metadata=metadata,
             structured_data=structured_data,
             findings=findings,
+            voice_objects=voice_objects,
             confidence=confidence,
         )
 
@@ -172,6 +182,56 @@ class CiscoShowDialPeerVoiceSummaryParser(CommandParser):
 
         return findings
 
+    def extract_voice_objects(
+        self,
+        structured_data: JsonDict,
+        context: ParserContext,
+        *,
+        hostname: str | None,
+        confidence: float,
+    ) -> list[DialPeer]:
+        """Build canonical DialPeer objects from parsed dial-peer summary data."""
+        parsed_peers = structured_data.get("parsed_dial_peers")
+        if not isinstance(parsed_peers, list):
+            return []
+
+        dial_peers: list[DialPeer] = []
+        for peer in parsed_peers:
+            if not isinstance(peer, dict):
+                continue
+
+            status = peer.get("status")
+            shutdown: bool | None = None
+            if status in {"down", "out_of_service"}:
+                shutdown = True
+            elif status == "up":
+                shutdown = False
+
+            peer_type = peer.get("type") or "unknown"
+            tag = peer.get("tag")
+            raw_line = peer.get("raw_line")
+
+            dial_peers.append(
+                DialPeer.create(
+                    vendor=context.vendor,
+                    platform=context.platform or "unknown",
+                    hostname=hostname or context.hostname or "unknown",
+                    source_parser=PARSER_ID,
+                    source_command=self.command,
+                    source_evidence_id=context.evidence_id or "",
+                    tag=tag,
+                    peer_type=peer_type,
+                    destination_pattern=peer.get("destination_pattern"),
+                    session_target=peer.get("session_target"),
+                    shutdown=shutdown,
+                    status=status,
+                    confidence=confidence,
+                    metadata={"raw_line": raw_line} if raw_line else {},
+                )
+            )
+
+        return dial_peers
+
     def extract_metadata(
         self,
         structured_data: JsonDict,
@@ -229,6 +289,7 @@ class CiscoShowDialPeerVoiceSummaryParser(CommandParser):
             "out_of_service_count": out_of_service_count,
             "destination_patterns": destination_patterns,
             "session_targets": session_targets,
+            "parsed_dial_peers": dial_peer_entries,
             "raw_dial_peer_lines": raw_dial_peer_lines,
             "outbound_dial_peer_candidates_present": outbound_dial_peer_candidates_present,
         }
@@ -266,20 +327,40 @@ def _extract_hostname(raw_text: str) -> str | None:
     return None
 
 
-def _parse_dial_peer_entries(lines: list[str]) -> list[dict[str, str]]:
-    entries: list[dict[str, str]] = []
+def _parse_dial_peer_entries(lines: list[str]) -> list[dict[str, str | None]]:
+    entries: list[dict[str, str | None]] = []
+    current: dict[str, str | None] | None = None
+
     for line in lines:
         match = _DIAL_PEER_LINE_RE.match(line)
-        if not match:
-            continue
-        status = _normalize_peer_status(match.group(3))
-        entries.append(
-            {
+        if match:
+            if current is not None:
+                entries.append(current)
+            status = _normalize_peer_status(match.group(3))
+            current = {
                 "tag": match.group(1),
                 "type": match.group(2).lower(),
                 "status": status,
+                "destination_pattern": None,
+                "session_target": None,
+                "raw_line": line,
             }
-        )
+            continue
+
+        if current is None:
+            continue
+
+        destination_match = _DESTINATION_PATTERN_RE.search(line)
+        if destination_match:
+            current["destination_pattern"] = destination_match.group(1)
+
+        session_match = _SESSION_TARGET_RE.search(line)
+        if session_match:
+            current["session_target"] = session_match.group(1)
+
+    if current is not None:
+        entries.append(current)
+
     return entries
 
 

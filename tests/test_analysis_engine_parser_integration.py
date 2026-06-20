@@ -320,3 +320,54 @@ class TestAnalysisEngineParserIntegration:
         assert disabled_finding.metadata["parser_id"] == "cisco_show_run_voice_service_voip"
         assert "related_voice_object_ids" in disabled_finding.metadata
         assert len(disabled_finding.metadata["related_voice_object_ids"]) == 1
+
+    def test_dial_peer_parser_links_voice_object_ids(
+        self,
+        parser_engine,
+    ) -> None:
+        from domain.enums import Severity
+        from domain.models import Case, Evidence
+        from domain.value_objects import AffectedScope, EvidenceQuality, EvidenceSource, PlatformRef, SymptomSummary
+
+        raw = (SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8")
+        case = Case.create(
+            title="Dial-peer CVOM integration",
+            symptom=SymptomSummary(summary="outbound calls fail"),
+            severity=Severity.HIGH,
+            business_impact="test",
+            affected_scope=AffectedScope(),
+            platform=PlatformRef(vendor="cisco", products=("CUBE",)),
+            playbook_id=PLAYBOOK_ID,
+        )
+        case.status = InvestigationState.ANALYSIS
+        case.evidence.append(
+            Evidence(
+                evidence_id="EVD-dial-peer-cvom",
+                case_id=case.case_id,
+                type="cli_output",
+                title="CLI paste",
+                source=EvidenceSource(
+                    origin="cli_paste",
+                    collector="engineer",
+                    command="show dial-peer voice summary",
+                ),
+                collected_at=case.opened_at,
+                quality=EvidenceQuality(
+                    completeness=1.0,
+                    freshness=1.0,
+                    reliability=1.0,
+                    parseability=1.0,
+                    overall=1.0,
+                ),
+                raw_text=raw,
+            )
+        )
+
+        findings = AnalysisEngine(parser_engine=parser_engine).analyze(case)
+        config_finding = next(f for f in findings if f.signal == "dial_peer_config_present")
+
+        assert config_finding.metadata is not None
+        assert config_finding.metadata["source"] == FINDING_SOURCE_PARSER
+        assert config_finding.metadata["parser_id"] == "cisco_show_dial_peer_voice_summary"
+        assert "related_voice_object_ids" in config_finding.metadata
+        assert len(config_finding.metadata["related_voice_object_ids"]) == 2
