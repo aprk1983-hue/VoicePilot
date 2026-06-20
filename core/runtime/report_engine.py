@@ -8,7 +8,17 @@ from datetime import datetime
 from domain.enums import InvestigationState
 from domain.models import Case, CorrelationResult, DecisionLogEntry, Hypothesis, Recommendation
 from model.dial_peer import DialPeer
-from model.voice_graph import OBJECT_TYPE_DIAL_PEER, OBJECT_TYPE_SIP_UA, OBJECT_TYPE_VOICE_SERVICE, VoiceObject
+from model.provider import Provider
+from model.sip_ua import SipUA
+from model.voice_graph import (
+    OBJECT_TYPE_DIAL_PEER,
+    OBJECT_TYPE_PROVIDER,
+    OBJECT_TYPE_SIP_UA,
+    OBJECT_TYPE_VOICE_SERVICE,
+    VoiceObject,
+)
+from topology.call_path_engine import CallPathEngine
+from topology.topology_builder import TopologyBuilder
 from runtime.decision_log_engine import _finding_labels, _timeline_category
 from runtime.analysis_engine import (
     format_finding_source_label,
@@ -20,6 +30,40 @@ from runtime.verification_engine import RESULT_PASSED
 VERIFICATION_OUTCOME_PASSED = "all_steps_passed"
 VERIFICATION_OUTCOME_PARTIAL = "partial"
 VERIFICATION_OUTCOME_NONE = "not_recorded"
+
+
+_DISABLED_SIP_UA_NOTE = (
+    "SIP-UA is disabled and may affect all SIP call processing, "
+    "even if not directly present in the current path graph."
+)
+
+
+@dataclass(frozen=True)
+class ReportCallPathBreakpoint:
+    """Breakpoint candidate on a modeled call path."""
+
+    label: str
+    health_status: str
+
+
+@dataclass(frozen=True)
+class ReportCallPath:
+    """Call path included in an incident report."""
+
+    direction: str
+    source_label: str
+    destination_label: str
+    hops: tuple[str, ...]
+    warnings: tuple[str, ...]
+    breakpoints: tuple[ReportCallPathBreakpoint, ...]
+
+
+@dataclass(frozen=True)
+class ReportCallPathAnalysis:
+    """Call path analysis derived from case voice objects."""
+
+    paths: tuple[ReportCallPath, ...]
+    disabled_sip_ua_note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -102,6 +146,7 @@ class IncidentReport:
     confidence: float | None
     findings: tuple[ReportFinding, ...]
     voice_objects: tuple[ReportVoiceObject, ...]
+    call_path_analysis: ReportCallPathAnalysis
     correlations: tuple[ReportCorrelation, ...]
     decisions: tuple[ReportDecision, ...]
     recommendation_summary: str | None
@@ -165,6 +210,7 @@ def build_incident_report(case: Case) -> IncidentReport:
             for finding in case.analysis_findings
         ),
         voice_objects=tuple(_build_report_voice_objects(case.voice_objects)),
+        call_path_analysis=_build_call_path_analysis(case.voice_objects),
         correlations=tuple(_build_report_correlations(case.correlation_results)),
         decisions=tuple(_build_report_decisions(case.decision_log)),
         recommendation_summary=_format_recommendation_summary(recommendation),
@@ -241,6 +287,8 @@ def format_incident_report(report: IncidentReport) -> str:
             )
     else:
         lines.append("_No canonical voice objects recorded._")
+
+    lines.extend(_format_call_path_analysis_section(report.call_path_analysis))
 
     lines.extend(["", "## Correlation Reasoning", ""])
     if report.correlations:
@@ -325,6 +373,148 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No timeline events recorded._")
 
     return "\n".join(lines)
+
+
+def _build_call_path_analysis(voice_objects: list[VoiceObject]) -> ReportCallPathAnalysis:
+    if not voice_objects:
+        return ReportCallPathAnalysis(paths=())
+
+    topology = TopologyBuilder().build(_supplement_call_path_objects(voice_objects))
+    call_path_engine = CallPathEngine()
+    outbound_paths = call_path_engine.build_outbound_paths(topology)
+    object_index = {obj.id: obj for obj in topology.all_objects()}
+
+    report_paths: list[ReportCallPath] = []
+    path_hop_ids: set[str] = set()
+    for call_path in outbound_paths:
+        path_hop_ids.update(hop.object_id for hop in call_path.hops)
+        source_object = object_index.get(call_path.source_object_id)
+        destination_object = object_index.get(call_path.destination_object_id)
+        breakpoints = call_path_engine.find_breakpoints(call_path)
+        report_paths.append(
+            ReportCallPath(
+                direction=call_path.direction.value,
+                source_label=_call_path_endpoint_label(source_object) if source_object else call_path.source_object_id,
+                destination_label=(
+                    _call_path_endpoint_label(destination_object)
+                    if destination_object
+                    else call_path.destination_object_id
+                ),
+                hops=tuple(_call_path_hop_label(hop, object_index) for hop in call_path.hops),
+                warnings=call_path.warnings,
+                breakpoints=tuple(
+                    ReportCallPathBreakpoint(
+                        label=_call_path_hop_label(breakpoint, object_index),
+                        health_status=breakpoint.health_status,
+                    )
+                    for breakpoint in breakpoints
+                ),
+            )
+        )
+
+    disabled_sip_ua_note = _disabled_sip_ua_note(voice_objects, path_hop_ids)
+    return ReportCallPathAnalysis(
+        paths=tuple(report_paths),
+        disabled_sip_ua_note=disabled_sip_ua_note,
+    )
+
+
+def _supplement_call_path_objects(voice_objects: list[VoiceObject]) -> list[VoiceObject]:
+    """Add provider placeholders from dial-peer session targets for report-time path modeling."""
+    if any(obj.object_type == OBJECT_TYPE_PROVIDER for obj in voice_objects):
+        return list(voice_objects)
+
+    dial_peers = [obj for obj in voice_objects if isinstance(obj, DialPeer)]
+    if not dial_peers:
+        return list(voice_objects)
+
+    supplemented = list(voice_objects)
+    seen_targets: set[str] = set()
+    provider_index = 0
+    for dial_peer in sorted(dial_peers, key=lambda item: item.id):
+        session_target = (dial_peer.session_target or "").strip()
+        if not session_target or session_target in seen_targets:
+            continue
+        seen_targets.add(session_target)
+        provider_index += 1
+        provider_suffix = session_target.split(":")[-1] if ":" in session_target else session_target
+        supplemented.append(
+            Provider.create(
+                vendor=dial_peer.vendor,
+                platform=dial_peer.platform,
+                hostname=dial_peer.hostname,
+                name=f"Provider-{provider_suffix}",
+                source_parser=dial_peer.source_parser,
+                source_command=dial_peer.source_command,
+                source_evidence_id=dial_peer.source_evidence_id,
+                addresses=(session_target,),
+                object_id=f"VOBJ-report-provider-{provider_index:03d}",
+            )
+        )
+    return supplemented
+
+
+def _disabled_sip_ua_note(voice_objects: list[VoiceObject], path_hop_ids: set[str]) -> str | None:
+    for obj in voice_objects:
+        if isinstance(obj, SipUA) and obj.enabled is False and obj.id not in path_hop_ids:
+            return _DISABLED_SIP_UA_NOTE
+    return None
+
+
+def _format_call_path_analysis_section(analysis: ReportCallPathAnalysis) -> list[str]:
+    lines = ["", "## Call Path Analysis", ""]
+    if not analysis.paths:
+        lines.append("_No call paths derived from current evidence._")
+    else:
+        for index, call_path in enumerate(analysis.paths):
+            if index > 0:
+                lines.append("")
+            lines.append(f"### {call_path.source_label} → {call_path.destination_label}")
+            lines.append(f"- **Direction:** {call_path.direction}")
+            lines.append(f"- **Source:** {call_path.source_label}")
+            lines.append(f"- **Destination:** {call_path.destination_label}")
+            lines.append("")
+            lines.append("**Hops:**")
+            if call_path.hops:
+                for hop_index, hop_label in enumerate(call_path.hops, start=1):
+                    lines.append(f"{hop_index}. {hop_label}")
+            else:
+                lines.append("_No hops recorded._")
+            lines.append("")
+            lines.append("**Warnings:**")
+            if call_path.warnings:
+                for warning in call_path.warnings:
+                    lines.append(f"- {warning}")
+            else:
+                lines.append("_None_")
+            lines.append("")
+            lines.append("**Breakpoints:**")
+            if call_path.breakpoints:
+                for breakpoint in call_path.breakpoints:
+                    lines.append(f"- {breakpoint.label} — {breakpoint.health_status}")
+            else:
+                lines.append("_None on path._")
+
+    if analysis.disabled_sip_ua_note:
+        lines.append("")
+        lines.append(f"**Note:** {analysis.disabled_sip_ua_note}")
+
+    return lines
+
+
+def _call_path_endpoint_label(obj: VoiceObject) -> str:
+    if obj.object_type == OBJECT_TYPE_DIAL_PEER:
+        return _voice_object_label(obj)
+    if obj.object_type == OBJECT_TYPE_PROVIDER:
+        return obj.name
+    return _voice_object_label(obj)
+
+
+def _call_path_hop_label(hop, object_index: dict[str, VoiceObject]) -> str:
+    obj = object_index.get(hop.object_id)
+    if obj is not None:
+        return _call_path_endpoint_label(obj)
+    return hop.label
 
 
 def _build_report_voice_objects(objects: list[VoiceObject]) -> list[ReportVoiceObject]:

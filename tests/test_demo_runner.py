@@ -84,3 +84,6 @@ class TestDemoRunner:
         assert "## Canonical Voice Objects" in content
         assert "SipUA — SIP-UA — cisco_show_sip_ua_status" in content
         assert "DialPeer 1 — destination 9T — cisco_show_dial_peer_voice_summary" in content
+        assert "## Call Path Analysis" in content
+        assert "### DialPeer 1 → Provider-192.0.2.10" in content
+        assert "SIP-UA is disabled and may affect all SIP call processing" in content

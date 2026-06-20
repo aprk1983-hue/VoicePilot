@@ -14,7 +14,11 @@ from runtime.exceptions import InvalidInvestigationStateError
 from runtime.playbook_catalog import PlaybookCatalog
 from runtime.playbook_loader import PlaybookLoader
 from runtime.plugin_registry import PluginRegistry
-from runtime.report_engine import ReportEngine, build_incident_report, format_incident_report
+from runtime.report_engine import (
+    ReportEngine,
+    build_incident_report,
+    format_incident_report,
+)
 from runtime.runtime_engine import RuntimeEngine
 from runtime.verification_engine import RESULT_PASSED, VerificationResultSubmission
 from shared.config import RuntimeConfig
@@ -161,6 +165,13 @@ class TestReportEngine:
         assert "VoiceService — voice service voip — cisco_show_run_voice_service_voip" in markdown
         assert "DialPeer 1 — destination 9T — cisco_show_dial_peer_voice_summary" in markdown
         assert len(report.voice_objects) == 4
+        assert "## Call Path Analysis" in markdown
+        assert "### DialPeer 1 → Provider-192.0.2.10" in markdown
+        assert "**Direction:** outbound" in markdown
+        assert "1. DialPeer 1" in markdown
+        assert "SIP-UA is disabled and may affect all SIP call processing" in markdown
+        assert report.call_path_analysis.disabled_sip_ua_note is not None
+        assert len(report.call_path_analysis.paths) >= 1
 
     def test_report_without_correlations_still_works(self) -> None:
         from domain.enums import InvestigationState, Severity
@@ -189,7 +200,48 @@ class TestReportEngine:
         assert "_No correlation results recorded._" in markdown
         assert "_No decision log entries recorded._" in markdown
         assert "_No canonical voice objects recorded._" in markdown
+        assert "_No call paths derived from current evidence._" in markdown
+        assert report.call_path_analysis.paths == ()
         assert "# VoicePilot Incident Report" in markdown
+
+    def test_call_path_analysis_handles_no_paths_gracefully(self) -> None:
+        from domain.enums import InvestigationState, Severity
+        from domain.models import Case
+        from domain.value_objects import AffectedScope, PlatformRef, SymptomSummary
+        from model import SipUA
+
+        def _provenance(**overrides: str) -> dict[str, str]:
+            base = {
+                "vendor": "cisco",
+                "platform": "CUBE",
+                "hostname": "cube-edge-01",
+                "source_parser": "cisco_show_sip_ua_status",
+                "source_command": "show sip-ua status",
+                "source_evidence_id": "EVD-test-001",
+            }
+            base.update(overrides)
+            return base
+
+        sip_ua = SipUA.create(**_provenance(), enabled=False, object_id="VOBJ-sip-ua-001")
+        case = Case(
+            case_id="CASE-CALL-PATH",
+            title="test",
+            status=InvestigationState.CLOSED,
+            severity=Severity.HIGH,
+            business_impact="test",
+            symptom=SymptomSummary(summary="outbound calls fail"),
+            affected_scope=AffectedScope(),
+            platform=PlatformRef(vendor="cisco"),
+            playbook_id=PLAYBOOK_ID,
+            voice_objects=[sip_ua],
+        )
+
+        report = build_incident_report(case)
+        markdown = format_incident_report(report)
+
+        assert "_No call paths derived from current evidence._" in markdown
+        assert "SIP-UA is disabled and may affect all SIP call processing" in markdown
+        assert report.call_path_analysis.disabled_sip_ua_note is not None
 
     def test_report_engine_builds_report_directly(self, runtime_engine: RuntimeEngine) -> None:
         case = _closed_case(runtime_engine)
