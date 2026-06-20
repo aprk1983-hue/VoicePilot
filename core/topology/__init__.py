@@ -1,5 +1,7 @@
 """Vendor-neutral topology relationship engine."""
 
+from topology.call_path_engine import CallPathEngine
+from topology.call_path_models import CallPath, CallPathDirection, CallPathHop
 from topology.dependency_engine import DependencyEngine
 from topology.impact_engine import ImpactEngine
 from topology.impact_models import ImpactDependencyPath, ImpactReport, ImpactSeverity
@@ -10,6 +12,10 @@ from topology.topology_exceptions import TopologyBuildError, TopologyObjectNotFo
 from topology.topology_queries import TopologyQueries
 
 __all__ = [
+    "CallPath",
+    "CallPathDirection",
+    "CallPathEngine",
+    "CallPathHop",
     "DependencyEngine",
     "ImpactDependencyPath",
     "ImpactEngine",
