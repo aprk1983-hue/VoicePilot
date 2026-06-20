@@ -11,6 +11,7 @@ from domain.models import AnalysisFinding, Case, Evidence
 from parser.parser_context import ParserContext
 from parser.parser_engine import ParserEngine
 from parser.parser_exceptions import VoicePilotParserError
+from model.voice_graph import VoiceObject
 from parser.parser_result import ParserResult
 from shared.types import JsonDict
 
@@ -66,6 +67,7 @@ class AnalysisEngine:
 
     def analyze(self, case: Case) -> list[AnalysisFinding]:
         """Analyze all collected evidence and return findings."""
+        case.voice_objects.clear()
         findings: list[AnalysisFinding] = []
         seen_signals: set[str] = set()
 
@@ -132,6 +134,7 @@ class AnalysisEngine:
         if not result.is_valid:
             return None
 
+        attach_voice_objects_to_case(case, result.voice_objects)
         return _findings_from_parser_result(case, evidence, command, result)
 
     def _append_findings(
@@ -288,6 +291,22 @@ def _build_parser_context(case: Case, evidence: Evidence, vendor: str) -> Parser
         hostname=None,
         collection_timestamp=evidence.collected_at,
     )
+
+
+def attach_voice_objects_to_case(case: Case, voice_objects: list[VoiceObject]) -> int:
+    """Append parser-produced CVOM objects to a case, skipping duplicate IDs."""
+    if not voice_objects:
+        return 0
+
+    known_ids = {obj.id for obj in case.voice_objects}
+    attached = 0
+    for obj in voice_objects:
+        if obj.id in known_ids:
+            continue
+        case.voice_objects.append(obj)
+        known_ids.add(obj.id)
+        attached += 1
+    return attached
 
 
 def _findings_from_parser_result(

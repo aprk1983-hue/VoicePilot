@@ -44,6 +44,7 @@ from shared.constants import (
     ID_PREFIX_TOPOLOGY,
     ID_PREFIX_VERIFICATION,
 )
+from model.voice_graph import VoiceObject
 from shared.types import JsonDict
 
 
@@ -622,6 +623,7 @@ class Case:
     schema_version: str = "1.0"
     evidence: list[Evidence] = field(default_factory=list)
     analysis_findings: list[AnalysisFinding] = field(default_factory=list)
+    voice_objects: list[VoiceObject] = field(default_factory=list)
     correlation_results: list[CorrelationResult] = field(default_factory=list)
     decision_log: list[DecisionLogEntry] = field(default_factory=list)
     hypotheses: list[Hypothesis] = field(default_factory=list)

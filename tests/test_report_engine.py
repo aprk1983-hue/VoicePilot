@@ -20,6 +20,7 @@ from runtime.verification_engine import RESULT_PASSED, VerificationResultSubmiss
 from shared.config import RuntimeConfig
 
 PLUGINS_ROOT = Path(__file__).resolve().parents[1] / "plugins"
+PARSER_SAMPLE_DIR = Path(__file__).resolve().parents[1] / "examples" / "sample_evidence" / "parser"
 PLAYBOOK_ID = "VP-CUBE-0001"
 INTAKE_ANSWERS = [
     "yes",
@@ -62,7 +63,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
         case,
         runtime_engine.case_manager,
         "show dial-peer voice summary",
-        "dial-peer 1 voip up",
+        (PARSER_SAMPLE_DIR / "show_dial_peer_voice_summary_normal.txt").read_text(encoding="utf-8"),
         decision_log=runtime_engine.decision_log_engine,
     )
     case = runtime_engine.case_manager.load_case(case.case_id)
@@ -155,6 +156,11 @@ class TestReportEngine:
         assert "CiscoShowSipUaStatusParser" in markdown
         assert "sip_ua_disabled_confirmed" in markdown
         assert any(decision.title == "sip_ua_disabled_confirmed" for decision in report.decisions)
+        assert "## Canonical Voice Objects" in markdown
+        assert "SipUA — SIP-UA — cisco_show_sip_ua_status" in markdown
+        assert "VoiceService — voice service voip — cisco_show_run_voice_service_voip" in markdown
+        assert "DialPeer 1 — destination 9T — cisco_show_dial_peer_voice_summary" in markdown
+        assert len(report.voice_objects) == 4
 
     def test_report_without_correlations_still_works(self) -> None:
         from domain.enums import InvestigationState, Severity
@@ -182,6 +188,7 @@ class TestReportEngine:
         assert "## Decision Timeline" in markdown
         assert "_No correlation results recorded._" in markdown
         assert "_No decision log entries recorded._" in markdown
+        assert "_No canonical voice objects recorded._" in markdown
         assert "# VoicePilot Incident Report" in markdown
 
     def test_report_engine_builds_report_directly(self, runtime_engine: RuntimeEngine) -> None:

@@ -7,6 +7,8 @@ from datetime import datetime
 
 from domain.enums import InvestigationState
 from domain.models import Case, CorrelationResult, DecisionLogEntry, Hypothesis, Recommendation
+from model.dial_peer import DialPeer
+from model.voice_graph import OBJECT_TYPE_DIAL_PEER, OBJECT_TYPE_SIP_UA, OBJECT_TYPE_VOICE_SERVICE, VoiceObject
 from runtime.decision_log_engine import _finding_labels, _timeline_category
 from runtime.analysis_engine import (
     format_finding_source_label,
@@ -18,6 +20,17 @@ from runtime.verification_engine import RESULT_PASSED
 VERIFICATION_OUTCOME_PASSED = "all_steps_passed"
 VERIFICATION_OUTCOME_PARTIAL = "partial"
 VERIFICATION_OUTCOME_NONE = "not_recorded"
+
+
+@dataclass(frozen=True)
+class ReportVoiceObject:
+    """Canonical voice object included in an incident report."""
+
+    label: str
+    detail: str
+    source_parser: str
+    source_command: str
+    confidence: float
 
 
 @dataclass(frozen=True)
@@ -88,6 +101,7 @@ class IncidentReport:
     top_hypothesis_id: str | None
     confidence: float | None
     findings: tuple[ReportFinding, ...]
+    voice_objects: tuple[ReportVoiceObject, ...]
     correlations: tuple[ReportCorrelation, ...]
     decisions: tuple[ReportDecision, ...]
     recommendation_summary: str | None
@@ -150,6 +164,7 @@ def build_incident_report(case: Case) -> IncidentReport:
             )
             for finding in case.analysis_findings
         ),
+        voice_objects=tuple(_build_report_voice_objects(case.voice_objects)),
         correlations=tuple(_build_report_correlations(case.correlation_results)),
         decisions=tuple(_build_report_decisions(case.decision_log)),
         recommendation_summary=_format_recommendation_summary(recommendation),
@@ -215,6 +230,17 @@ def format_incident_report(report: IncidentReport) -> str:
             )
     else:
         lines.append("_No analysis findings recorded._")
+
+    lines.extend(["", "## Canonical Voice Objects", ""])
+    if report.voice_objects:
+        for voice_object in report.voice_objects:
+            confidence = int(voice_object.confidence)
+            lines.append(
+                f"- {voice_object.label} — {voice_object.detail} — "
+                f"{voice_object.source_parser} — {voice_object.source_command} — {confidence}%"
+            )
+    else:
+        lines.append("_No canonical voice objects recorded._")
 
     lines.extend(["", "## Correlation Reasoning", ""])
     if report.correlations:
@@ -299,6 +325,43 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No timeline events recorded._")
 
     return "\n".join(lines)
+
+
+def _build_report_voice_objects(objects: list[VoiceObject]) -> list[ReportVoiceObject]:
+    return [
+        ReportVoiceObject(
+            label=_voice_object_label(obj),
+            detail=_voice_object_detail(obj),
+            source_parser=obj.source_parser,
+            source_command=obj.source_command,
+            confidence=obj.confidence,
+        )
+        for obj in objects
+    ]
+
+
+def _voice_object_label(obj: VoiceObject) -> str:
+    if obj.object_type == OBJECT_TYPE_DIAL_PEER:
+        name = obj.name
+        if name.lower().startswith("dial-peer "):
+            return f"DialPeer {name.split(' ', 1)[1]}"
+        return name
+    labels = {
+        OBJECT_TYPE_SIP_UA: "SipUA",
+        OBJECT_TYPE_VOICE_SERVICE: "VoiceService",
+    }
+    return labels.get(obj.object_type, obj.object_type)
+
+
+def _voice_object_detail(obj: VoiceObject) -> str:
+    if obj.object_type == OBJECT_TYPE_DIAL_PEER and isinstance(obj, DialPeer):
+        if obj.destination_pattern:
+            return f"destination {obj.destination_pattern}"
+    if obj.object_type == OBJECT_TYPE_SIP_UA:
+        return "SIP-UA"
+    if obj.object_type == OBJECT_TYPE_VOICE_SERVICE:
+        return "voice service voip"
+    return obj.name
 
 
 def _build_report_decisions(entries: list[DecisionLogEntry]) -> list[ReportDecision]:

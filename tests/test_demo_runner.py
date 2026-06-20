@@ -81,3 +81,6 @@ class TestDemoRunner:
         assert "## Decision Timeline" in content
         assert "CiscoShowSipUaStatusParser" in content
         assert "sip_ua_disabled_confirmed" in content
+        assert "## Canonical Voice Objects" in content
+        assert "SipUA — SIP-UA — cisco_show_sip_ua_status" in content
+        assert "DialPeer 1 — destination 9T — cisco_show_dial_peer_voice_summary" in content
