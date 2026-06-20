@@ -172,6 +172,16 @@ class TestReportEngine:
         assert "SIP-UA is disabled and may affect all SIP call processing" in markdown
         assert report.call_path_analysis.disabled_sip_ua_note is not None
         assert len(report.call_path_analysis.paths) >= 1
+        assert "## Health Assessment" in markdown
+        assert "**Overall Score:**" in markdown
+        assert "/100" in markdown
+        assert "**Status:** FAIL" in markdown
+        assert "CRITICAL FAIL — SIP-UA is disabled." in markdown
+        assert "Enable SIP-UA and validate registration." in markdown
+        assert "MEDIUM WARN — allow-connections policy is missing" in markdown
+        assert report.health_assessment.available is True
+        assert report.health_assessment.overall_status == "FAIL"
+        assert report.health_assessment.fail_count >= 1
 
     def test_report_without_correlations_still_works(self) -> None:
         from domain.enums import InvestigationState, Severity
@@ -202,6 +212,8 @@ class TestReportEngine:
         assert "_No canonical voice objects recorded._" in markdown
         assert "_No call paths derived from current evidence._" in markdown
         assert report.call_path_analysis.paths == ()
+        assert "_No canonical voice objects available for health evaluation._" in markdown
+        assert report.health_assessment.available is False
         assert "# VoicePilot Incident Report" in markdown
 
     def test_call_path_analysis_handles_no_paths_gracefully(self) -> None:
@@ -242,6 +254,8 @@ class TestReportEngine:
         assert "_No call paths derived from current evidence._" in markdown
         assert "SIP-UA is disabled and may affect all SIP call processing" in markdown
         assert report.call_path_analysis.disabled_sip_ua_note is not None
+        assert "## Health Assessment" in markdown
+        assert "CRITICAL FAIL — SIP-UA is disabled." in markdown
 
     def test_report_engine_builds_report_directly(self, runtime_engine: RuntimeEngine) -> None:
         case = _closed_case(runtime_engine)

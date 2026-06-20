@@ -17,6 +17,9 @@ from model.voice_graph import (
     OBJECT_TYPE_VOICE_SERVICE,
     VoiceObject,
 )
+from health.health_engine import HealthEngine
+from health.health_models import HealthResult, HealthStatus
+from health.health_severity import HealthSeverity
 from topology.call_path_engine import CallPathEngine
 from topology.topology_builder import TopologyBuilder
 from runtime.decision_log_engine import _finding_labels, _timeline_category
@@ -36,6 +39,33 @@ _DISABLED_SIP_UA_NOTE = (
     "SIP-UA is disabled and may affect all SIP call processing, "
     "even if not directly present in the current path graph."
 )
+
+
+@dataclass(frozen=True)
+class ReportHealthFinding:
+    """Top health finding included in an incident report."""
+
+    severity: str
+    status: str
+    message: str
+    recommendation: str | None = None
+
+
+@dataclass(frozen=True)
+class ReportHealthAssessment:
+    """Health evaluation summary for an incident report."""
+
+    available: bool
+    overall_score: int | None = None
+    overall_status: str | None = None
+    pass_count: int = 0
+    warn_count: int = 0
+    fail_count: int = 0
+    unknown_count: int = 0
+    severity_counts: tuple[tuple[str, int], ...] = ()
+    category_counts: tuple[tuple[str, int], ...] = ()
+    top_findings: tuple[ReportHealthFinding, ...] = ()
+    recommendations: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -147,6 +177,7 @@ class IncidentReport:
     findings: tuple[ReportFinding, ...]
     voice_objects: tuple[ReportVoiceObject, ...]
     call_path_analysis: ReportCallPathAnalysis
+    health_assessment: ReportHealthAssessment
     correlations: tuple[ReportCorrelation, ...]
     decisions: tuple[ReportDecision, ...]
     recommendation_summary: str | None
@@ -211,6 +242,7 @@ def build_incident_report(case: Case) -> IncidentReport:
         ),
         voice_objects=tuple(_build_report_voice_objects(case.voice_objects)),
         call_path_analysis=_build_call_path_analysis(case.voice_objects),
+        health_assessment=_build_health_assessment(case),
         correlations=tuple(_build_report_correlations(case.correlation_results)),
         decisions=tuple(_build_report_decisions(case.decision_log)),
         recommendation_summary=_format_recommendation_summary(recommendation),
@@ -289,6 +321,7 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No canonical voice objects recorded._")
 
     lines.extend(_format_call_path_analysis_section(report.call_path_analysis))
+    lines.extend(_format_health_assessment_section(report.health_assessment))
 
     lines.extend(["", "## Correlation Reasoning", ""])
     if report.correlations:
@@ -373,6 +406,116 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("_No timeline events recorded._")
 
     return "\n".join(lines)
+
+
+def _build_health_assessment(case: Case) -> ReportHealthAssessment:
+    if not case.voice_objects:
+        return ReportHealthAssessment(available=False)
+
+    health_report = HealthEngine().evaluate_case(case)
+    unknown_count = sum(
+        1 for result in health_report.results if result.status == HealthStatus.UNKNOWN
+    )
+    top_findings = tuple(
+        ReportHealthFinding(
+            severity=result.severity.value.upper(),
+            status=result.status.value.upper(),
+            message=result.message,
+            recommendation=result.recommendation,
+        )
+        for result in _top_health_findings(health_report.results)
+    )
+    category_counts = tuple(
+        (category.value, count) for category, count in health_report.category_counts
+    )
+
+    return ReportHealthAssessment(
+        available=True,
+        overall_score=health_report.overall_score,
+        overall_status=_overall_health_status(health_report.fail_count, health_report.warn_count),
+        pass_count=health_report.pass_count,
+        warn_count=health_report.warn_count,
+        fail_count=health_report.fail_count,
+        unknown_count=unknown_count,
+        severity_counts=health_report.severity_counts,
+        category_counts=category_counts,
+        top_findings=top_findings,
+        recommendations=health_report.recommendations,
+    )
+
+
+def _format_health_assessment_section(assessment: ReportHealthAssessment) -> list[str]:
+    lines = ["", "## Health Assessment", ""]
+    if not assessment.available:
+        lines.append("_No canonical voice objects available for health evaluation._")
+        return lines
+
+    lines.append(f"- **Overall Score:** {assessment.overall_score}/100")
+    lines.append(f"- **Status:** {assessment.overall_status}")
+    lines.append(
+        "- **Counts:** "
+        f"PASS {assessment.pass_count} | "
+        f"WARN {assessment.warn_count} | "
+        f"FAIL {assessment.fail_count} | "
+        f"UNKNOWN {assessment.unknown_count}"
+    )
+
+    if assessment.severity_counts:
+        severity_text = ", ".join(f"{name} {count}" for name, count in assessment.severity_counts)
+        lines.append(f"- **Severity Counts:** {severity_text}")
+
+    if assessment.category_counts:
+        category_text = ", ".join(f"{name} {count}" for name, count in assessment.category_counts)
+        lines.append(f"- **Category Counts:** {category_text}")
+
+    lines.extend(["", "**Findings:**"])
+    if assessment.top_findings:
+        for finding in assessment.top_findings:
+            lines.append(f"- {finding.severity} {finding.status} — {finding.message}")
+            if finding.recommendation:
+                lines.append(f"  Recommendation: {finding.recommendation}")
+    else:
+        lines.append("_No health findings recorded._")
+
+    lines.extend(["", "**Recommendations:**"])
+    if assessment.recommendations:
+        for recommendation in assessment.recommendations:
+            lines.append(f"- {recommendation}")
+    else:
+        lines.append("_None_")
+
+    return lines
+
+
+_SEVERITY_ORDER = {
+    HealthSeverity.CRITICAL: 0,
+    HealthSeverity.HIGH: 1,
+    HealthSeverity.MEDIUM: 2,
+    HealthSeverity.LOW: 3,
+    HealthSeverity.INFO: 4,
+}
+
+
+def _top_health_findings(results: tuple[HealthResult, ...]) -> tuple[HealthResult, ...]:
+    active = [
+        result
+        for result in results
+        if result.status in {HealthStatus.WARN, HealthStatus.FAIL}
+    ]
+    return tuple(
+        sorted(
+            active,
+            key=lambda result: (_SEVERITY_ORDER[result.severity], result.rule_id),
+        )
+    )
+
+
+def _overall_health_status(fail_count: int, warn_count: int) -> str:
+    if fail_count > 0:
+        return "FAIL"
+    if warn_count > 0:
+        return "WARN"
+    return "PASS"
 
 
 def _build_call_path_analysis(voice_objects: list[VoiceObject]) -> ReportCallPathAnalysis:

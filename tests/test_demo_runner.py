@@ -87,3 +87,6 @@ class TestDemoRunner:
         assert "## Call Path Analysis" in content
         assert "### DialPeer 1 → Provider-192.0.2.10" in content
         assert "SIP-UA is disabled and may affect all SIP call processing" in content
+        assert "## Health Assessment" in content
+        assert "CRITICAL FAIL — SIP-UA is disabled." in content
+        assert "**Overall Score:**" in content
