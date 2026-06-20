@@ -76,6 +76,7 @@ class DecisionLogEntryType(str, Enum):
     RECOMMENDATION_SELECTED = "recommendation_selected"
     VERIFICATION_COMPLETED = "verification_completed"
     LEARNING_CREATED = "learning_created"
+    DISCOVERY_PLANNED = "discovery_planned"
     CASE_CLOSED = "case_closed"
 
 

@@ -178,3 +178,74 @@ class TestScenariosCommand:
         assert code == 0
         assert "provider_503" in text
         assert "Scenarios: 1 total, 1 passed, 0 failed" in text
+
+    def test_plan_scenario_prints_discovery_plan(self) -> None:
+        from cli.voicepilot_cli import run_plan_scenario
+
+        output: list[str] = []
+        code = run_plan_scenario(
+            PLAYBOOK_ID,
+            output.append,
+            scenario_id="provider_503",
+        )
+
+        text = "\n".join(output)
+        assert code == 0
+        assert text.startswith("# Discovery Plan")
+        assert "Current Confidence" in text
+        assert "Estimated Final Confidence" in text
+        assert "Remaining Uncertainty" in text
+
+    def test_plan_scenario_partial_evidence_lists_missing_commands(self) -> None:
+        from runtime.scenario_runner import EVIDENCE_FILES, run_scenario_to_correlation
+
+        scenario_dir = SCENARIOS_ROOT / "provider_503"
+        runtime, case_id = run_scenario_to_correlation(
+            scenario_dir,
+            evidence_files=EVIDENCE_FILES[:2],
+        )
+        try:
+            plan = runtime.plan_discovery(case_id)
+            commands = {request.command for request in plan.requests}
+            assert "debug ccsip messages" in commands
+        finally:
+            runtime.shutdown()
+
+    def test_main_plan_scenario_command(self) -> None:
+        from cli.voicepilot_cli import main
+
+        output: list[str] = []
+        original_print = __import__("builtins").print
+
+        def capture_print(*args, **kwargs) -> None:
+            if args:
+                output.append(str(args[0]))
+
+        import builtins
+
+        builtins.print = capture_print
+        try:
+            code = main(["plan-scenario", PLAYBOOK_ID, "--scenario", "provider_503"])
+        finally:
+            builtins.print = original_print
+
+        text = "\n".join(output)
+        assert code == 0
+        assert "# Discovery Plan" in text
+
+    def test_scenario_markdown_can_include_discovery_plan(self, tmp_path: Path) -> None:
+        from cli.voicepilot_cli import run_scenario_assessment
+
+        report_path = tmp_path / "scenario_results.md"
+        code = run_scenario_assessment(
+            PLAYBOOK_ID,
+            lambda _line: None,
+            scenario_id="provider_503",
+            output_path=report_path,
+            include_discovery=True,
+        )
+
+        assert code == 0
+        content = report_path.read_text(encoding="utf-8")
+        assert "## Discovery Plan" in content
+        assert "Current Confidence" in content

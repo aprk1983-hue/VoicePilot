@@ -19,6 +19,8 @@ from runtime.case_manager import CaseManager
 from runtime.engine_registry import EngineRegistry
 from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
+from discovery.planner_engine import PlannerEngine
+from discovery.planner_models import DiscoveryPlan
 from runtime.correlation_engine import (
     CorrelationEngine,
     CorrelationSummary,
@@ -303,6 +305,24 @@ class RuntimeEngine:
             )
 
         return summary
+
+    def plan_discovery(self, case_id: CaseId) -> DiscoveryPlan:
+        """Generate and store a discovery plan for the case."""
+        case = self._case_manager.load_case(case_id)
+        plan = PlannerEngine().evaluate_case(case)
+        case.discovery_plan = plan
+        self._decision_log.append_discovery_plan(case, plan=plan)
+        self._case_manager.save_case(case)
+
+        if self._logger:
+            self._logger.info(
+                "Discovery plan generated",
+                case_id=case_id,
+                request_count=len(plan.requests),
+                next_best_command=plan.next_best_command,
+            )
+
+        return plan
 
     def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
         """Generate a recommendation from the top hypothesis."""

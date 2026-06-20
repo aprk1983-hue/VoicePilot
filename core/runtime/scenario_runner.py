@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from domain.enums import InvestigationState
 from infrastructure.filesystem import FilesystemPlaybookRepository, InMemoryCaseRepository
 from infrastructure.yaml_loader import YamlLoader
 from runtime.evidence_collection import initialize_evidence_collection, submit_evidence
@@ -251,6 +252,47 @@ def run_playbook_scenarios(
     return results
 
 
+def run_scenario_to_correlation(
+    scenario_dir: Path,
+    *,
+    playbook_id: str = VP_CUBE_0001_PLAYBOOK_ID,
+    plugins_root: Path | None = None,
+    evidence_files: tuple[tuple[str, str], ...] | None = None,
+) -> tuple[RuntimeEngine, str]:
+    """Run a scenario through correlation and return the runtime and case ID."""
+    runtime = build_scenario_runtime_engine(plugins_root)
+    files = evidence_files or EVIDENCE_FILES
+
+    turn = runtime.start_investigation(playbook_id)
+    for answer in INTAKE_ANSWERS:
+        turn = runtime.submit_answer(turn.case_id, turn.question_id, answer)
+
+    case = runtime.case_manager.load_case(turn.case_id)
+    playbook = runtime.playbook_catalog.get(playbook_id)
+    initialize_evidence_collection(case, runtime.case_manager, playbook)
+    case = runtime.case_manager.load_case(case.case_id)
+
+    for command, filename in files:
+        raw_text = (scenario_dir / filename).read_text(encoding="utf-8")
+        submit_evidence(
+            case,
+            runtime.case_manager,
+            command,
+            raw_text,
+            decision_log=runtime.decision_log_engine,
+        )
+        case = runtime.case_manager.load_case(case.case_id)
+
+    if len(files) < len(EVIDENCE_FILES) and case.status == InvestigationState.COLLECTION:
+        runtime.case_manager.transition_state(case.case_id, InvestigationState.ANALYSIS)
+        case = runtime.case_manager.load_case(case.case_id)
+
+    runtime.analyze_case(case.case_id)
+    runtime.generate_hypotheses(case.case_id)
+    runtime.correlate_case(case.case_id)
+    return runtime, turn.case_id
+
+
 def _result_rows(results: list[ScenarioResult]) -> list[tuple[str, str, str, str, str]]:
     rows: list[tuple[str, str, str, str, str]] = []
     for result in results:
@@ -310,6 +352,7 @@ def format_scenario_markdown_report(
     *,
     scenarios_root: Path,
     generated_at: datetime | None = None,
+    discovery_plan_markdown: str | None = None,
 ) -> str:
     """Format scenario results as a Markdown report."""
     timestamp = generated_at or datetime.now(timezone.utc)
@@ -349,4 +392,6 @@ def format_scenario_markdown_report(
             )
             + " |"
         )
+    if discovery_plan_markdown:
+        lines.extend(["", "## Discovery Plan", "", discovery_plan_markdown.strip(), ""])
     return "\n".join(lines) + "\n"

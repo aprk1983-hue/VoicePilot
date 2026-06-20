@@ -98,6 +98,7 @@ def _closed_case(runtime_engine: RuntimeEngine):
     runtime_engine.analyze_case(case.case_id)
     runtime_engine.generate_hypotheses(case.case_id)
     runtime_engine.correlate_case(case.case_id)
+    runtime_engine.plan_discovery(case.case_id)
     runtime_engine.generate_recommendation(case.case_id)
     case = runtime_engine.case_manager.load_case(case.case_id)
 
@@ -189,6 +190,9 @@ class TestReportEngine:
         assert "Verify allow-connections sip to sip is configured" in markdown
         assert report.knowledge_assessment.available is True
         assert len(report.knowledge_assessment.matches) == 2
+        assert report.discovery_plan.available is True
+        assert "## Discovery Plan" in markdown
+        assert "_No additional evidence recommended._" in markdown
         assert any(
             match.pack_id == "CISCO-BP-SIP-UA-ENABLED"
             for match in report.knowledge_assessment.matches
@@ -227,6 +231,8 @@ class TestReportEngine:
         assert report.health_assessment.available is False
         assert "_No knowledge packs matched current case._" in markdown
         assert report.knowledge_assessment.available is False
+        assert report.discovery_plan.available is False
+        assert "_No discovery plan recorded._" in markdown
         assert "# VoicePilot Incident Report" in markdown
 
     def test_call_path_analysis_handles_no_paths_gracefully(self) -> None:

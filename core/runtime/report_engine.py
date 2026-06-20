@@ -177,6 +177,30 @@ class ReportVerification:
 
 
 @dataclass(frozen=True)
+class ReportDiscoveryRequest:
+    """Recommended evidence item included in an incident report."""
+
+    command: str
+    priority: str
+    reason: str
+    estimated_confidence_gain: float
+    estimated_minutes: int
+    optional: bool
+
+
+@dataclass(frozen=True)
+class ReportDiscoveryPlan:
+    """Discovery planning summary for an incident report."""
+
+    available: bool
+    current_confidence: float | None = None
+    estimated_final_confidence: float | None = None
+    remaining_uncertainty: float | None = None
+    next_best_command: str | None = None
+    requests: tuple[ReportDiscoveryRequest, ...] = ()
+
+
+@dataclass(frozen=True)
 class ReportTimelineEntry:
     """Chronological event included in an incident report."""
 
@@ -212,6 +236,7 @@ class IncidentReport:
     learning_root_cause: str | None
     learning_reusable_pattern: str | None
     learning_lessons: str | None
+    discovery_plan: ReportDiscoveryPlan
     timeline: tuple[ReportTimelineEntry, ...]
     closed_at: str | None
 
@@ -286,6 +311,7 @@ def build_incident_report(case: Case) -> IncidentReport:
         learning_root_cause=learning.root_cause if learning else None,
         learning_reusable_pattern=learning.reusable_pattern if learning else None,
         learning_lessons=learning.lessons_learned if learning else None,
+        discovery_plan=_build_discovery_plan(case),
         timeline=_build_timeline(case),
         closed_at=_format_timestamp(case.closed_at),
     )
@@ -398,6 +424,8 @@ def format_incident_report(report: IncidentReport) -> str:
         lines.append("**Recommended Actions:**")
         for action in report.recommendation_actions:
             lines.append(f"- {action}")
+
+    lines.extend(_format_discovery_plan_section(report.discovery_plan))
 
     lines.extend(["", "## Verification", ""])
     if report.verification_outcome:
@@ -898,6 +926,64 @@ def _build_timeline(case: Case) -> tuple[ReportTimelineEntry, ...]:
             )
         )
     return tuple(entries)
+
+
+def _build_discovery_plan(case: Case) -> ReportDiscoveryPlan:
+    plan = case.discovery_plan
+    if plan is None:
+        return ReportDiscoveryPlan(available=False)
+
+    return ReportDiscoveryPlan(
+        available=True,
+        current_confidence=plan.current_confidence,
+        estimated_final_confidence=plan.estimated_final_confidence,
+        remaining_uncertainty=plan.remaining_uncertainty,
+        next_best_command=plan.next_best_command,
+        requests=tuple(
+            ReportDiscoveryRequest(
+                command=request.command,
+                priority=request.priority.value,
+                reason=request.reason,
+                estimated_confidence_gain=request.estimated_confidence_gain,
+                estimated_minutes=request.estimated_minutes,
+                optional=request.optional,
+            )
+            for request in plan.requests
+        ),
+    )
+
+
+def _format_discovery_plan_section(plan: ReportDiscoveryPlan) -> list[str]:
+    lines = ["", "## Discovery Plan", ""]
+    if not plan.available:
+        lines.append("_No discovery plan recorded._")
+        return lines
+
+    if plan.current_confidence is not None:
+        lines.append(f"- **Current Confidence:** {int(plan.current_confidence)}%")
+    if plan.estimated_final_confidence is not None:
+        lines.append(
+            f"- **Estimated Final Confidence:** {int(plan.estimated_final_confidence)}%"
+        )
+    if plan.remaining_uncertainty is not None:
+        lines.append(f"- **Remaining Uncertainty:** {int(plan.remaining_uncertainty)}%")
+    if plan.next_best_command:
+        lines.append(f"- **Next Best Command:** `{plan.next_best_command}`")
+
+    lines.append("")
+    lines.append("**Recommended Evidence:**")
+    if plan.requests:
+        for index, request in enumerate(plan.requests, start=1):
+            optional = " (optional)" if request.optional else ""
+            lines.append(
+                f"{index}. `{request.command}` — **{request.priority}** — "
+                f"{request.reason} (+{int(request.estimated_confidence_gain)}%, "
+                f"{request.estimated_minutes} min){optional}"
+            )
+    else:
+        lines.append("_No additional evidence recommended._")
+
+    return lines
 
 
 def _format_timestamp(value: datetime | None) -> str | None:

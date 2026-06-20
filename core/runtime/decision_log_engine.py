@@ -29,6 +29,7 @@ HYPOTHESIS_ENGINE_NAME = "hypothesis-engine"
 RECOMMENDATION_ENGINE_NAME = "recommendation-engine"
 VERIFICATION_ENGINE_NAME = "verification-engine"
 LEARNING_ENGINE_NAME = "learning-engine"
+DISCOVERY_ENGINE_NAME = "discovery-engine"
 RUNTIME_ENGINE_NAME = "runtime-engine"
 
 
@@ -281,6 +282,35 @@ class DecisionLogEngine:
                 selected_hypothesis=learning_record.hypothesis_id,
                 supporting_findings=tuple(learning_record.evidence_finding_ids),
                 metadata={"learning_record_id": learning_record.learning_record_id},
+            ),
+        )
+
+    def append_discovery_plan(
+        self,
+        case: Case,
+        *,
+        plan,
+    ) -> DecisionLogEntry:
+        next_command = plan.next_best_command or "none"
+        return self.append(
+            case,
+            _build_entry(
+                case,
+                decision_type=DecisionLogEntryType.DISCOVERY_PLANNED,
+                title="Discovery plan generated",
+                description=(
+                    f"Discovery plan generated with {len(plan.requests)} recommendation(s). "
+                    f"Next best command: {next_command}."
+                ),
+                engine=DISCOVERY_ENGINE_NAME,
+                confidence_before=plan.current_confidence,
+                confidence_after=plan.estimated_final_confidence,
+                metadata={
+                    "next_best_command": plan.next_best_command,
+                    "request_count": len(plan.requests),
+                    "remaining_uncertainty": plan.remaining_uncertainty,
+                    "total_estimated_minutes": plan.total_estimated_minutes,
+                },
             ),
         )
 

@@ -60,12 +60,15 @@ from model.voice_graph import VoiceObject
 from parser.parser_context import ParserContext
 from runtime.knowledge_bootstrap import default_knowledge_engine
 from runtime.parser_bootstrap import build_default_parser_engine
+from discovery.planner_report import format_discovery_plan_markdown
 from runtime.scenario_runner import (
     default_scenarios_root,
     format_scenario_markdown_report,
     format_scenario_summary,
     format_summary_table,
+    resolve_scenario_dirs,
     run_playbook_scenarios,
+    run_scenario_to_correlation,
 )
 from runtime.exceptions import ScenarioNotFoundError, UnsupportedPlaybookScenarioError
 from shared.config import RuntimeConfig
@@ -575,6 +578,7 @@ def run_scenario_assessment(
     output_path: Path | None = None,
     generated_at: datetime | None = None,
     repo_root: Path | None = None,
+    include_discovery: bool = False,
 ) -> int:
     """Run scenario regression tests and optionally write a Markdown report."""
     root = repo_root or REPO_ROOT
@@ -605,11 +609,28 @@ def run_scenario_assessment(
     output_writer(format_scenario_summary(results))
 
     if output_path is not None:
+        discovery_plan_markdown: str | None = None
+        if include_discovery and scenario_id is not None:
+            scenario_dirs = resolve_scenario_dirs(
+                playbook_id,
+                scenario_id=scenario_id,
+                scenarios_root=scenarios_root,
+                repo_root=root,
+            )
+            if scenario_dirs:
+                runtime, case_id = run_scenario_to_correlation(scenario_dirs[0])
+                try:
+                    plan = runtime.plan_discovery(case_id)
+                    discovery_plan_markdown = format_discovery_plan_markdown(plan)
+                finally:
+                    runtime.shutdown()
+
         markdown = format_scenario_markdown_report(
             playbook_id,
             results,
             scenarios_root=resolved_root,
             generated_at=generated_at,
+            discovery_plan_markdown=discovery_plan_markdown,
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(markdown, encoding="utf-8")
@@ -628,7 +649,81 @@ def cmd_scenarios(args: argparse.Namespace) -> int:
         print,
         scenario_id=args.scenario,
         output_path=output_path,
+        include_discovery=args.include_discovery,
     )
+
+
+def run_plan_scenario(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    scenario_id: str | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run a scenario through correlation and print a discovery plan."""
+    root = repo_root or REPO_ROOT
+    try:
+        scenario_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=scenario_id,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+
+    if not scenario_dirs:
+        output_writer(
+            f"No scenarios found under {default_scenarios_root(playbook_id, repo_root=root)}"
+        )
+        return 1
+    if scenario_id is None and len(scenario_dirs) > 1:
+        output_writer("Error: specify --scenario when multiple scenarios are available.")
+        return 1
+
+    scenario_dir = scenario_dirs[0]
+    runtime, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id)
+    try:
+        plan = runtime.plan_discovery(case_id)
+        output_writer(format_discovery_plan_markdown(plan))
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_plan_scenario(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot plan-scenario <playbook_id>``."""
+    return run_plan_scenario(args.playbook_id, print, scenario_id=args.scenario)
+
+
+def run_plan_case(
+    case_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+) -> int:
+    """Generate and print a discovery plan for an in-memory case."""
+    runtime = build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        plan = runtime.plan_discovery(case_id)
+    except CaseNotFoundError:
+        output_writer(f"Error: Case not found: {case_id}")
+        return 1
+    else:
+        output_writer(format_discovery_plan_markdown(plan))
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot plan <case_id>``."""
+    plugins_root = Path(args.plugins_root) if args.plugins_root else None
+    return run_plan_case(args.case_id, print, plugins_root=plugins_root)
 
 
 _HEALTH_SEVERITY_ORDER = {
@@ -735,7 +830,42 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Write Markdown scenario report to the given file path",
     )
+    scenarios.add_argument(
+        "--include-discovery",
+        action="store_true",
+        help="Include discovery plan in Markdown scenario output (requires --scenario)",
+    )
     scenarios.set_defaults(func=cmd_scenarios)
+
+    plan = subparsers.add_parser(
+        "plan",
+        help="Generate a discovery plan for an in-memory case",
+    )
+    plan.add_argument(
+        "case_id",
+        help="Case ID (e.g. CASE-abc123)",
+    )
+    plan.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    plan.set_defaults(func=cmd_plan)
+
+    plan_scenario = subparsers.add_parser(
+        "plan-scenario",
+        help="Run a scenario through correlation and print a discovery plan",
+    )
+    plan_scenario.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    plan_scenario.add_argument(
+        "--scenario",
+        default=None,
+        help="Scenario folder to run (e.g. provider_503)",
+    )
+    plan_scenario.set_defaults(func=cmd_plan_scenario)
 
     return parser
 

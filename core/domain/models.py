@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from domain.enums import (
@@ -46,6 +46,9 @@ from shared.constants import (
 )
 from model.voice_graph import VoiceObject
 from shared.types import JsonDict
+
+if TYPE_CHECKING:
+    from discovery.planner_models import DiscoveryPlan
 
 
 def _utc_now() -> datetime:
@@ -637,6 +640,7 @@ class Case:
     investigation_steps: list[InvestigationStep] = field(default_factory=list)
     confidence_scores: list[ConfidenceScore] = field(default_factory=list)
     learning_record: LearningRecord | None = None
+    discovery_plan: DiscoveryPlan | None = None
     metadata: JsonDict = field(default_factory=dict)
 
     @classmethod
