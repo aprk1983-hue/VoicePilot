@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import importlib
 import subprocess
 import sys
 import tomllib
+from importlib.metadata import entry_points
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -17,14 +19,31 @@ def _package_find_config() -> dict:
 
 
 class TestPackaging:
-    def test_package_discovery_excludes_repo_knowledge_packs(self) -> None:
+    def test_package_discovery_includes_cli_sdk_and_plugins(self) -> None:
         config = _package_find_config()
 
-        assert config["where"] == ["core", "cli", "sdk"]
-        assert "." not in config["where"]
+        assert config["where"] == [".", "core"]
+        assert "cli*" in config["include"]
+        assert "sdk*" in config["include"]
+        assert "plugins*" in config["include"]
         assert "knowledge.packs*" in config["exclude"]
         assert (REPO_ROOT / "knowledge" / "packs").is_dir()
         assert not (REPO_ROOT / "core" / "knowledge" / "packs").exists()
+
+    def test_cli_import_succeeds(self) -> None:
+        module = importlib.import_module("cli.voicepilot_cli")
+
+        assert module.main is not None
+        assert callable(module.main)
+
+    def test_console_entry_point_target_exists(self) -> None:
+        scripts = entry_points(group="console_scripts")
+        voicepilot = next(script for script in scripts if script.name == "voicepilot")
+
+        assert voicepilot.value == "cli.voicepilot_cli:main"
+        module_name, _, attr = voicepilot.value.partition(":")
+        module = importlib.import_module(module_name)
+        assert hasattr(module, attr)
 
     def test_editable_install_succeeds(self) -> None:
         completed = subprocess.run(
@@ -37,12 +56,15 @@ class TestPackaging:
 
         assert completed.returncode == 0, completed.stderr or completed.stdout
 
-    def test_voicepilot_health_works_after_install(self) -> None:
+        top_level = (
+            REPO_ROOT / "voicepilot.egg-info" / "top_level.txt"
+        ).read_text(encoding="utf-8")
+        assert "cli" in top_level.splitlines()
+
+    def test_voicepilot_console_script_runs_health(self) -> None:
         completed = subprocess.run(
             [
-                sys.executable,
-                "-m",
-                "cli.voicepilot_cli",
+                "voicepilot",
                 "health",
                 "--samples",
                 str(SAMPLE_DIR),

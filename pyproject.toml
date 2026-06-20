@@ -27,15 +27,16 @@ testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.setuptools.packages.find]
-where = ["core", "cli", "sdk"]
+where = [".", "core"]
 include = [
+    "cli*",
+    "sdk*",
+    "plugins*",
     "domain*",
     "runtime*",
     "application*",
     "infrastructure*",
     "shared*",
-    "sdk*",
-    "cli*",
     "parser*",
     "model*",
     "topology*",
