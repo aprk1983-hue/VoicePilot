@@ -22,6 +22,7 @@ This works for editable installs and direct module execution.
 ```bash
 voicepilot health
 voicepilot health --samples examples/sample_evidence/parser
+voicepilot health --samples examples/sample_evidence/parser --output health_report.md
 ```
 
 ### Default samples
@@ -80,6 +81,7 @@ Coverage includes:
 
 ## Related
 
+- [Health CLI export v1](./health-cli-export-v1.md)
 - [Health framework v1](../sprint-6/health-framework-v1.md)
 - [Cisco knowledge pack v1](./cisco-knowledge-pack-v1.md)
 - [Parser framework](../parser-framework.md)

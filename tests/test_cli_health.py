@@ -146,3 +146,65 @@ class TestHealthCommand:
 
         assert code == 1
         assert "Sample evidence directory not found." in "\n".join(output)
+
+
+class TestHealthReportExport:
+    def test_output_writes_markdown_file(self, tmp_path: Path) -> None:
+        from cli.voicepilot_cli import run_health_assessment
+
+        report_path = tmp_path / "health_report.md"
+        output: list[str] = []
+        code = run_health_assessment(
+            SAMPLE_DIR,
+            output.append,
+            output_path=report_path,
+            generated_at=__import__("datetime").datetime(
+                2026, 6, 20, 12, 0, tzinfo=__import__("datetime").timezone.utc
+            ),
+        )
+
+        assert code == 0
+        assert report_path.exists()
+        assert "VoicePilot Health Assessment" in "\n".join(output)
+
+        content = report_path.read_text(encoding="utf-8")
+        assert content.startswith("# VoicePilot Health Assessment")
+        assert "**Score:**" in content
+        assert "/100" in content
+        assert "SIP-UA is disabled." in content
+        assert "CISCO-BP-SIP-UA-ENABLED" in content
+        assert "Enable SIP-UA and verify SIP registration before closing the incident." in content
+        assert "**Generated:** 2026-06-20T12:00:00+00:00" in content
+        assert f"**Samples:** {SAMPLE_DIR}" in content
+
+    def test_output_creates_parent_directory(self, tmp_path: Path) -> None:
+        from cli.voicepilot_cli import run_health_assessment
+
+        report_path = tmp_path / "reports" / "nested" / "health_report.md"
+        code = run_health_assessment(
+            SAMPLE_DIR,
+            lambda _line: None,
+            output_path=report_path,
+        )
+
+        assert code == 0
+        assert report_path.exists()
+        assert "# VoicePilot Health Assessment" in report_path.read_text(encoding="utf-8")
+
+    def test_main_supports_output_option(self, tmp_path: Path) -> None:
+        from cli.voicepilot_cli import main
+
+        report_path = tmp_path / "health_report.md"
+        code = main(
+            [
+                "health",
+                "--samples",
+                str(SAMPLE_DIR),
+                "--output",
+                str(report_path),
+            ]
+        )
+
+        assert code == 0
+        assert report_path.exists()
+        assert "**Score:**" in report_path.read_text(encoding="utf-8")

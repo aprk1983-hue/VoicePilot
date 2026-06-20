@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Callable
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -442,6 +443,64 @@ def format_health_cli_output(health_report, knowledge_report) -> str:
     return "\n".join(lines)
 
 
+def format_health_markdown_report(
+    health_report,
+    knowledge_report,
+    *,
+    samples_dir: Path,
+    generated_at: datetime | None = None,
+) -> str:
+    """Format health and knowledge evaluation as a Markdown report."""
+    status = _overall_health_status(health_report.fail_count, health_report.warn_count)
+    timestamp = (generated_at or datetime.now(timezone.utc)).isoformat()
+    lines = [
+        "# VoicePilot Health Assessment",
+        "",
+        f"- **Score:** {health_report.overall_score}/100",
+        f"- **Status:** {status}",
+        (
+            "- **Counts:** "
+            f"PASS {health_report.pass_count} | "
+            f"WARN {health_report.warn_count} | "
+            f"FAIL {health_report.fail_count}"
+        ),
+        "",
+        "## Top Findings",
+        "",
+    ]
+
+    top_findings = _top_health_findings(health_report.results)
+    if top_findings:
+        for finding in top_findings:
+            lines.append(
+                f"- {finding.severity.value.upper()} {finding.status.value.upper()} — {finding.message}"
+            )
+            if finding.recommendation:
+                lines.append(f"  - Recommendation: {finding.recommendation}")
+    else:
+        lines.append("_No health findings recorded._")
+
+    lines.extend(["", "## Matched Knowledge", ""])
+    if knowledge_report.matched_packs:
+        for match in knowledge_report.matched_packs:
+            lines.append(f"- **{match.pack_id}** — {match.title}")
+            if match.recommendations:
+                lines.append(f"  - Recommendation: {match.recommendations[0]}")
+    else:
+        lines.append("_No knowledge packs matched._")
+
+    lines.extend(
+        [
+            "",
+            "## Report Metadata",
+            "",
+            f"- **Generated:** {timestamp}",
+            f"- **Samples:** {samples_dir}",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def run_health_assessment(
     samples_dir: Path | None,
     output_writer: OutputWriter,
@@ -449,6 +508,8 @@ def run_health_assessment(
     parser_engine=None,
     health_engine: HealthEngine | None = None,
     knowledge_engine: KnowledgeEngine | None = None,
+    output_path: Path | None = None,
+    generated_at: datetime | None = None,
 ) -> int:
     """Run health and knowledge assessment against parser sample evidence."""
     if samples_dir is None or not samples_dir.is_dir():
@@ -476,13 +537,25 @@ def run_health_assessment(
 
     for line in format_health_cli_output(health_report, knowledge_report).splitlines():
         output_writer(line)
+
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown = format_health_markdown_report(
+            health_report,
+            knowledge_report,
+            samples_dir=samples_dir,
+            generated_at=generated_at,
+        )
+        output_path.write_text(markdown, encoding="utf-8")
+
     return 0
 
 
 def cmd_health(args: argparse.Namespace) -> int:
     """Handle ``voicepilot health``."""
     samples_dir = resolve_samples_dir(args.samples)
-    return run_health_assessment(samples_dir, print)
+    output_path = Path(args.output) if args.output else None
+    return run_health_assessment(samples_dir, print, output_path=output_path)
 
 
 _HEALTH_SEVERITY_ORDER = {
@@ -563,6 +636,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Parser sample evidence directory "
         "(default: examples/sample_evidence/parser when present)",
+    )
+    health.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown health report to the given file path",
     )
     health.set_defaults(func=cmd_health)
 
