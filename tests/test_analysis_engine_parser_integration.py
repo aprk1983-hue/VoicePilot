@@ -269,3 +269,54 @@ class TestAnalysisEngineParserIntegration:
 
         assert any(finding.signal == "sip_ua_disabled" for finding in findings)
         assert all(finding.metadata and finding.metadata["source"] == FINDING_SOURCE_V1 for finding in findings)
+
+    def test_voice_service_parser_links_voice_object_ids(
+        self,
+        parser_engine,
+    ) -> None:
+        from domain.enums import Severity
+        from domain.models import Case, Evidence
+        from domain.value_objects import AffectedScope, EvidenceQuality, EvidenceSource, PlatformRef, SymptomSummary
+
+        raw = (SAMPLE_DIR / "show_run_voice_service_voip_disabled.txt").read_text(encoding="utf-8")
+        case = Case.create(
+            title="Voice service CVOM integration",
+            symptom=SymptomSummary(summary="outbound calls fail"),
+            severity=Severity.HIGH,
+            business_impact="test",
+            affected_scope=AffectedScope(),
+            platform=PlatformRef(vendor="cisco", products=("CUBE",)),
+            playbook_id=PLAYBOOK_ID,
+        )
+        case.status = InvestigationState.ANALYSIS
+        case.evidence.append(
+            Evidence(
+                evidence_id="EVD-voip-config",
+                case_id=case.case_id,
+                type="cli_output",
+                title="CLI paste",
+                source=EvidenceSource(
+                    origin="cli_paste",
+                    collector="engineer",
+                    command="show run | sec voice service voip",
+                ),
+                collected_at=case.opened_at,
+                quality=EvidenceQuality(
+                    completeness=1.0,
+                    freshness=1.0,
+                    reliability=1.0,
+                    parseability=1.0,
+                    overall=1.0,
+                ),
+                raw_text=raw,
+            )
+        )
+
+        findings = AnalysisEngine(parser_engine=parser_engine).analyze(case)
+        disabled_finding = next(f for f in findings if f.signal == "sip_ua_disabled_by_config")
+
+        assert disabled_finding.metadata is not None
+        assert disabled_finding.metadata["source"] == FINDING_SOURCE_PARSER
+        assert disabled_finding.metadata["parser_id"] == "cisco_show_run_voice_service_voip"
+        assert "related_voice_object_ids" in disabled_finding.metadata
+        assert len(disabled_finding.metadata["related_voice_object_ids"]) == 1

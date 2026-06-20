@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from model.voice_service import VoiceService
 from parser.interfaces import CommandParser
 from parser.parser_context import ParserContext
 from parser.parser_result import ParserFinding, ParserResult
@@ -11,6 +12,7 @@ from shared.types import JsonDict
 
 COMMAND = "show run | sec voice service voip"
 VENDOR = "cisco"
+PARSER_ID = "cisco_show_run_voice_service_voip"
 PARSER_VERSION = "1.0.0"
 
 _DETECT_MARKERS: tuple[str, ...] = (
@@ -30,6 +32,18 @@ _BIND_CONTROL_RE = re.compile(
 )
 _BIND_MEDIA_RE = re.compile(
     r"bind\s+media\s+source-interface\s+(\S+)",
+    re.IGNORECASE,
+)
+_TRUSTED_IPV4_RE = re.compile(
+    r"ipv4\s+(\S+)\s+(\S+)",
+    re.IGNORECASE,
+)
+_NO_SUPPLEMENTARY_MOVED_RE = re.compile(
+    r"no\s+supplementary-service\s+sip\s+moved-temporarily",
+    re.IGNORECASE,
+)
+_NO_SUPPLEMENTARY_REFER_RE = re.compile(
+    r"no\s+supplementary-service\s+sip\s+refer",
     re.IGNORECASE,
 )
 _NO_SIP_RE = re.compile(r"^\s*no\s+sip\b", re.IGNORECASE | re.MULTILINE)
@@ -72,10 +86,21 @@ class CiscoShowRunVoiceServiceVoipParser(CommandParser):
         findings = self.extract_findings(structured_data, context)
         metadata = self.extract_metadata(structured_data, context)
         confidence = _calculate_confidence(structured_data, errors)
+        hostname = _extract_hostname(raw_text) or context.hostname
+        voice_objects = (
+            self.extract_voice_objects(
+                structured_data,
+                context,
+                hostname=hostname,
+                confidence=confidence,
+            )
+            if not errors
+            else []
+        )
 
         return ParserResult(
             command=self.command,
-            hostname=_extract_hostname(raw_text) or context.hostname,
+            hostname=hostname,
             platform=context.platform,
             ios_version=context.ios_version,
             parser_version=self.parser_version,
@@ -84,6 +109,7 @@ class CiscoShowRunVoiceServiceVoipParser(CommandParser):
             metadata=metadata,
             structured_data=structured_data,
             findings=findings,
+            voice_objects=voice_objects,
             confidence=confidence,
         )
 
@@ -195,6 +221,47 @@ class CiscoShowRunVoiceServiceVoipParser(CommandParser):
 
         return findings
 
+    def extract_voice_objects(
+        self,
+        structured_data: JsonDict,
+        context: ParserContext,
+        *,
+        hostname: str | None,
+        confidence: float,
+    ) -> list[VoiceService]:
+        """Build canonical VoiceService object from structured config data."""
+        supplementary = structured_data.get("supplementary_services")
+        supplementary_tuple: tuple[str, ...] = ()
+        if isinstance(supplementary, list):
+            supplementary_tuple = tuple(str(item) for item in supplementary)
+
+        trusted_ips = structured_data.get("trusted_ips")
+        trusted_tuple: tuple[str, ...] = ()
+        if isinstance(trusted_ips, list):
+            trusted_tuple = tuple(str(item) for item in trusted_ips)
+
+        voice_service = VoiceService.create(
+            vendor=context.vendor,
+            platform=context.platform or "unknown",
+            hostname=hostname or context.hostname or "unknown",
+            source_parser=PARSER_ID,
+            source_command=self.command,
+            source_evidence_id=context.evidence_id or "",
+            allow_connections=structured_data.get("allow_connections_sip_to_sip"),
+            bind_control=structured_data.get("bind_control_interface"),
+            bind_media=structured_data.get("bind_media_interface"),
+            trusted_ips=trusted_tuple,
+            early_offer=structured_data.get("early_offer_forced"),
+            options_ping=structured_data.get("options_ping_present"),
+            supplementary_services=supplementary_tuple,
+            confidence=confidence,
+            metadata={
+                "sip_ua_disabled_by_config": structured_data.get("sip_ua_disabled_by_config"),
+                "sip_section_present": structured_data.get("sip_section_present"),
+            },
+        )
+        return [voice_service]
+
     def extract_metadata(
         self,
         structured_data: JsonDict,
@@ -222,6 +289,8 @@ class CiscoShowRunVoiceServiceVoipParser(CommandParser):
 
         bind_control_match = _BIND_CONTROL_RE.search(combined)
         bind_media_match = _BIND_MEDIA_RE.search(combined)
+        trusted_ips = _parse_trusted_ips(combined)
+        supplementary_services = _parse_supplementary_services(combined)
 
         return {
             "voice_service_voip_present": voice_service_voip_present,
@@ -229,10 +298,16 @@ class CiscoShowRunVoiceServiceVoipParser(CommandParser):
             "sip_ua_disabled_by_config": sip_ua_disabled_by_config,
             "bind_control_interface": bind_control_match.group(1) if bind_control_match else None,
             "bind_media_interface": bind_media_match.group(1) if bind_media_match else None,
-            "trusted_ip_list_present": "ip address trusted list" in lower,
-            "allow_connections_sip_to_sip": "allow-connections sip to sip" in lower,
-            "early_offer_forced": "forced" in lower and "early-offer" in lower,
-            "options_ping_present": "options-ping" in lower,
+            "trusted_ip_list_present": bool(trusted_ips),
+            "trusted_ips": trusted_ips,
+            "allow_connections_sip_to_sip": (
+                True if "allow-connections sip to sip" in lower else None
+            ),
+            "early_offer_forced": (
+                True if "forced" in lower and "early-offer" in lower else None
+            ),
+            "options_ping_present": True if "options-ping" in lower else None,
+            "supplementary_services": supplementary_services,
             "raw_voice_service_lines": raw_voice_service_lines,
         }
 
@@ -312,4 +387,22 @@ def _calculate_confidence(structured_data: JsonDict, errors: list[str]) -> float
         score += 10.0
     if structured_data.get("trusted_ip_list_present"):
         score += 5.0
+    if structured_data.get("supplementary_services"):
+        score += 5.0
     return min(score, 100.0)
+
+
+def _parse_trusted_ips(combined: str) -> list[str]:
+    trusted_ips: list[str] = []
+    for match in _TRUSTED_IPV4_RE.finditer(combined):
+        trusted_ips.append(f"{match.group(1)} {match.group(2)}")
+    return trusted_ips
+
+
+def _parse_supplementary_services(combined: str) -> list[str]:
+    services: list[str] = []
+    if _NO_SUPPLEMENTARY_MOVED_RE.search(combined):
+        services.append("no supplementary-service sip moved-temporarily")
+    if _NO_SUPPLEMENTARY_REFER_RE.search(combined):
+        services.append("no supplementary-service sip refer")
+    return services
