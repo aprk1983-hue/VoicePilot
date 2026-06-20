@@ -49,6 +49,7 @@ from shared.types import JsonDict
 
 if TYPE_CHECKING:
     from discovery.planner_models import DiscoveryPlan
+    from investigation_quality.quality_models import InvestigationQualityReport
 
 
 def _utc_now() -> datetime:
@@ -641,6 +642,7 @@ class Case:
     confidence_scores: list[ConfidenceScore] = field(default_factory=list)
     learning_record: LearningRecord | None = None
     discovery_plan: DiscoveryPlan | None = None
+    investigation_quality_report: InvestigationQualityReport | None = None
     metadata: JsonDict = field(default_factory=dict)
 
     @classmethod

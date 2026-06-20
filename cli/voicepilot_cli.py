@@ -61,6 +61,7 @@ from parser.parser_context import ParserContext
 from runtime.knowledge_bootstrap import default_knowledge_engine
 from runtime.parser_bootstrap import build_default_parser_engine
 from discovery.planner_report import format_discovery_plan_markdown
+from investigation_quality.quality_report import format_investigation_quality_markdown
 from runtime.scenario_runner import (
     default_scenarios_root,
     format_scenario_markdown_report,
@@ -579,6 +580,7 @@ def run_scenario_assessment(
     generated_at: datetime | None = None,
     repo_root: Path | None = None,
     include_discovery: bool = False,
+    include_quality: bool = False,
 ) -> int:
     """Run scenario regression tests and optionally write a Markdown report."""
     root = repo_root or REPO_ROOT
@@ -610,7 +612,8 @@ def run_scenario_assessment(
 
     if output_path is not None:
         discovery_plan_markdown: str | None = None
-        if include_discovery and scenario_id is not None:
+        investigation_quality_markdown: str | None = None
+        if (include_discovery or include_quality) and scenario_id is not None:
             scenario_dirs = resolve_scenario_dirs(
                 playbook_id,
                 scenario_id=scenario_id,
@@ -620,8 +623,14 @@ def run_scenario_assessment(
             if scenario_dirs:
                 runtime, case_id = run_scenario_to_correlation(scenario_dirs[0])
                 try:
-                    plan = runtime.plan_discovery(case_id)
-                    discovery_plan_markdown = format_discovery_plan_markdown(plan)
+                    if include_discovery:
+                        plan = runtime.plan_discovery(case_id)
+                        discovery_plan_markdown = format_discovery_plan_markdown(plan)
+                    if include_quality:
+                        quality_report = runtime.evaluate_investigation_quality(case_id)
+                        investigation_quality_markdown = format_investigation_quality_markdown(
+                            quality_report
+                        )
                 finally:
                     runtime.shutdown()
 
@@ -631,6 +640,7 @@ def run_scenario_assessment(
             scenarios_root=resolved_root,
             generated_at=generated_at,
             discovery_plan_markdown=discovery_plan_markdown,
+            investigation_quality_markdown=investigation_quality_markdown,
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(markdown, encoding="utf-8")
@@ -650,6 +660,7 @@ def cmd_scenarios(args: argparse.Namespace) -> int:
         scenario_id=args.scenario,
         output_path=output_path,
         include_discovery=args.include_discovery,
+        include_quality=args.include_quality,
     )
 
 
@@ -724,6 +735,79 @@ def cmd_plan(args: argparse.Namespace) -> int:
     """Handle ``voicepilot plan <case_id>``."""
     plugins_root = Path(args.plugins_root) if args.plugins_root else None
     return run_plan_case(args.case_id, print, plugins_root=plugins_root)
+
+
+def run_quality_scenario(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    scenario_id: str | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run a scenario through correlation and print investigation quality."""
+    root = repo_root or REPO_ROOT
+    try:
+        scenario_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=scenario_id,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+
+    if not scenario_dirs:
+        output_writer(
+            f"No scenarios found under {default_scenarios_root(playbook_id, repo_root=root)}"
+        )
+        return 1
+    if scenario_id is None and len(scenario_dirs) > 1:
+        output_writer("Error: specify --scenario when multiple scenarios are available.")
+        return 1
+
+    scenario_dir = scenario_dirs[0]
+    runtime, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id)
+    try:
+        report = runtime.evaluate_investigation_quality(case_id)
+        output_writer(format_investigation_quality_markdown(report))
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_quality_scenario(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot quality-scenario <playbook_id>``."""
+    return run_quality_scenario(args.playbook_id, print, scenario_id=args.scenario)
+
+
+def run_quality_case(
+    case_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+) -> int:
+    """Evaluate and print investigation quality for an in-memory case."""
+    runtime = build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        report = runtime.evaluate_investigation_quality(case_id)
+    except CaseNotFoundError:
+        output_writer(f"Error: Case not found: {case_id}")
+        return 1
+    else:
+        output_writer(format_investigation_quality_markdown(report))
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_quality(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot quality <case_id>``."""
+    plugins_root = Path(args.plugins_root) if args.plugins_root else None
+    return run_quality_case(args.case_id, print, plugins_root=plugins_root)
 
 
 _HEALTH_SEVERITY_ORDER = {
@@ -835,6 +919,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Include discovery plan in Markdown scenario output (requires --scenario)",
     )
+    scenarios.add_argument(
+        "--include-quality",
+        action="store_true",
+        help="Include investigation quality in Markdown scenario output (requires --scenario)",
+    )
     scenarios.set_defaults(func=cmd_scenarios)
 
     plan = subparsers.add_parser(
@@ -866,6 +955,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Scenario folder to run (e.g. provider_503)",
     )
     plan_scenario.set_defaults(func=cmd_plan_scenario)
+
+    quality = subparsers.add_parser(
+        "quality",
+        help="Evaluate investigation quality for an in-memory case",
+    )
+    quality.add_argument(
+        "case_id",
+        help="Case ID (e.g. CASE-abc123)",
+    )
+    quality.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    quality.set_defaults(func=cmd_quality)
+
+    quality_scenario = subparsers.add_parser(
+        "quality-scenario",
+        help="Run a scenario through correlation and print investigation quality",
+    )
+    quality_scenario.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    quality_scenario.add_argument(
+        "--scenario",
+        default=None,
+        help="Scenario folder to run (e.g. provider_503)",
+    )
+    quality_scenario.set_defaults(func=cmd_quality_scenario)
 
     return parser
 

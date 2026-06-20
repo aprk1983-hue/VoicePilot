@@ -201,6 +201,30 @@ class ReportDiscoveryPlan:
 
 
 @dataclass(frozen=True)
+class ReportInvestigationQualityMetric:
+    """Investigation quality metric included in an incident report."""
+
+    metric_name: str
+    score: int
+    max_score: int
+    status: str
+    summary: str
+    recommendations: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ReportInvestigationQuality:
+    """Investigation quality summary for an incident report."""
+
+    available: bool
+    overall_score: int | None = None
+    overall_status: str | None = None
+    ready_for_recommendation: bool | None = None
+    ready_for_case_closure: bool | None = None
+    metrics: tuple[ReportInvestigationQualityMetric, ...] = ()
+
+
+@dataclass(frozen=True)
 class ReportTimelineEntry:
     """Chronological event included in an incident report."""
 
@@ -237,6 +261,7 @@ class IncidentReport:
     learning_reusable_pattern: str | None
     learning_lessons: str | None
     discovery_plan: ReportDiscoveryPlan
+    investigation_quality: ReportInvestigationQuality
     timeline: tuple[ReportTimelineEntry, ...]
     closed_at: str | None
 
@@ -312,6 +337,7 @@ def build_incident_report(case: Case) -> IncidentReport:
         learning_reusable_pattern=learning.reusable_pattern if learning else None,
         learning_lessons=learning.lessons_learned if learning else None,
         discovery_plan=_build_discovery_plan(case),
+        investigation_quality=_build_investigation_quality(case),
         timeline=_build_timeline(case),
         closed_at=_format_timestamp(case.closed_at),
     )
@@ -426,6 +452,7 @@ def format_incident_report(report: IncidentReport) -> str:
             lines.append(f"- {action}")
 
     lines.extend(_format_discovery_plan_section(report.discovery_plan))
+    lines.extend(_format_investigation_quality_section(report.investigation_quality))
 
     lines.extend(["", "## Verification", ""])
     if report.verification_outcome:
@@ -984,6 +1011,63 @@ def _format_discovery_plan_section(plan: ReportDiscoveryPlan) -> list[str]:
         lines.append("_No additional evidence recommended._")
 
     return lines
+
+
+def _build_investigation_quality(case: Case) -> ReportInvestigationQuality:
+    report = case.investigation_quality_report
+    if report is None:
+        return ReportInvestigationQuality(available=False)
+
+    return ReportInvestigationQuality(
+        available=True,
+        overall_score=report.overall_score,
+        overall_status=report.overall_status,
+        ready_for_recommendation=report.ready_for_recommendation,
+        ready_for_case_closure=report.ready_for_case_closure,
+        metrics=tuple(
+            ReportInvestigationQualityMetric(
+                metric_name=metric.metric_name,
+                score=metric.score,
+                max_score=metric.max_score,
+                status=metric.status,
+                summary=metric.summary,
+                recommendations=metric.recommendations,
+            )
+            for metric in report.metric_results
+        ),
+    )
+
+
+def _format_investigation_quality_section(
+    quality: ReportInvestigationQuality,
+) -> list[str]:
+    from datetime import datetime, timezone
+
+    from investigation_quality.quality_models import InvestigationQualityReport, QualityMetricResult
+    from investigation_quality.quality_report import format_investigation_quality_report_section
+
+    if not quality.available:
+        return ["", "## Investigation Quality", "", "_No investigation quality report recorded._"]
+
+    report = InvestigationQualityReport(
+        overall_score=quality.overall_score or 0,
+        overall_status=quality.overall_status or "UNKNOWN",
+        metric_results=tuple(
+            QualityMetricResult(
+                metric_name=metric.metric_name,
+                score=metric.score,
+                max_score=metric.max_score,
+                status=metric.status,
+                summary=metric.summary,
+                recommendations=metric.recommendations,
+            )
+            for metric in quality.metrics
+        ),
+        ready_for_recommendation=bool(quality.ready_for_recommendation),
+        ready_for_case_closure=bool(quality.ready_for_case_closure),
+        generated_at=datetime.now(timezone.utc),
+    )
+    return format_investigation_quality_report_section(report)
 
 
 def _format_timestamp(value: datetime | None) -> str | None:

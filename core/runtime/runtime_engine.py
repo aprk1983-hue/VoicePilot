@@ -21,6 +21,8 @@ from runtime.event_bus import EventBus
 from runtime.exceptions import CaseNotFoundError, InvalidInvestigationStateError, PlaybookIdNotFoundError, QuestionNotFoundError
 from discovery.planner_engine import PlannerEngine
 from discovery.planner_models import DiscoveryPlan
+from investigation_quality.quality_engine import InvestigationQualityEngine
+from investigation_quality.quality_models import InvestigationQualityReport
 from runtime.correlation_engine import (
     CorrelationEngine,
     CorrelationSummary,
@@ -323,6 +325,26 @@ class RuntimeEngine:
             )
 
         return plan
+
+    def evaluate_investigation_quality(self, case_id: CaseId) -> InvestigationQualityReport:
+        """Evaluate and store investigation quality for the case."""
+        case = self._case_manager.load_case(case_id)
+        if case.discovery_plan is None:
+            case.discovery_plan = PlannerEngine().evaluate_case(case)
+
+        report = InvestigationQualityEngine().evaluate_case(case)
+        case.investigation_quality_report = report
+        self._case_manager.save_case(case)
+
+        if self._logger:
+            self._logger.info(
+                "Investigation quality evaluated",
+                case_id=case_id,
+                overall_score=report.overall_score,
+                overall_status=report.overall_status,
+            )
+
+        return report
 
     def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
         """Generate a recommendation from the top hypothesis."""

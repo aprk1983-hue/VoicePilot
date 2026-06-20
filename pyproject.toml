@@ -44,5 +44,6 @@ include = [
     "knowledge*",
     "configuration*",
     "discovery*",
+    "investigation_quality*",
 ]
 exclude = ["knowledge.packs*"]
