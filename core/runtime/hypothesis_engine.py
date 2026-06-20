@@ -80,7 +80,7 @@ VP_CUBE_0001_RULES: tuple[HypothesisRule, ...] = (
     HypothesisRule(
         rule_id="HYP-488-CODEC",
         title="Codec / SDP negotiation issue",
-        confidence=78.0,
+        confidence=82.0,
         required_signals=frozenset({"sip_488_detected"}),
         supporting_signals=frozenset({"sip_488_detected"}),
         explanation="SIP 488 indicates media negotiation failure between endpoints.",
@@ -103,6 +103,19 @@ VP_CUBE_0001_RULES: tuple[HypothesisRule, ...] = (
         supporting_signals=frozenset({"sip_403_detected"}),
         explanation="SIP 403 indicates provider-side rejection or authorization policy enforcement.",
         next_best_action="Validate caller ID presentation and provider authorization policy.",
+    ),
+    HypothesisRule(
+        rule_id="HYP-DIAL-PEER-DOWN",
+        title="Outbound dial peer administratively down/out of service",
+        confidence=86.0,
+        required_signals=frozenset({"dial_peer_down"}),
+        supporting_signals=frozenset({"dial_peer_down", "dial_peer_out_of_service"}),
+        explanation=(
+            "Outbound dial-peer summary shows administratively down or out-of-service peers."
+        ),
+        next_best_action=(
+            "Remove shutdown on outbound dial-peers and verify peer operational state."
+        ),
     ),
     HypothesisRule(
         rule_id="HYP-SIP-UA-DISABLED",

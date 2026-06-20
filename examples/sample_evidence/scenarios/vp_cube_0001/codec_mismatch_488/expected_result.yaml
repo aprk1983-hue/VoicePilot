@@ -1,0 +1,5 @@
+scenario_id: codec_mismatch_488
+expected_root_cause: "Codec / SDP negotiation issue"
+expected_root_cause_aliases:
+  - "Codec/media negotiation mismatch"
+min_confidence: 80

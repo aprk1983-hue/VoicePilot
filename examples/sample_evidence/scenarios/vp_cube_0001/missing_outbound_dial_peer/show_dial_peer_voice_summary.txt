@@ -1,0 +1,1 @@
+cube-edge-01#show dial-peer voice summary

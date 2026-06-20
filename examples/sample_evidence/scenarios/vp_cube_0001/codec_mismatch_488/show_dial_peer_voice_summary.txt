@@ -1,0 +1,8 @@
+cube-edge-01#show dial-peer voice summary
+dial-peer 1 voip up
+ destination-pattern 9T
+ peer tag 1
+  session target ipv4:192.0.2.10
+dial-peer 2 voip up
+ destination-pattern 8011
+  session target ipv4:198.51.100.20

@@ -1,0 +1,7 @@
+*Mar 10 14:25:44.456: //-1/xxxxxxxxxxxx/SIP/Msg/ccsipDisplayMsg:
+Received:
+SIP/2.0 404 Not Found
+From: <sip:1001@10.1.1.10>;tag=abc404
+To: <sip:15559876543@10.1.1.20>;tag=xyz404
+Call-ID: ccsip-404-shutdown-001@cube-edge-01
+CSeq: 101 INVITE

@@ -1,0 +1,6 @@
+scenario_id: provider_503
+expected_root_cause: "Provider or SIP trunk service issue"
+expected_root_cause_aliases:
+  - "Provider/trunk rejection"
+  - "upstream service issue"
+min_confidence: 85

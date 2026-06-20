@@ -131,7 +131,7 @@ class TestHypothesisEngineRules:
         hypotheses = HypothesisEngine().generate(case)
 
         assert any(h.title == "Codec / SDP negotiation issue" for h in hypotheses)
-        assert next(h for h in hypotheses if h.title == "Codec / SDP negotiation issue").confidence == 78.0
+        assert next(h for h in hypotheses if h.title == "Codec / SDP negotiation issue").confidence == 82.0
 
     def test_sip_ua_disabled_creates_high_confidence_hypothesis(self) -> None:
         case = _case_with_signals("CASE-UA", ["sip_ua_disabled"])

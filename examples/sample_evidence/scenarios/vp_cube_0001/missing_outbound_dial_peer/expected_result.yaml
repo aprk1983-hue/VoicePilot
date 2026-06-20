@@ -1,0 +1,6 @@
+scenario_id: missing_outbound_dial_peer
+expected_root_cause: "Missing or unmatched outbound dial-peer"
+expected_root_cause_aliases:
+  - "No matching outbound dial peer"
+  - "dial plan routing issue"
+min_confidence: 85

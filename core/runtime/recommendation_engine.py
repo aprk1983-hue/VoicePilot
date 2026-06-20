@@ -125,6 +125,19 @@ VP_CUBE_0001_ACTION_PLANS: dict[str, HypothesisActionPlan] = {
         ),
         command="show run | sec dial-peer",
     ),
+    "HYP-DIAL-PEER-DOWN": HypothesisActionPlan(
+        recommended_actions=(
+            "Review show dial-peer voice summary for shutdown or out-of-service peers",
+            "Remove shutdown from affected outbound dial-peers",
+            "Verify dial-peer session target and provider reachability",
+        ),
+        verification_steps=(
+            "Dial-peer summary shows outbound peers in UP state",
+            "Outbound test call routes without local 404/503",
+        ),
+        command="show dial-peer voice summary",
+        requires_engineer_approval=True,
+    ),
     "HYP-404-MISSING": HypothesisActionPlan(
         recommended_actions=(
             "Collect show run | sec dial-peer for outbound peers",

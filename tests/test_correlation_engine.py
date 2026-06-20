@@ -155,7 +155,7 @@ class TestCorrelationEngineRules:
             hypothesis for hypothesis in case.hypotheses if hypothesis.title == HYP_CODEC_TITLE
         )
 
-        assert codec.confidence == 78.0
+        assert codec.confidence == 82.0
         correlation = next(
             item for item in summary.correlations if item.rule_id == "codec_negotiation_failure_signal"
         )

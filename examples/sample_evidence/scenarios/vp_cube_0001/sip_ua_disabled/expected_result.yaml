@@ -1,0 +1,3 @@
+scenario_id: sip_ua_disabled
+expected_root_cause: "CUBE SIP user agent disabled"
+min_confidence: 98

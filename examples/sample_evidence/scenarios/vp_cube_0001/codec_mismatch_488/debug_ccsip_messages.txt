@@ -1,0 +1,15 @@
+*Mar 10 14:30:02.789: //-1/xxxxxxxxxxxx/SIP/Msg/ccsipDisplayMsg:
+Received:
+SIP/2.0 488 Not Acceptable Here
+From: <sip:1001@10.1.1.10>;tag=abc488
+To: <sip:15551112222@10.1.1.20>;tag=xyz488
+Call-ID: ccsip-488-demo-001@cube-edge-01
+CSeq: 103 INVITE
+---
+*Mar 10 14:30:02.812: //-1/xxxxxxxxxxxx/SIP/Msg/ccsipDisplayMsg:
+Sent:
+BYE sip:15551112222@10.1.1.20 SIP/2.0
+From: <sip:1001@10.1.1.10>;tag=abc488
+To: <sip:15551112222@10.1.1.20>;tag=xyz488
+Call-ID: ccsip-488-demo-001@cube-edge-01
+CSeq: 104 BYE

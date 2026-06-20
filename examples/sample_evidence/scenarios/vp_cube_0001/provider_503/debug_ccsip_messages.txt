@@ -1,0 +1,8 @@
+*Mar 10 14:22:11.123: //-1/xxxxxxxxxxxx/SIP/Msg/ccsipDisplayMsg:
+Received:
+SIP/2.0 503 Service Unavailable
+Via: SIP/2.0/UDP 10.1.1.10:5060
+From: <sip:1001@10.1.1.10>;tag=abc123
+To: <sip:15551234567@10.1.1.20>;tag=xyz789
+Call-ID: ccsip-503-provider-001@cube-edge-01
+CSeq: 102 INVITE

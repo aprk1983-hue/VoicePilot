@@ -23,6 +23,10 @@ HYP_SIP_UA_DISABLED_TITLE = "CUBE SIP user agent disabled"
 HYP_PROVIDER_TITLE = "Provider or SIP trunk service issue"
 HYP_MISSING_DIAL_PEER_TITLE = "Missing or unmatched outbound dial-peer"
 HYP_CODEC_TITLE = "Codec / SDP negotiation issue"
+HYP_DIAL_PEER_DOWN_TITLE = "Outbound dial peer administratively down/out of service"
+FINDING_DIAL_PEER_DOWN = "dial_peer_down"
+FINDING_DIAL_PEER_CONFIG_PRESENT = "dial_peer_config_present"
+FINDING_SIP_TRACE_PRESENT = "sip_trace_present"
 
 CORRELATION_TYPE_REINFORCEMENT = "reinforcement"
 CORRELATION_TYPE_CONTRADICTION = "contradiction"
@@ -107,6 +111,35 @@ VP_CUBE_0001_CORRELATION_RULES: tuple[CorrelationRule, ...] = (
         confidence_delta=0.0,
         explanation=(
             "SIP 488 indicates codec negotiation failure; SDP details are required to confirm."
+        ),
+    ),
+    CorrelationRule(
+        rule_id="provider_503_healthy_cube",
+        correlation_type=CORRELATION_TYPE_REINFORCEMENT,
+        required_codes=frozenset(
+            {
+                FINDING_SIP_503_DETECTED,
+                FINDING_SIP_TRACE_PRESENT,
+                FINDING_SIP_UA_ENABLED,
+                FINDING_DIAL_PEER_CONFIG_PRESENT,
+            }
+        ),
+        hypothesis_title=HYP_PROVIDER_TITLE,
+        confidence_delta=12.0,
+        explanation=(
+            "SIP 503 with healthy CUBE dial-plan and SIP-UA points to provider or trunk issue."
+        ),
+    ),
+    CorrelationRule(
+        rule_id="dial_peer_down_routing_failure",
+        correlation_type=CORRELATION_TYPE_REINFORCEMENT,
+        required_codes=frozenset(
+            {FINDING_SIP_404_DETECTED, FINDING_DIAL_PEER_DOWN}
+        ),
+        hypothesis_title=HYP_DIAL_PEER_DOWN_TITLE,
+        confidence_delta=5.0,
+        explanation=(
+            "SIP 404 with administratively down dial-peers reinforces local peer availability issue."
         ),
     ),
 )

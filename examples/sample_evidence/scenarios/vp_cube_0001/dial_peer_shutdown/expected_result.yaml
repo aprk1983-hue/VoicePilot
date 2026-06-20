@@ -1,0 +1,3 @@
+scenario_id: dial_peer_shutdown
+expected_root_cause: "Outbound dial peer administratively down/out of service"
+min_confidence: 85
