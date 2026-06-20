@@ -60,6 +60,14 @@ from model.voice_graph import VoiceObject
 from parser.parser_context import ParserContext
 from runtime.knowledge_bootstrap import default_knowledge_engine
 from runtime.parser_bootstrap import build_default_parser_engine
+from runtime.scenario_runner import (
+    default_scenarios_root,
+    format_scenario_markdown_report,
+    format_scenario_summary,
+    format_summary_table,
+    run_playbook_scenarios,
+)
+from runtime.exceptions import ScenarioNotFoundError, UnsupportedPlaybookScenarioError
 from shared.config import RuntimeConfig
 from topology.topology_builder import TopologyBuilder
 
@@ -558,6 +566,71 @@ def cmd_health(args: argparse.Namespace) -> int:
     return run_health_assessment(samples_dir, print, output_path=output_path)
 
 
+def run_scenario_assessment(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    scenario_id: str | None = None,
+    scenarios_root: Path | None = None,
+    output_path: Path | None = None,
+    generated_at: datetime | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run scenario regression tests and optionally write a Markdown report."""
+    root = repo_root or REPO_ROOT
+    try:
+        resolved_root = scenarios_root or default_scenarios_root(playbook_id, repo_root=root)
+        results = run_playbook_scenarios(
+            playbook_id,
+            scenario_id=scenario_id,
+            scenarios_root=scenarios_root,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+
+    if not results:
+        output_writer(f"No scenarios found under {resolved_root}")
+        return 1
+
+    output_writer(f"VoicePilot Scenario Regression — {playbook_id}")
+    output_writer("")
+    for line in format_summary_table(results).splitlines():
+        output_writer(line)
+    output_writer("")
+    output_writer(format_scenario_summary(results))
+
+    if output_path is not None:
+        markdown = format_scenario_markdown_report(
+            playbook_id,
+            results,
+            scenarios_root=resolved_root,
+            generated_at=generated_at,
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(markdown, encoding="utf-8")
+        output_writer("")
+        output_writer(f"Scenario report saved: {output_path}")
+
+    failures = [result for result in results if not result.passed]
+    return 1 if failures else 0
+
+
+def cmd_scenarios(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot scenarios <playbook_id>``."""
+    output_path = Path(args.output) if args.output else None
+    return run_scenario_assessment(
+        args.playbook_id,
+        print,
+        scenario_id=args.scenario,
+        output_path=output_path,
+    )
+
+
 _HEALTH_SEVERITY_ORDER = {
     HealthSeverity.CRITICAL: 0,
     HealthSeverity.HIGH: 1,
@@ -643,6 +716,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write Markdown health report to the given file path",
     )
     health.set_defaults(func=cmd_health)
+
+    scenarios = subparsers.add_parser(
+        "scenarios",
+        help="Run deterministic scenario regression tests for a playbook",
+    )
+    scenarios.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    scenarios.add_argument(
+        "--scenario",
+        default=None,
+        help="Run only the named scenario folder (e.g. provider_503)",
+    )
+    scenarios.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown scenario report to the given file path",
+    )
+    scenarios.set_defaults(func=cmd_scenarios)
 
     return parser
 

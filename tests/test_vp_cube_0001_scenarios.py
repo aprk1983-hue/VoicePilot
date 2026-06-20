@@ -15,21 +15,24 @@ if str(REPO_ROOT / "sdk") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "sdk"))
 
 from domain.enums import InvestigationState
-from examples.run_vp_cube_0001_scenarios import (
+from runtime.evidence_collection import initialize_evidence_collection, submit_evidence
+from runtime.report_engine import format_incident_report
+from runtime.scenario_runner import (
     EVIDENCE_FILES,
     INTAKE_ANSWERS,
-    PLAYBOOK_ID,
-    SCENARIOS_ROOT,
-    build_runtime_engine,
+    VP_CUBE_0001_PLAYBOOK_ID,
+    build_scenario_runtime_engine,
+    default_scenarios_root,
     discover_scenario_dirs,
     load_expected_result,
     root_cause_matches,
-    run_all_scenarios,
+    run_playbook_scenarios,
     run_scenario,
 )
-from runtime.evidence_collection import initialize_evidence_collection, submit_evidence
-from runtime.report_engine import format_incident_report
 from runtime.verification_engine import RESULT_PASSED, VerificationResultSubmission
+
+PLAYBOOK_ID = VP_CUBE_0001_PLAYBOOK_ID
+SCENARIOS_ROOT = default_scenarios_root(PLAYBOOK_ID, repo_root=REPO_ROOT)
 
 EXPECTED_SCENARIO_IDS = {
     "sip_ua_disabled",
@@ -42,19 +45,19 @@ EXPECTED_SCENARIO_IDS = {
 
 class TestVpCube0001Scenarios:
     def test_all_scenario_folders_present(self) -> None:
-        scenario_dirs = discover_scenario_dirs()
+        scenario_dirs = discover_scenario_dirs(SCENARIOS_ROOT)
         scenario_ids = {path.name for path in scenario_dirs}
         assert scenario_ids == EXPECTED_SCENARIO_IDS
 
     def test_all_scenarios_execute_without_crash(self) -> None:
-        results = run_all_scenarios()
+        results = run_playbook_scenarios(PLAYBOOK_ID, repo_root=REPO_ROOT)
         assert len(results) == len(EXPECTED_SCENARIO_IDS)
         for result in results:
             assert result.error is None, result.scenario_id
             assert result.actual_top_hypothesis is not None
 
     def test_all_scenarios_match_expected_root_cause(self) -> None:
-        results = run_all_scenarios()
+        results = run_playbook_scenarios(PLAYBOOK_ID, repo_root=REPO_ROOT)
         for result in results:
             assert result.passed, (
                 f"{result.scenario_id}: expected {result.expected_root_cause!r}, "
@@ -62,7 +65,7 @@ class TestVpCube0001Scenarios:
             )
 
     def test_expected_confidence_thresholds_met(self) -> None:
-        for scenario_dir in discover_scenario_dirs():
+        for scenario_dir in discover_scenario_dirs(SCENARIOS_ROOT):
             expected = load_expected_result(scenario_dir)
             result = run_scenario(scenario_dir)
             assert result.confidence >= float(expected["min_confidence"]), (
@@ -80,7 +83,7 @@ class TestVpCube0001Scenarios:
 
     def test_report_generation_for_sip_ua_disabled_scenario(self) -> None:
         scenario_dir = SCENARIOS_ROOT / "sip_ua_disabled"
-        runtime = build_runtime_engine()
+        runtime = build_scenario_runtime_engine()
         try:
             turn = runtime.start_investigation(PLAYBOOK_ID)
             for answer in INTAKE_ANSWERS:

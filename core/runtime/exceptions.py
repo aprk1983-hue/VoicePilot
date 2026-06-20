@@ -123,3 +123,25 @@ class PlaybookCatalogLoadError(VoicePilotRuntimeError):
         )
         self.plugin_name = plugin_name
         self.path = path
+
+
+class UnsupportedPlaybookScenarioError(VoicePilotRuntimeError):
+    """Raised when scenario regression is not available for a playbook."""
+
+    def __init__(self, playbook_id: str) -> None:
+        super().__init__(f"No scenario pack registered for playbook: {playbook_id}")
+        self.playbook_id = playbook_id
+
+
+class ScenarioNotFoundError(VoicePilotRuntimeError):
+    """Raised when a requested scenario ID is not present in the pack."""
+
+    def __init__(self, playbook_id: str, scenario_id: str, available: tuple[str, ...]) -> None:
+        available_text = ", ".join(available) if available else "(none)"
+        super().__init__(
+            f"Scenario {scenario_id!r} not found for playbook {playbook_id}. "
+            f"Available: {available_text}"
+        )
+        self.playbook_id = playbook_id
+        self.scenario_id = scenario_id
+        self.available = available
