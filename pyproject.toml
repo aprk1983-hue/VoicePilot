@@ -28,4 +28,4 @@ addopts = "-ra"
 
 [tool.setuptools.packages.find]
 where = ["core", "cli", "."]
-include = ["domain*", "runtime*", "application*", "infrastructure*", "shared*", "sdk*", "cli*", "parser*", "model*"]
+include = ["domain*", "runtime*", "application*", "infrastructure*", "shared*", "sdk*", "cli*", "parser*", "model*", "topology*", "health*"]
