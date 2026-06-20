@@ -2,10 +2,10 @@
 
 ## Case Overview
 
-- **Case ID:** CASE-034cef347eae
+- **Case ID:** CASE-3b5fc0109799
 - **Playbook ID:** VP-CUBE-0001
 - **Final State:** CLOSED
-- **Closed At:** 2026-06-20T02:40:20.062895+00:00
+- **Closed At:** 2026-06-20T03:58:44.180625+00:00
 
 ## Symptom
 
@@ -14,7 +14,7 @@ outbound, PSTN, external, off-net
 ## Root Cause Assessment
 
 - **Top Hypothesis:** CUBE SIP user agent disabled
-- **Hypothesis ID:** HYP-aad128bfe490
+- **Hypothesis ID:** HYP-dac60e147320
 - **Confidence:** 98%
 
 ## Evidence Findings
@@ -38,6 +38,58 @@ outbound, PSTN, external, off-net
 - SipUA — SIP-UA — cisco_show_sip_ua_status — show sip-ua status — 70%
 - VoiceService — voice service voip — cisco_show_run_voice_service_voip — show run | sec voice service voip — 70%
 
+## Call Path Analysis
+
+### DialPeer 2 → Provider-198.51.100.20
+- **Direction:** outbound
+- **Source:** DialPeer 2
+- **Destination:** Provider-198.51.100.20
+
+**Hops:**
+1. DialPeer 2
+2. Provider-198.51.100.20
+
+**Warnings:**
+_None_
+
+**Breakpoints:**
+_None on path._
+
+### DialPeer 1 → Provider-192.0.2.10
+- **Direction:** outbound
+- **Source:** DialPeer 1
+- **Destination:** Provider-192.0.2.10
+
+**Hops:**
+1. DialPeer 1
+2. Provider-192.0.2.10
+
+**Warnings:**
+_None_
+
+**Breakpoints:**
+_None on path._
+
+**Note:** SIP-UA is disabled and may affect all SIP call processing, even if not directly present in the current path graph.
+
+## Health Assessment
+
+- **Overall Score:** 60/100
+- **Status:** FAIL
+- **Counts:** PASS 4 | WARN 1 | FAIL 1 | UNKNOWN 0
+- **Severity Counts:** critical 1, medium 1
+- **Category Counts:** configuration 1, sip 1
+
+**Findings:**
+- CRITICAL FAIL — SIP-UA is disabled.
+  Recommendation: Enable SIP-UA and validate registration.
+- MEDIUM WARN — allow-connections policy is missing from voice service configuration.
+  Recommendation: Review voice service voip allow-connections settings.
+
+**Recommendations:**
+- Enable SIP-UA and validate registration.
+- Review voice service voip allow-connections settings.
+
 ## Correlation Reasoning
 
 - **sip_ua_disabled_confirmed** — reinforcement, +8 confidence
@@ -46,35 +98,35 @@ outbound, PSTN, external, off-net
 
 ## Decision Timeline
 
-02:40:20
+03:58:44
 Evidence
 Evidence collected: show dial-peer voice summary
 CLI evidence submitted for command `show dial-peer voice summary`.
 
 ↓
 
-02:40:20
+03:58:44
 Evidence
 Evidence collected: show sip-ua status
 CLI evidence submitted for command `show sip-ua status`.
 
 ↓
 
-02:40:20
+03:58:44
 Evidence
 Evidence collected: show run | sec voice service voip
 CLI evidence submitted for command `show run | sec voice service voip`.
 
 ↓
 
-02:40:20
+03:58:44
 Evidence
 Evidence collected: debug ccsip messages
 CLI evidence submitted for command `debug ccsip messages`.
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowDialPeerVoiceSummaryParser
 Detected dial_peer_summary_present
@@ -82,7 +134,7 @@ Evidence: dial_peer_summary_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowDialPeerVoiceSummaryParser
 Detected dial_peer_config_present
@@ -90,7 +142,7 @@ Evidence: dial_peer_config_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowDialPeerVoiceSummaryParser
 Detected outbound_dial_peer_candidates_present
@@ -98,7 +150,7 @@ Evidence: outbound_dial_peer_candidates_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowDialPeerVoiceSummaryParser
 Detected session_target_present
@@ -106,7 +158,7 @@ Evidence: session_target_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowSipUaStatusParser
 Detected sip_ua_disabled
@@ -114,7 +166,7 @@ Evidence: sip_ua_disabled
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowRunVoiceServiceVoipParser
 Detected voice_service_voip_present
@@ -122,7 +174,7 @@ Evidence: voice_service_voip_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoShowRunVoiceServiceVoipParser
 Detected sip_ua_disabled_by_config
@@ -130,7 +182,7 @@ Evidence: sip_ua_disabled_by_config
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoDebugCcsipMessagesParser
 Detected sip_trace_present
@@ -138,7 +190,7 @@ Evidence: sip_trace_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoDebugCcsipMessagesParser
 Detected sip_503_detected
@@ -146,7 +198,7 @@ Evidence: sip_503_detected
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoDebugCcsipMessagesParser
 Detected sip_call_id_present
@@ -154,7 +206,7 @@ Evidence: sip_call_id_present
 
 ↓
 
-02:40:20
+03:58:44
 Parser
 CiscoDebugCcsipMessagesParser
 Detected sip_invite_present
@@ -162,23 +214,23 @@ Evidence: sip_invite_present
 
 ↓
 
-02:40:20
+03:58:44
 Hypothesis
 CUBE SIP user agent disabled
 SIP user agent is disabled on CUBE, blocking outbound SIP processing.
-Evidence: FIND-6e2345024463
+Evidence: FIND-805cf1c3b871
 
 ↓
 
-02:40:20
+03:58:44
 Hypothesis
 Provider or SIP trunk service issue
 SIP 503 with trace present points to provider or trunk service rejection.
-Evidence: FIND-40cc52496fc5, FIND-7281b239a8c7
+Evidence: FIND-e0edc702ac59, FIND-49a18dece2fe
 
 ↓
 
-02:40:20
+03:58:44
 Correlation — Rule fired
 sip_ua_disabled_confirmed
 Operational status and running configuration both indicate SIP-UA is disabled.
@@ -187,7 +239,7 @@ Evidence: sip_ua_disabled, sip_ua_disabled_by_config
 
 ↓
 
-02:40:20
+03:58:44
 Confidence
 CUBE SIP user agent disabled
 Confidence changed from 90% to 98% (reinforcement).
@@ -195,45 +247,45 @@ Confidence: 90 → 98
 
 ↓
 
-02:40:20
+03:58:44
 Recommendation
 Likely Root Cause — CUBE SIP user agent disabled
 SIP user agent is disabled on CUBE, blocking outbound SIP processing.
-Evidence: FIND-6e2345024463
+Evidence: FIND-805cf1c3b871
 Rejected: Provider or SIP trunk service issue
 
 ↓
 
-02:40:20
+03:58:44
 Verification
 VER-001
 show sip-ua status reports SIP-UA enabled — passed
 
 ↓
 
-02:40:20
+03:58:44
 Verification
 VER-002
 Provider trunk shows registered/UP — passed
 
 ↓
 
-02:40:20
+03:58:44
 Verification
 VER-003
 Place controlled outbound test call — passed
 
 ↓
 
-02:40:20
+03:58:44
 Learning
 Learning record created
 Review voice service voip configuration on CUBE; Enable SIP user agent if currently disabled
-Evidence: FIND-053d61d9b2b7, FIND-d6af4c30bade, FIND-dfeda2a96c94, FIND-2e7126f0060f, FIND-6e2345024463, FIND-ff7122afe4cd, FIND-7beb573e26ca, FIND-40cc52496fc5, FIND-7281b239a8c7, FIND-a681cd3358e8, FIND-8e9cc7f34b82
+Evidence: FIND-898b3f084d06, FIND-43243018d43b, FIND-f926c8d7fed9, FIND-7a66d4b32a86, FIND-805cf1c3b871, FIND-91f1fcb37ddd, FIND-b8b45c46fe04, FIND-49a18dece2fe, FIND-e0edc702ac59, FIND-1a2953bea14c, FIND-2740135289e9
 
 ↓
 
-02:40:20
+03:58:44
 Case Closed
 Case closed
 Review voice service voip configuration on CUBE; Enable SIP user agent if currently disabled
@@ -255,7 +307,7 @@ Likely root cause identified: CUBE SIP user agent disabled Likely root cause: CU
 
 ## Learning Record
 
-- **Learning Record ID:** LRN-c70115b025f7
+- **Learning Record ID:** LRN-13823aaa9f96
 - **Root Cause:** CUBE SIP user agent disabled
 - **Reusable Pattern:** VP-CUBE-0001:HYP-SIP-UA-DISABLED
 - **Lessons Learned:** Playbook VP-CUBE-0001 investigation verified 'CUBE SIP user agent disabled'. Always collect correlated CLI evidence and verification before closure. Next focus: Review voice service voip configuration on CUBE.
@@ -263,12 +315,12 @@ Likely root cause identified: CUBE SIP user agent disabled Likely root cause: CU
 ## Timeline
 
 0. [intake] symptom_onset: Symptom onset recorded: 2026-06-10
-1. [2026-06-20T02:40:20.061766+00:00] question_answered: Answered question Q-INT-001
-2. [2026-06-20T02:40:20.061783+00:00] question_answered: Answered question Q-INT-002
-3. [2026-06-20T02:40:20.061796+00:00] question_answered: Answered question Q-INT-003
-4. [2026-06-20T02:40:20.061806+00:00] question_answered: Answered question Q-INT-004
-5. [2026-06-20T02:40:20.061816+00:00] question_answered: Answered question Q-INT-005
-6. [2026-06-20T02:40:20.061926+00:00] evidence_collected: Collected CLI evidence for: show dial-peer voice summary
-7. [2026-06-20T02:40:20.061962+00:00] evidence_collected: Collected CLI evidence for: show sip-ua status
-8. [2026-06-20T02:40:20.061993+00:00] evidence_collected: Collected CLI evidence for: show run | sec voice service voip
-9. [2026-06-20T02:40:20.062023+00:00] evidence_collected: Collected CLI evidence for: debug ccsip messages
+1. [2026-06-20T03:58:44.179168+00:00] question_answered: Answered question Q-INT-001
+2. [2026-06-20T03:58:44.179185+00:00] question_answered: Answered question Q-INT-002
+3. [2026-06-20T03:58:44.179197+00:00] question_answered: Answered question Q-INT-003
+4. [2026-06-20T03:58:44.179207+00:00] question_answered: Answered question Q-INT-004
+5. [2026-06-20T03:58:44.179217+00:00] question_answered: Answered question Q-INT-005
+6. [2026-06-20T03:58:44.179323+00:00] evidence_collected: Collected CLI evidence for: show dial-peer voice summary
+7. [2026-06-20T03:58:44.179359+00:00] evidence_collected: Collected CLI evidence for: show sip-ua status
+8. [2026-06-20T03:58:44.179440+00:00] evidence_collected: Collected CLI evidence for: show run | sec voice service voip
+9. [2026-06-20T03:58:44.179515+00:00] evidence_collected: Collected CLI evidence for: debug ccsip messages
