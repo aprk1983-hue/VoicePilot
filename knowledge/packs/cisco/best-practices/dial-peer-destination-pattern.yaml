@@ -1,0 +1,16 @@
+id: CISCO-BP-DIAL-PEER-DESTINATION-PATTERN
+title: Dial peer requires destination pattern
+description: Outbound dial peers must define routing criteria such as destination-pattern.
+vendor: cisco
+platform: CUBE
+category: best_practice
+severity: high
+supported_object_types:
+  - dial_peer
+conditions:
+  destination_pattern: missing
+recommendations:
+  - Configure destination-pattern or equivalent routing criteria for outbound dial peers.
+references:
+  - Cisco dial-peer routing best practice
+version: "1.0"

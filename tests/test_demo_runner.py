@@ -90,3 +90,7 @@ class TestDemoRunner:
         assert "## Health Assessment" in content
         assert "CRITICAL FAIL — SIP-UA is disabled." in content
         assert "**Overall Score:**" in content
+        assert "## Matched Knowledge" in content
+        assert "CISCO-BP-SIP-UA-ENABLED" in content
+        assert "CISCO-BP-VOICE-SERVICE-ALLOW-CONNECTIONS" in content
+        assert "Enable SIP-UA and verify SIP registration before closing the incident." in content

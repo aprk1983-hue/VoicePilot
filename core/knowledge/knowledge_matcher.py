@@ -77,9 +77,21 @@ def _resolve_condition_value(obj: VoiceObject, key: str):
 
 
 def _values_equal(actual, expected) -> bool:
+    if isinstance(expected, list):
+        return any(_values_equal(actual, item) for item in expected)
+    if isinstance(expected, str) and expected.strip().lower() == "missing":
+        return _is_missing(actual)
     if isinstance(expected, str) and isinstance(actual, str):
         return actual.strip().lower() == expected.strip().lower()
     return actual == expected
+
+
+def _is_missing(actual) -> bool:
+    if actual is None:
+        return True
+    if isinstance(actual, str) and not actual.strip():
+        return True
+    return False
 
 
 def _match_sort_key(match: KnowledgeMatch) -> tuple[str, str]:

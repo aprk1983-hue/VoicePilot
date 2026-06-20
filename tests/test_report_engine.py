@@ -182,6 +182,17 @@ class TestReportEngine:
         assert report.health_assessment.available is True
         assert report.health_assessment.overall_status == "FAIL"
         assert report.health_assessment.fail_count >= 1
+        assert "## Matched Knowledge" in markdown
+        assert "CISCO-BP-SIP-UA-ENABLED" in markdown
+        assert "CISCO-BP-VOICE-SERVICE-ALLOW-CONNECTIONS" in markdown
+        assert "Enable SIP-UA and verify SIP registration before closing the incident." in markdown
+        assert "Verify allow-connections sip to sip is configured" in markdown
+        assert report.knowledge_assessment.available is True
+        assert len(report.knowledge_assessment.matches) == 2
+        assert any(
+            match.pack_id == "CISCO-BP-SIP-UA-ENABLED"
+            for match in report.knowledge_assessment.matches
+        )
 
     def test_report_without_correlations_still_works(self) -> None:
         from domain.enums import InvestigationState, Severity
@@ -214,6 +225,8 @@ class TestReportEngine:
         assert report.call_path_analysis.paths == ()
         assert "_No canonical voice objects available for health evaluation._" in markdown
         assert report.health_assessment.available is False
+        assert "_No knowledge packs matched current case._" in markdown
+        assert report.knowledge_assessment.available is False
         assert "# VoicePilot Incident Report" in markdown
 
     def test_call_path_analysis_handles_no_paths_gracefully(self) -> None:

@@ -1,0 +1,16 @@
+id: CISCO-BP-SIP-UA-ENABLED
+title: SIP-UA must be enabled for CUBE SIP processing
+description: SIP user agent must be enabled before CUBE can process SIP calls.
+vendor: cisco
+platform: CUBE
+category: best_practice
+severity: critical
+supported_object_types:
+  - sip_ua
+conditions:
+  enabled: false
+recommendations:
+  - Enable SIP-UA and verify SIP registration before closing the incident.
+references:
+  - Cisco CUBE SIP service best practice
+version: "1.0"

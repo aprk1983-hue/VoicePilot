@@ -1,0 +1,18 @@
+id: CISCO-BP-VOICE-SERVICE-ALLOW-CONNECTIONS
+title: Voice service allow-connections policy should be configured
+description: CUBE voice service should declare allow-connections sip to sip when interworking SIP legs.
+vendor: cisco
+platform: CUBE
+category: best_practice
+severity: medium
+supported_object_types:
+  - voice_service
+conditions:
+  allow_connections:
+    - false
+    - missing
+recommendations:
+  - Verify allow-connections sip to sip is configured where CUBE is expected to interwork SIP legs.
+references:
+  - Cisco CUBE basic SIP-SIP interworking guidance
+version: "1.0"

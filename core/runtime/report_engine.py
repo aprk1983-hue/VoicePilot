@@ -20,6 +20,7 @@ from model.voice_graph import (
 from health.health_engine import HealthEngine
 from health.health_models import HealthResult, HealthStatus
 from health.health_severity import HealthSeverity
+from runtime.knowledge_bootstrap import default_knowledge_engine
 from topology.call_path_engine import CallPathEngine
 from topology.topology_builder import TopologyBuilder
 from runtime.decision_log_engine import _finding_labels, _timeline_category
@@ -39,6 +40,28 @@ _DISABLED_SIP_UA_NOTE = (
     "SIP-UA is disabled and may affect all SIP call processing, "
     "even if not directly present in the current path graph."
 )
+
+
+@dataclass(frozen=True)
+class ReportKnowledgeMatch:
+    """Knowledge pack match included in an incident report."""
+
+    pack_id: str
+    title: str
+    severity: str
+    category: str
+    matched_object: str
+    recommendation: str
+    references: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ReportKnowledgeAssessment:
+    """Knowledge evaluation summary for an incident report."""
+
+    available: bool
+    matches: tuple[ReportKnowledgeMatch, ...] = ()
+    summary: str | None = None
 
 
 @dataclass(frozen=True)
@@ -178,6 +201,7 @@ class IncidentReport:
     voice_objects: tuple[ReportVoiceObject, ...]
     call_path_analysis: ReportCallPathAnalysis
     health_assessment: ReportHealthAssessment
+    knowledge_assessment: ReportKnowledgeAssessment
     correlations: tuple[ReportCorrelation, ...]
     decisions: tuple[ReportDecision, ...]
     recommendation_summary: str | None
@@ -243,6 +267,7 @@ def build_incident_report(case: Case) -> IncidentReport:
         voice_objects=tuple(_build_report_voice_objects(case.voice_objects)),
         call_path_analysis=_build_call_path_analysis(case.voice_objects),
         health_assessment=_build_health_assessment(case),
+        knowledge_assessment=_build_knowledge_assessment(case),
         correlations=tuple(_build_report_correlations(case.correlation_results)),
         decisions=tuple(_build_report_decisions(case.decision_log)),
         recommendation_summary=_format_recommendation_summary(recommendation),
@@ -322,6 +347,7 @@ def format_incident_report(report: IncidentReport) -> str:
 
     lines.extend(_format_call_path_analysis_section(report.call_path_analysis))
     lines.extend(_format_health_assessment_section(report.health_assessment))
+    lines.extend(_format_knowledge_assessment_section(report.knowledge_assessment))
 
     lines.extend(["", "## Correlation Reasoning", ""])
     if report.correlations:
@@ -483,6 +509,62 @@ def _format_health_assessment_section(assessment: ReportHealthAssessment) -> lis
             lines.append(f"- {recommendation}")
     else:
         lines.append("_None_")
+
+    return lines
+
+
+def _build_knowledge_assessment(case: Case) -> ReportKnowledgeAssessment:
+    if not case.voice_objects:
+        return ReportKnowledgeAssessment(available=False)
+
+    knowledge_report = default_knowledge_engine().evaluate_case(case)
+    object_index = {obj.id: obj for obj in case.voice_objects}
+    matches = tuple(
+        ReportKnowledgeMatch(
+            pack_id=match.pack_id,
+            title=match.title,
+            severity=match.severity.value.upper(),
+            category=match.category.value.upper(),
+            matched_object=_matched_object_label(object_index.get(match.object_id), match),
+            recommendation=match.recommendations[0] if match.recommendations else "",
+            references=match.references,
+        )
+        for match in knowledge_report.matched_packs
+    )
+    return ReportKnowledgeAssessment(
+        available=True,
+        matches=matches,
+        summary=knowledge_report.summary,
+    )
+
+
+def _matched_object_label(obj: VoiceObject | None, match) -> str:
+    if obj is not None:
+        return _voice_object_label(obj)
+    return match.object_type
+
+
+def _format_knowledge_assessment_section(assessment: ReportKnowledgeAssessment) -> list[str]:
+    lines = ["", "## Matched Knowledge", ""]
+    if not assessment.available or not assessment.matches:
+        lines.append("_No knowledge packs matched current case._")
+        return lines
+
+    for index, match in enumerate(assessment.matches):
+        if index > 0:
+            lines.append("")
+        lines.append(f"### {match.pack_id}")
+        lines.append(f"- **Knowledge ID:** {match.pack_id}")
+        lines.append(f"- **Title:** {match.title}")
+        lines.append(f"- **Severity:** {match.severity}")
+        lines.append(f"- **Category:** {match.category}")
+        lines.append(f"- **Matched object:** {match.matched_object}")
+        lines.append(f"- **Recommendation:** {match.recommendation}")
+        if match.references:
+            reference_text = "; ".join(match.references)
+            lines.append(f"- **References:** {reference_text}")
+        else:
+            lines.append("- **References:** _None_")
 
     return lines
 
