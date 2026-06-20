@@ -42,5 +42,6 @@ include = [
     "topology*",
     "health*",
     "knowledge*",
+    "configuration*",
 ]
 exclude = ["knowledge.packs*"]
