@@ -38,7 +38,13 @@ from runtime.evidence_collection import (
     submit_evidence,
 )
 from runtime.decision_log_engine import format_decision_timeline
-from runtime.exceptions import PlaybookIdNotFoundError, CaseNotFoundError
+from runtime.exceptions import (
+    CaseNotFoundError,
+    PlaybookIdNotFoundError,
+    QuestionNotFoundError,
+    ScenarioNotFoundError,
+    UnsupportedPlaybookScenarioError,
+)
 from runtime.intake_summary import write_intake_summary
 from runtime.correlation_engine import format_correlation_summary
 from runtime.hypothesis_engine import format_hypothesis_summary
@@ -99,7 +105,7 @@ from runtime.scenario_runner import (
     run_playbook_scenarios,
     run_scenario_to_correlation,
 )
-from runtime.exceptions import ScenarioNotFoundError, UnsupportedPlaybookScenarioError
+from change_package.change_report import format_change_package_markdown
 from shared.config import RuntimeConfig
 from topology.topology_builder import TopologyBuilder
 
@@ -946,6 +952,105 @@ def cmd_health(args: argparse.Namespace) -> int:
     return run_health_assessment(samples_dir, print, output_path=output_path)
 
 
+def run_change_package_case(
+    case_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    output_path: Path | None = None,
+) -> int:
+    """Generate a read-only engineering change package for a case."""
+    runtime = build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        package = runtime.generate_change_package(case_id)
+        markdown = format_change_package_markdown(package)
+        output_writer(markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Change package saved: {output_path}")
+        return 0
+    except CaseNotFoundError:
+        output_writer(f"Error: Case not found: {case_id}")
+        return 1
+    finally:
+        runtime.shutdown()
+
+
+def run_change_package_scenario(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    scenario_id: str | None = None,
+    output_path: Path | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run a scenario through recommendation and generate a change package."""
+    root = repo_root or REPO_ROOT
+    try:
+        scenario_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=scenario_id,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+
+    if not scenario_dirs:
+        output_writer(
+            f"No scenarios found under {default_scenarios_root(playbook_id, repo_root=root)}"
+        )
+        return 1
+    if scenario_id is None and len(scenario_dirs) > 1:
+        output_writer("Error: specify --scenario when multiple scenarios are available.")
+        return 1
+
+    scenario_dir = scenario_dirs[0]
+    runtime, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id)
+    try:
+        runtime.generate_recommendation(case_id)
+        package = runtime.generate_change_package(case_id)
+        markdown = format_change_package_markdown(package)
+        output_writer(markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Change package saved: {output_path}")
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_change_package(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot change-package <case_id>``."""
+    plugins_root = Path(args.plugins_root) if args.plugins_root else None
+    output_path = Path(args.output) if args.output else None
+    return run_change_package_case(
+        args.case_id,
+        print,
+        plugins_root=plugins_root,
+        output_path=output_path,
+    )
+
+
+def cmd_change_package_scenario(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot change-package-scenario <playbook_id>``."""
+    output_path = Path(args.output) if args.output else None
+    return run_change_package_scenario(
+        args.playbook_id,
+        print,
+        scenario_id=args.scenario,
+        output_path=output_path,
+    )
+
+
 def run_scenario_assessment(
     playbook_id: str,
     output_writer: OutputWriter,
@@ -957,6 +1062,7 @@ def run_scenario_assessment(
     repo_root: Path | None = None,
     include_discovery: bool = False,
     include_quality: bool = False,
+    include_change_package: bool = False,
 ) -> int:
     """Run scenario regression tests and optionally write a Markdown report."""
     root = repo_root or REPO_ROOT
@@ -989,7 +1095,11 @@ def run_scenario_assessment(
     if output_path is not None:
         discovery_plan_markdown: str | None = None
         investigation_quality_markdown: str | None = None
-        if (include_discovery or include_quality) and scenario_id is not None:
+        change_package_markdown: str | None = None
+        if (
+            (include_discovery or include_quality or include_change_package)
+            and scenario_id is not None
+        ):
             scenario_dirs = resolve_scenario_dirs(
                 playbook_id,
                 scenario_id=scenario_id,
@@ -1007,6 +1117,10 @@ def run_scenario_assessment(
                         investigation_quality_markdown = format_investigation_quality_markdown(
                             quality_report
                         )
+                    if include_change_package:
+                        runtime.generate_recommendation(case_id)
+                        package = runtime.generate_change_package(case_id)
+                        change_package_markdown = format_change_package_markdown(package)
                 finally:
                     runtime.shutdown()
 
@@ -1017,6 +1131,7 @@ def run_scenario_assessment(
             generated_at=generated_at,
             discovery_plan_markdown=discovery_plan_markdown,
             investigation_quality_markdown=investigation_quality_markdown,
+            change_package_markdown=change_package_markdown,
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(markdown, encoding="utf-8")
@@ -1037,6 +1152,7 @@ def cmd_scenarios(args: argparse.Namespace) -> int:
         output_path=output_path,
         include_discovery=args.include_discovery,
         include_quality=args.include_quality,
+        include_change_package=args.include_change_package,
     )
 
 
@@ -1339,7 +1455,52 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Include investigation quality in Markdown scenario output (requires --scenario)",
     )
+    scenarios.add_argument(
+        "--include-change-package",
+        action="store_true",
+        help="Include engineering change package in Markdown scenario output (requires --scenario)",
+    )
     scenarios.set_defaults(func=cmd_scenarios)
+
+    change_package = subparsers.add_parser(
+        "change-package",
+        help="Generate a read-only engineering change package for a case",
+    )
+    change_package.add_argument(
+        "case_id",
+        help="Case ID (e.g. CASE-abc123)",
+    )
+    change_package.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown change package to the given file path",
+    )
+    change_package.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    change_package.set_defaults(func=cmd_change_package)
+
+    change_package_scenario = subparsers.add_parser(
+        "change-package-scenario",
+        help="Run a scenario and generate a read-only engineering change package",
+    )
+    change_package_scenario.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    change_package_scenario.add_argument(
+        "--scenario",
+        required=True,
+        help="Scenario folder to run (e.g. sip_ua_disabled)",
+    )
+    change_package_scenario.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown change package to the given file path",
+    )
+    change_package_scenario.set_defaults(func=cmd_change_package_scenario)
 
     plan = subparsers.add_parser(
         "plan",

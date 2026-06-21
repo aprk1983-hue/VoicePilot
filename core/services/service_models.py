@@ -77,6 +77,17 @@ class ServiceReportResult:
 
 
 @dataclass(frozen=True)
+class ServiceChangePackageResult:
+    """Generated read-only engineering change package."""
+
+    case_id: str
+    package_id: str
+    risk_level: str
+    title: str
+    markdown: str
+
+
+@dataclass(frozen=True)
 class ServiceBrainSessionResult:
     """Summary view of a Brain orchestration session."""
 

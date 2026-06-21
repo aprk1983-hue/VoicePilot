@@ -48,6 +48,7 @@ from model.voice_graph import VoiceObject
 from shared.types import JsonDict
 
 if TYPE_CHECKING:
+    from change_package.change_models import EngineeringChangePackage
     from discovery.planner_models import DiscoveryPlan
     from investigation_quality.quality_models import InvestigationQualityReport
 
@@ -643,6 +644,7 @@ class Case:
     learning_record: LearningRecord | None = None
     discovery_plan: DiscoveryPlan | None = None
     investigation_quality_report: InvestigationQualityReport | None = None
+    change_package: EngineeringChangePackage | None = None
     metadata: JsonDict = field(default_factory=dict)
 
     @classmethod

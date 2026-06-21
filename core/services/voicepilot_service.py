@@ -15,6 +15,7 @@ from runtime.analysis_engine import build_analysis_summary
 from runtime.evidence_collection import submit_evidence
 from runtime.exceptions import CaseNotFoundError, PlaybookIdNotFoundError
 from brain.brain_exceptions import BrainSessionNotFoundError
+from change_package.change_report import format_change_package_markdown
 from runtime.report_engine import format_incident_report
 from runtime.runtime_engine import RuntimeEngine
 from services.service_exceptions import (
@@ -26,6 +27,7 @@ from services.service_models import (
     ServiceAnalysisResult,
     ServiceBrainSessionResult,
     ServiceCaseResult,
+    ServiceChangePackageResult,
     ServiceDiscoveryResult,
     ServiceEvidenceResult,
     ServiceQualityResult,
@@ -194,6 +196,18 @@ class VoicePilotService:
         return ServiceReportResult(
             case_id=case_id,
             markdown=format_incident_report(report),
+        )
+
+    def generate_change_package(self, case_id: str) -> ServiceChangePackageResult:
+        """Generate a read-only engineering change package for a case."""
+        runtime = self._ensure_runtime()
+        package = runtime.generate_change_package(case_id)
+        return ServiceChangePackageResult(
+            case_id=case_id,
+            package_id=package.package_id,
+            risk_level=package.risk_level.value,
+            title=package.title,
+            markdown=format_change_package_markdown(package),
         )
 
     def get_case(self, case_id: str) -> ServiceCaseResult:

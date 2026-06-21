@@ -4,7 +4,11 @@
 
 ## Purpose
 
-Document the non-negotiable design principles observable in the implemented codebase: determinism, vendor neutrality, immutability of CVOM objects, separation of parser output from case mutation, and in-memory v1 scope.
+Document the non-negotiable design principles observable in the implemented codebase: determinism, vendor neutrality, immutability of CVOM objects, separation of parser output from case mutation, in-memory v1 scope, and **read-only by design** — VoicePilot never executes or pushes configuration.
+
+## Read-Only by Design
+
+VoicePilot is an investigation and advisory platform. The Engineering Change Package (ECP) generates configuration **examples** and rollback **examples** for engineer/CAB review only. See `core/change_package/` and `docs/sprint-10/engineering-change-package-v1.md`.
 
 ## Repository Modules Involved
 

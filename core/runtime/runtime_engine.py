@@ -42,6 +42,8 @@ from runtime.learning_engine import (
     build_learning_closure_summary,
 )
 from runtime.recommendation_engine import RecommendationEngine, RecommendationSummary, build_recommendation_summary
+from change_package.change_engine import EngineeringChangePackageEngine
+from change_package.change_models import EngineeringChangePackage
 from runtime.report_engine import IncidentReport, ReportEngine
 from runtime.verification_engine import (
     OUTCOME_COMPLETE,
@@ -449,6 +451,33 @@ class RuntimeEngine:
             )
 
         return build_recommendation_summary(case, recommendation)
+
+    def generate_change_package(self, case_id: CaseId) -> EngineeringChangePackage:
+        """Generate a read-only engineering change package for a case."""
+        case = self._case_manager.load_case(case_id)
+
+        if (
+            not case.recommendations
+            and case.hypotheses
+            and case.status == InvestigationState.INVESTIGATION
+        ):
+            self.generate_recommendation(case_id)
+            case = self._case_manager.load_case(case_id)
+
+        engine = EngineeringChangePackageEngine()
+        package = engine.generate_for_case(case)
+        case.change_package = package
+        self._case_manager.save_case(case)
+
+        if self._logger:
+            self._logger.info(
+                "Change package generated",
+                case_id=case_id,
+                package_id=package.package_id,
+                risk_level=package.risk_level.value,
+            )
+
+        return package
 
     def generate_verification_checklist(self, case_id: CaseId) -> VerificationChecklist | None:
         """Build a verification checklist for a likely root cause recommendation."""

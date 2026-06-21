@@ -354,6 +354,7 @@ def format_scenario_markdown_report(
     generated_at: datetime | None = None,
     discovery_plan_markdown: str | None = None,
     investigation_quality_markdown: str | None = None,
+    change_package_markdown: str | None = None,
 ) -> str:
     """Format scenario results as a Markdown report."""
     timestamp = generated_at or datetime.now(timezone.utc)
@@ -399,4 +400,6 @@ def format_scenario_markdown_report(
         lines.extend(
             ["", "## Investigation Quality", "", investigation_quality_markdown.strip(), ""]
         )
+    if change_package_markdown:
+        lines.extend(["", "## Engineering Change Package", "", change_package_markdown.strip(), ""])
     return "\n".join(lines) + "\n"
