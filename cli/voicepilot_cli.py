@@ -103,10 +103,15 @@ from runtime.scenario_runner import (
     format_summary_table,
     resolve_scenario_dirs,
     run_playbook_scenarios,
+    build_scenario_runtime_engine,
+    run_scenario_for_comparison,
+    resolve_comparison_after_scenario,
     run_scenario_to_correlation,
 )
 from change_package.change_report import format_change_package_markdown
 from reporting.report_formatter import terminal_summary
+from investigation_compare.compare_report import format_comparison_markdown
+from investigation_compare.compare_models import READ_ONLY_NOTICE as COMPARE_READ_ONLY_NOTICE
 from reporting.report_models import READ_ONLY_NOTICE, ReportType
 from shared.config import RuntimeConfig
 from topology.topology_builder import TopologyBuilder
@@ -1164,6 +1169,126 @@ def cmd_report_scenario(args: argparse.Namespace) -> int:
     )
 
 
+def run_compare_cases(
+    before_case_id: str,
+    after_case_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    output_path: Path | None = None,
+) -> int:
+    """Compare two in-memory cases and print a comparison report."""
+    runtime = build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        comparison = runtime.compare_cases(before_case_id, after_case_id)
+        markdown = format_comparison_markdown(comparison)
+        output_writer(f"Comparison ID: {comparison.comparison_id}")
+        output_writer(f"Status:        {comparison.status.value}")
+        output_writer(f"Summary:       {comparison.summary}")
+        output_writer("")
+        output_writer(markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Comparison saved: {output_path}")
+        return 0
+    except CaseNotFoundError as exc:
+        output_writer(f"Error: Case not found: {exc}")
+        return 1
+    finally:
+        runtime.shutdown()
+
+
+def run_compare_scenarios(
+    playbook_id: str,
+    before_scenario: str,
+    output_writer: OutputWriter,
+    *,
+    after_scenario: str | None = None,
+    output_path: Path | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run before/after scenarios and compare investigation outputs."""
+    root = repo_root or REPO_ROOT
+    try:
+        after = resolve_comparison_after_scenario(before_scenario, after_scenario)
+        before_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=before_scenario,
+            repo_root=root,
+        )
+        after_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=after,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+    except ValueError as exc:
+        output_writer(str(exc))
+        return 1
+
+    runtime = build_scenario_runtime_engine()
+    try:
+        _, before_case_id = run_scenario_for_comparison(
+            before_dirs[0],
+            playbook_id=playbook_id,
+            runtime=runtime,
+        )
+        _, after_case_id = run_scenario_for_comparison(
+            after_dirs[0],
+            playbook_id=playbook_id,
+            runtime=runtime,
+        )
+        comparison = runtime.compare_cases(before_case_id, after_case_id)
+        markdown = format_comparison_markdown(comparison)
+        output_writer(f"Comparison ID: {comparison.comparison_id}")
+        output_writer(f"Status:        {comparison.status.value}")
+        output_writer(f"Summary:       {comparison.summary}")
+        output_writer("")
+        output_writer(markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Comparison saved: {output_path}")
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_compare(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot compare <before_case> <after_case>``."""
+    plugins_root = Path(args.plugins_root) if args.plugins_root else None
+    output_path = Path(args.output) if args.output else None
+    return run_compare_cases(
+        args.before_case_id,
+        args.after_case_id,
+        print,
+        plugins_root=plugins_root,
+        output_path=output_path,
+    )
+
+
+def cmd_compare_scenarios(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot compare-scenarios <playbook_id> <before> [after]``."""
+    output_path = Path(args.output) if args.output else None
+    after_scenario = args.after_scenario if hasattr(args, "after_scenario") else None
+    return run_compare_scenarios(
+        args.playbook_id,
+        args.before_scenario,
+        print,
+        after_scenario=getattr(args, "after_scenario", None),
+        output_path=output_path,
+    )
+
+
 def run_scenario_assessment(
     playbook_id: str,
     output_writer: OutputWriter,
@@ -1666,6 +1791,49 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write Markdown report to the given file path",
     )
     report_scenario.set_defaults(func=cmd_report_scenario)
+
+    compare = subparsers.add_parser(
+        "compare",
+        help="Compare two investigation cases and produce an improvement report",
+    )
+    compare.add_argument("before_case_id", help="Before case ID (e.g. CASE-abc123)")
+    compare.add_argument("after_case_id", help="After case ID (e.g. CASE-def456)")
+    compare.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown comparison report to the given file path",
+    )
+    compare.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    compare.set_defaults(func=cmd_compare)
+
+    compare_scenarios = subparsers.add_parser(
+        "compare-scenarios",
+        help="Compare before/after VP-CUBE-0001 scenarios",
+    )
+    compare_scenarios.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    compare_scenarios.add_argument(
+        "before_scenario",
+        help="Before scenario folder (e.g. sip_ua_disabled)",
+    )
+    compare_scenarios.add_argument(
+        "after_scenario",
+        nargs="?",
+        default=None,
+        help="After scenario folder (default: mapped fixed scenario)",
+    )
+    compare_scenarios.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown comparison report to the given file path",
+    )
+    compare_scenarios.set_defaults(func=cmd_compare_scenarios)
 
     plan = subparsers.add_parser(
         "plan",

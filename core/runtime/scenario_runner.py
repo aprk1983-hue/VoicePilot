@@ -19,6 +19,16 @@ from shared.config import RuntimeConfig
 
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
 
+SCENARIO_COMPARISON_PAIRS: dict[str, str] = {
+    "sip_ua_disabled": "sip_ua_fixed",
+    "provider_503": "provider_restored",
+    "dial_peer_shutdown": "dial_peer_enabled",
+    "codec_mismatch_488": "codec_fixed",
+    "missing_outbound_dial_peer": "dial_peer_added",
+}
+
+SCENARIO_COMPARISON_AFTER = frozenset(SCENARIO_COMPARISON_PAIRS.values())
+
 INTAKE_ANSWERS = [
     "yes",
     "2026-06-10",
@@ -111,8 +121,8 @@ def root_cause_matches(actual: str, expected: dict) -> bool:
     return False
 
 
-def discover_scenario_dirs(scenarios_root: Path) -> list[Path]:
-    """Return scenario directories containing expected_result.yaml."""
+def _all_scenario_dirs(scenarios_root: Path) -> list[Path]:
+    """Return all scenario directories containing expected_result.yaml."""
     if not scenarios_root.is_dir():
         return []
     return sorted(
@@ -120,6 +130,15 @@ def discover_scenario_dirs(scenarios_root: Path) -> list[Path]:
         for path in scenarios_root.iterdir()
         if path.is_dir() and (path / "expected_result.yaml").is_file()
     )
+
+
+def discover_scenario_dirs(scenarios_root: Path) -> list[Path]:
+    """Return scenario directories for standalone playbook validation."""
+    return [
+        path
+        for path in _all_scenario_dirs(scenarios_root)
+        if path.name not in SCENARIO_COMPARISON_AFTER
+    ]
 
 
 def list_scenario_ids(scenarios_root: Path) -> tuple[str, ...]:
@@ -139,9 +158,9 @@ def resolve_scenario_dirs(
         raise UnsupportedPlaybookScenarioError(playbook_id)
 
     root = resolve_scenarios_root(playbook_id, scenarios_root, repo_root=repo_root)
-    scenario_dirs = discover_scenario_dirs(root)
+    scenario_dirs = _all_scenario_dirs(root)
     if scenario_id is None:
-        return scenario_dirs
+        return discover_scenario_dirs(root)
 
     for scenario_dir in scenario_dirs:
         if scenario_dir.name == scenario_id:
@@ -258,39 +277,72 @@ def run_scenario_to_correlation(
     playbook_id: str = VP_CUBE_0001_PLAYBOOK_ID,
     plugins_root: Path | None = None,
     evidence_files: tuple[tuple[str, str], ...] | None = None,
+    runtime: RuntimeEngine | None = None,
 ) -> tuple[RuntimeEngine, str]:
     """Run a scenario through correlation and return the runtime and case ID."""
-    runtime = build_scenario_runtime_engine(plugins_root)
+    active_runtime = runtime or build_scenario_runtime_engine(plugins_root)
     files = evidence_files or EVIDENCE_FILES
 
-    turn = runtime.start_investigation(playbook_id)
+    turn = active_runtime.start_investigation(playbook_id)
     for answer in INTAKE_ANSWERS:
-        turn = runtime.submit_answer(turn.case_id, turn.question_id, answer)
+        turn = active_runtime.submit_answer(turn.case_id, turn.question_id, answer)
 
-    case = runtime.case_manager.load_case(turn.case_id)
-    playbook = runtime.playbook_catalog.get(playbook_id)
-    initialize_evidence_collection(case, runtime.case_manager, playbook)
-    case = runtime.case_manager.load_case(case.case_id)
+    case = active_runtime.case_manager.load_case(turn.case_id)
+    playbook = active_runtime.playbook_catalog.get(playbook_id)
+    initialize_evidence_collection(case, active_runtime.case_manager, playbook)
+    case = active_runtime.case_manager.load_case(case.case_id)
 
     for command, filename in files:
         raw_text = (scenario_dir / filename).read_text(encoding="utf-8")
         submit_evidence(
             case,
-            runtime.case_manager,
+            active_runtime.case_manager,
             command,
             raw_text,
-            decision_log=runtime.decision_log_engine,
+            decision_log=active_runtime.decision_log_engine,
         )
-        case = runtime.case_manager.load_case(case.case_id)
+        case = active_runtime.case_manager.load_case(case.case_id)
 
     if len(files) < len(EVIDENCE_FILES) and case.status == InvestigationState.COLLECTION:
-        runtime.case_manager.transition_state(case.case_id, InvestigationState.ANALYSIS)
-        case = runtime.case_manager.load_case(case.case_id)
+        active_runtime.case_manager.transition_state(case.case_id, InvestigationState.ANALYSIS)
+        case = active_runtime.case_manager.load_case(case.case_id)
 
-    runtime.analyze_case(case.case_id)
-    runtime.generate_hypotheses(case.case_id)
-    runtime.correlate_case(case.case_id)
-    return runtime, turn.case_id
+    active_runtime.analyze_case(case.case_id)
+    active_runtime.generate_hypotheses(case.case_id)
+    active_runtime.correlate_case(case.case_id)
+    return active_runtime, turn.case_id
+
+
+def run_scenario_for_comparison(
+    scenario_dir: Path,
+    *,
+    playbook_id: str = VP_CUBE_0001_PLAYBOOK_ID,
+    runtime: RuntimeEngine | None = None,
+) -> tuple[RuntimeEngine, str]:
+    """Run a scenario through correlation and quality evaluation for comparison."""
+    close_runtime = False
+    if runtime is None:
+        runtime = build_scenario_runtime_engine()
+        close_runtime = True
+
+    try:
+        _, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id, runtime=runtime)
+        runtime.evaluate_investigation_quality(case_id)
+        return runtime, case_id
+    finally:
+        if close_runtime:
+            runtime.shutdown()
+
+
+def resolve_comparison_after_scenario(before_scenario: str, after_scenario: str | None) -> str:
+    """Resolve the after scenario from explicit input or known comparison pairs."""
+    if after_scenario is not None:
+        return after_scenario
+    if before_scenario in SCENARIO_COMPARISON_PAIRS:
+        return SCENARIO_COMPARISON_PAIRS[before_scenario]
+    raise ValueError(
+        f"No default after-scenario mapping for {before_scenario!r}; provide after scenario explicitly."
+    )
 
 
 def _result_rows(results: list[ScenarioResult]) -> list[tuple[str, str, str, str, str]]:

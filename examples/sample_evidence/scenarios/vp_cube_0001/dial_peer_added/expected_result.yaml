@@ -1,0 +1,3 @@
+scenario_id: dial_peer_added
+expected_root_cause: "No critical issues detected"
+min_confidence: 0

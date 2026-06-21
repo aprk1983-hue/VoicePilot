@@ -1,0 +1,8 @@
+*Mar 10 15:00:00.000: //-1/xxxxxxxxxxxx/SIP/Msg/ccsipDisplayMsg:
+Received:
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 10.1.1.10:5060
+From: <sip:1001@10.1.1.10>;tag=abc200
+To: <sip:15551234567@10.1.1.20>;tag=xyz200
+Call-ID: ccsip-success-001@cube-edge-01
+CSeq: 102 INVITE

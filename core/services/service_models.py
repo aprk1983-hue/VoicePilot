@@ -77,6 +77,18 @@ class ServiceReportResult:
 
 
 @dataclass(frozen=True)
+class ComparisonResult:
+    """Generated investigation comparison result."""
+
+    comparison_id: str
+    status: str
+    summary: str
+    markdown: str
+    before_case_id: str
+    after_case_id: str
+
+
+@dataclass(frozen=True)
 class ReportResult:
     """Generated enterprise report for any audience."""
 

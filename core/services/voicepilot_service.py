@@ -16,6 +16,8 @@ from runtime.evidence_collection import submit_evidence
 from runtime.exceptions import CaseNotFoundError, PlaybookIdNotFoundError
 from brain.brain_exceptions import BrainSessionNotFoundError
 from change_package.change_report import format_change_package_markdown
+from investigation_compare.compare_models import InvestigationSnapshot
+from investigation_compare.compare_report import format_comparison_markdown
 from reporting.report_models import ReportType
 from runtime.runtime_engine import RuntimeEngine
 from services.service_exceptions import (
@@ -34,6 +36,7 @@ from services.service_models import (
     ServiceRecommendationResult,
     ServiceReportResult,
     ReportResult,
+    ComparisonResult,
 )
 from shared.config import RuntimeConfig
 from shared.types import CaseId
@@ -226,6 +229,36 @@ class VoicePilotService:
             risk_level=package.risk_level.value,
             title=package.title,
             markdown=format_change_package_markdown(package),
+        )
+
+    def compare_cases(self, before_case_id: str, after_case_id: str) -> ComparisonResult:
+        """Compare two investigation cases and return a comparison report."""
+        runtime = self._ensure_runtime()
+        comparison = runtime.compare_cases(before_case_id, after_case_id)
+        return ComparisonResult(
+            comparison_id=comparison.comparison_id,
+            status=comparison.status.value,
+            summary=comparison.summary,
+            markdown=format_comparison_markdown(comparison),
+            before_case_id=before_case_id,
+            after_case_id=after_case_id,
+        )
+
+    def compare_snapshots(
+        self,
+        before_snapshot: InvestigationSnapshot,
+        after_snapshot: InvestigationSnapshot,
+    ) -> ComparisonResult:
+        """Compare two investigation snapshots and return a comparison report."""
+        runtime = self._ensure_runtime()
+        comparison = runtime.compare_snapshots(before_snapshot, after_snapshot)
+        return ComparisonResult(
+            comparison_id=comparison.comparison_id,
+            status=comparison.status.value,
+            summary=comparison.summary,
+            markdown=format_comparison_markdown(comparison),
+            before_case_id=comparison.before_case_id,
+            after_case_id=comparison.after_case_id,
         )
 
     def get_case(self, case_id: str) -> ServiceCaseResult:

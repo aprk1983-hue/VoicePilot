@@ -4,12 +4,13 @@
 
 ## Purpose
 
-Document deterministic incident report generation from closed cases and the Enterprise Reporting Engine (ERE) for audience-specific commercial reports.
+Document deterministic incident report generation from closed cases and the Enterprise Reporting Engine (ERE) for audience-specific commercial reports. The Investigation Comparison Engine (ICE) provides before/after validation for operational trend analysis.
 
 ## Repository Modules Involved
 
 - [`../../core/runtime/report_engine.py`](../../core/runtime/report_engine.py) — legacy engineering incident report
 - [`../../core/reporting/report_engine.py`](../../core/reporting/report_engine.py) — Enterprise Reporting Engine (ERE)
+- [`../../core/investigation_compare/compare_engine.py`](../../core/investigation_compare/compare_engine.py) — Investigation Comparison Engine (ICE)
 - [`../../core/reporting/report_templates.py`](../../core/reporting/report_templates.py) — executive, customer, CAB, operations templates
 - Integrations: `TopologyBuilder`, `CallPathEngine`, `HealthEngine`, `default_knowledge_engine()`, `EnterpriseReportEngine`
 
@@ -27,10 +28,23 @@ ERE produces commercial and operational report types without new diagnosis:
 
 See [`../../docs/sprint-10/enterprise-reporting-engine-v1.md`](../../docs/sprint-10/enterprise-reporting-engine-v1.md).
 
+## Investigation Comparison Engine
+
+ICE compares before/after investigations for **Before/After Validation** and **Operational Trend Analysis**:
+
+| Capability | Description |
+|------------|-------------|
+| Case comparison | Compare two investigation cases by health, quality, findings |
+| Snapshot comparison | Compare configuration snapshot health/knowledge outputs |
+| Status classification | IMPROVED / UNCHANGED / REGRESSED / PARTIAL |
+
+See [`../../docs/sprint-10/investigation-comparison-engine-v1.md`](../../docs/sprint-10/investigation-comparison-engine-v1.md).
+
 ## Related Tests
 
 - [`../../tests/test_report_engine.py`](../../tests/test_report_engine.py)
 - [`../../tests/test_reporting_engine.py`](../../tests/test_reporting_engine.py)
+- [`../../tests/test_investigation_compare.py`](../../tests/test_investigation_compare.py)
 - [`../../tests/test_demo_runner.py`](../../tests/test_demo_runner.py)
 
 ## Related Documentation

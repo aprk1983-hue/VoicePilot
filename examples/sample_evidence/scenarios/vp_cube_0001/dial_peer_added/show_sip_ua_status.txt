@@ -1,0 +1,6 @@
+cube-edge-01#show sip-ua status
+SIP-UA Status: enabled
+ Registrar Host: sip:10.10.10.1
+ Transport Type: UDP
+ SIP Trunk Status: registered
+ Outbound calls permitted

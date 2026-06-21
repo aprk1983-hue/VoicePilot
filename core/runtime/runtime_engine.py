@@ -45,6 +45,8 @@ from runtime.recommendation_engine import RecommendationEngine, RecommendationSu
 from change_package.change_engine import EngineeringChangePackageEngine
 from change_package.change_models import EngineeringChangePackage
 from runtime.report_engine import IncidentReport, ReportEngine
+from investigation_compare.compare_engine import InvestigationComparisonEngine, snapshot_from_configuration
+from investigation_compare.compare_models import InvestigationComparison, InvestigationSnapshot
 from reporting.report_engine import EnterpriseReportEngine
 from reporting.report_models import ReportType
 from runtime.verification_engine import (
@@ -480,6 +482,31 @@ class RuntimeEngine:
             )
 
         return package
+
+    def compare_cases(self, before_case_id: CaseId, after_case_id: CaseId) -> InvestigationComparison:
+        """Compare two investigation cases using existing outputs."""
+        before_case = self._case_manager.load_case(before_case_id)
+        after_case = self._case_manager.load_case(after_case_id)
+        comparison = InvestigationComparisonEngine().compare_cases(before_case, after_case)
+
+        if self._logger:
+            self._logger.info(
+                "Investigation comparison complete",
+                before_case_id=before_case_id,
+                after_case_id=after_case_id,
+                comparison_id=comparison.comparison_id,
+                status=comparison.status.value,
+            )
+
+        return comparison
+
+    def compare_snapshots(
+        self,
+        before_snapshot: InvestigationSnapshot,
+        after_snapshot: InvestigationSnapshot,
+    ) -> InvestigationComparison:
+        """Compare two investigation snapshots using existing outputs."""
+        return InvestigationComparisonEngine().compare_snapshots(before_snapshot, after_snapshot)
 
     def generate_verification_checklist(self, case_id: CaseId) -> VerificationChecklist | None:
         """Build a verification checklist for a likely root cause recommendation."""
