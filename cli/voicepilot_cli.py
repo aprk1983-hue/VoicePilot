@@ -1483,6 +1483,57 @@ def run_scenario_assessment(
     return 1 if failures else 0
 
 
+def run_validation(
+    playbook_id: str | None,
+    output_writer: OutputWriter,
+    *,
+    output_path: Path | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run the enterprise validation suite for one or all playbooks."""
+    from validation import (
+        UnsupportedValidationPlaybookError,
+        ValidationEngine,
+        format_validation_report,
+        format_validation_summary_line,
+    )
+
+    engine = ValidationEngine(repo_root=repo_root or REPO_ROOT)
+    try:
+        suite = (
+            engine.validate_playbook(playbook_id)
+            if playbook_id
+            else engine.validate_all()
+        )
+    except UnsupportedValidationPlaybookError as exc:
+        output_writer(str(exc))
+        return 1
+
+    output_writer("VoicePilot Enterprise Validation Suite")
+    output_writer("")
+    output_writer(format_validation_summary_line(suite))
+    output_writer("")
+    output_writer(format_validation_report(suite))
+
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(format_validation_report(suite), encoding="utf-8")
+        output_writer("")
+        output_writer(f"Validation report saved: {output_path}")
+
+    return 0 if suite.summary.failed_count == 0 else 1
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot validate [playbook_id]``."""
+    output_path = Path(args.output) if args.output else None
+    return run_validation(
+        args.playbook_id,
+        print,
+        output_path=output_path,
+    )
+
+
 def cmd_scenarios(args: argparse.Namespace) -> int:
     """Handle ``voicepilot scenarios <playbook_id>``."""
     output_path = Path(args.output) if args.output else None
@@ -1802,6 +1853,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Include engineering change package in Markdown scenario output (requires --scenario)",
     )
     scenarios.set_defaults(func=cmd_scenarios)
+
+    validate = subparsers.add_parser(
+        "validate",
+        help="Run enterprise validation suite for investigation scenarios",
+    )
+    validate.add_argument(
+        "playbook_id",
+        nargs="?",
+        default=None,
+        help="Playbook to validate (VP-CUBE-0001 or VP-CUCM-0001). Omit to validate all.",
+    )
+    validate.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown validation report to the given file path",
+    )
+    validate.set_defaults(func=cmd_validate)
 
     change_package = subparsers.add_parser(
         "change-package",

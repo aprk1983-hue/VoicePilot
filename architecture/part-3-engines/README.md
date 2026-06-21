@@ -14,6 +14,7 @@ Implemented deterministic engines that analyze voice infrastructure and produce 
 | [06 — Configuration Engines](06-configuration-engines.md) | Implemented | Snapshots, diff, baseline drift |
 | [07 — Report Engine](07-report-engine.md) | Implemented | Incident report generation |
 | [08 — Engineering Asset Factory](08-engineering-asset-factory.md) | Implemented | Knowledge production and quality validation pipeline |
+| [09 — Enterprise Validation Engine](09-enterprise-validation-engine.md) | Implemented | Deterministic scenario validation suite |
 
 ## Related Documentation
 
