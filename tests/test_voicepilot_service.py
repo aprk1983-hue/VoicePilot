@@ -37,7 +37,9 @@ from services.service_models import (
     ServiceQualityResult,
     ServiceRecommendationResult,
     ServiceReportResult,
+    ReportResult,
 )
+from reporting import ReportType
 from services import voicepilot_service as voicepilot_service_module
 from shared.config import RuntimeConfig
 
@@ -191,10 +193,11 @@ class TestVoicePilotService:
     def test_generate_report_returns_markdown(self) -> None:
         closed_service, case_id = _closed_case()
 
-        result = closed_service.generate_report(case_id)
+        result = closed_service.generate_report(case_id, ReportType.ENGINEERING)
 
-        assert isinstance(result, ServiceReportResult)
+        assert isinstance(result, ReportResult)
         assert result.case_id == case_id
+        assert result.report_type == "ENGINEERING"
         assert "# VoicePilot Incident Report" in result.markdown
 
     def test_start_brain_session_returns_session_dto(self, service: VoicePilotService) -> None:

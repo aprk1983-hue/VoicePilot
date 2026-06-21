@@ -106,6 +106,8 @@ from runtime.scenario_runner import (
     run_scenario_to_correlation,
 )
 from change_package.change_report import format_change_package_markdown
+from reporting.report_formatter import terminal_summary
+from reporting.report_models import READ_ONLY_NOTICE, ReportType
 from shared.config import RuntimeConfig
 from topology.topology_builder import TopologyBuilder
 
@@ -1051,6 +1053,117 @@ def cmd_change_package_scenario(args: argparse.Namespace) -> int:
     )
 
 
+def _parse_report_type(value: str) -> ReportType:
+    normalized = value.strip().upper()
+    try:
+        return ReportType(normalized)
+    except ValueError as exc:
+        valid = ", ".join(item.value.lower() for item in ReportType)
+        raise argparse.ArgumentTypeError(f"Invalid report type {value!r}. Choose one of: {valid}") from exc
+
+
+def run_report_case(
+    case_id: str,
+    output_writer: OutputWriter,
+    *,
+    report_type: ReportType = ReportType.ENGINEERING,
+    plugins_root: Path | None = None,
+    output_path: Path | None = None,
+) -> int:
+    """Generate an enterprise report for a case."""
+    runtime = build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        report = runtime.generate_report(case_id, report_type)
+        output_writer(terminal_summary(report))
+        output_writer("")
+        output_writer(report.markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(report.markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Report saved: {output_path}")
+        return 0
+    except CaseNotFoundError:
+        output_writer(f"Error: Case not found: {case_id}")
+        return 1
+    finally:
+        runtime.shutdown()
+
+
+def run_report_scenario(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    scenario_id: str,
+    report_type: ReportType = ReportType.ENGINEERING,
+    output_path: Path | None = None,
+    repo_root: Path | None = None,
+) -> int:
+    """Run a scenario through recommendation and generate an enterprise report."""
+    root = repo_root or REPO_ROOT
+    try:
+        scenario_dirs = resolve_scenario_dirs(
+            playbook_id,
+            scenario_id=scenario_id,
+            repo_root=root,
+        )
+    except UnsupportedPlaybookScenarioError as exc:
+        output_writer(str(exc))
+        return 1
+    except ScenarioNotFoundError as exc:
+        output_writer(str(exc))
+        return 1
+
+    if not scenario_dirs:
+        output_writer(
+            f"No scenarios found under {default_scenarios_root(playbook_id, repo_root=root)}"
+        )
+        return 1
+
+    scenario_dir = scenario_dirs[0]
+    runtime, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id)
+    try:
+        runtime.generate_recommendation(case_id)
+        report = runtime.generate_report(case_id, report_type)
+        output_writer(terminal_summary(report))
+        output_writer("")
+        output_writer(report.markdown)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(report.markdown, encoding="utf-8")
+            output_writer("")
+            output_writer(f"Report saved: {output_path}")
+        return 0
+    finally:
+        runtime.shutdown()
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot report <case_id>``."""
+    plugins_root = Path(args.plugins_root) if args.plugins_root else None
+    output_path = Path(args.output) if args.output else None
+    return run_report_case(
+        args.case_id,
+        print,
+        report_type=args.type,
+        plugins_root=plugins_root,
+        output_path=output_path,
+    )
+
+
+def cmd_report_scenario(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot report-scenario <playbook_id>``."""
+    output_path = Path(args.output) if args.output else None
+    return run_report_scenario(
+        args.playbook_id,
+        print,
+        scenario_id=args.scenario,
+        report_type=args.type,
+        output_path=output_path,
+    )
+
+
 def run_scenario_assessment(
     playbook_id: str,
     output_writer: OutputWriter,
@@ -1501,6 +1614,58 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write Markdown change package to the given file path",
     )
     change_package_scenario.set_defaults(func=cmd_change_package_scenario)
+
+    report = subparsers.add_parser(
+        "report",
+        help="Generate an audience-specific enterprise report for a case",
+    )
+    report.add_argument(
+        "case_id",
+        help="Case ID (e.g. CASE-abc123)",
+    )
+    report.add_argument(
+        "--type",
+        type=_parse_report_type,
+        default=ReportType.ENGINEERING,
+        help="Report type: engineering, executive, customer, cab, operations",
+    )
+    report.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown report to the given file path",
+    )
+    report.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    report.set_defaults(func=cmd_report)
+
+    report_scenario = subparsers.add_parser(
+        "report-scenario",
+        help="Run a scenario and generate an audience-specific enterprise report",
+    )
+    report_scenario.add_argument(
+        "playbook_id",
+        help="Playbook with scenario pack (e.g. VP-CUBE-0001)",
+    )
+    report_scenario.add_argument(
+        "--scenario",
+        required=True,
+        help="Scenario folder to run (e.g. sip_ua_disabled)",
+    )
+    report_scenario.add_argument(
+        "--type",
+        type=_parse_report_type,
+        default=ReportType.ENGINEERING,
+        help="Report type: engineering, executive, customer, cab, operations",
+    )
+    report_scenario.add_argument(
+        "--output",
+        default=None,
+        help="Write Markdown report to the given file path",
+    )
+    report_scenario.set_defaults(func=cmd_report_scenario)
 
     plan = subparsers.add_parser(
         "plan",

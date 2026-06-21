@@ -51,6 +51,7 @@ include = [
     "engineering_assets*",
     "engineering_knowledge*",
     "change_package*",
+    "reporting*",
 ]
 exclude = [
     "knowledge.packs*",

@@ -45,6 +45,8 @@ from runtime.recommendation_engine import RecommendationEngine, RecommendationSu
 from change_package.change_engine import EngineeringChangePackageEngine
 from change_package.change_models import EngineeringChangePackage
 from runtime.report_engine import IncidentReport, ReportEngine
+from reporting.report_engine import EnterpriseReportEngine
+from reporting.report_models import ReportType
 from runtime.verification_engine import (
     OUTCOME_COMPLETE,
     OUTCOME_FAILED,
@@ -573,8 +575,30 @@ class RuntimeEngine:
         self._parser_engine = build_default_parser_engine()
         return self._parser_engine
 
-    def generate_report(self, case_id: CaseId) -> IncidentReport:
-        """Generate a readable incident report for a closed case."""
+    def generate_report(
+        self,
+        case_id: CaseId,
+        report_type: ReportType | None = None,
+    ):
+        """Generate an incident or audience-specific enterprise report."""
+        if report_type is None:
+            return self._generate_legacy_incident_report(case_id)
+
+        case = self._case_manager.load_case(case_id)
+        report = EnterpriseReportEngine().generate(case, report_type)
+
+        if self._logger:
+            self._logger.info(
+                "Enterprise report generated",
+                case_id=case_id,
+                report_id=report.report_id,
+                report_type=report.report_type.value,
+            )
+
+        return report
+
+    def _generate_legacy_incident_report(self, case_id: CaseId) -> IncidentReport:
+        """Generate a legacy incident report for a closed case."""
         case = self._case_manager.load_case(case_id)
         if case.status != InvestigationState.CLOSED:
             raise InvalidInvestigationStateError(

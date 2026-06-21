@@ -16,7 +16,7 @@ from runtime.evidence_collection import submit_evidence
 from runtime.exceptions import CaseNotFoundError, PlaybookIdNotFoundError
 from brain.brain_exceptions import BrainSessionNotFoundError
 from change_package.change_report import format_change_package_markdown
-from runtime.report_engine import format_incident_report
+from reporting.report_models import ReportType
 from runtime.runtime_engine import RuntimeEngine
 from services.service_exceptions import (
     ServiceBrainSessionNotFoundError,
@@ -33,6 +33,7 @@ from services.service_models import (
     ServiceQualityResult,
     ServiceRecommendationResult,
     ServiceReportResult,
+    ReportResult,
 )
 from shared.config import RuntimeConfig
 from shared.types import CaseId
@@ -189,13 +190,30 @@ class VoicePilotService:
             top_recommendation=top_recommendation,
         )
 
-    def generate_report(self, case_id: str) -> ServiceReportResult:
-        """Generate a markdown incident report for a closed case."""
+    def generate_report(
+        self,
+        case_id: str,
+        report_type: ReportType = ReportType.ENGINEERING,
+    ) -> ReportResult:
+        """Generate an audience-specific enterprise report for a case."""
         runtime = self._ensure_runtime()
-        report = runtime.generate_report(case_id)
+        report = runtime.generate_report(case_id, report_type)
+        return ReportResult(
+            case_id=case_id,
+            report_id=report.report_id,
+            report_type=report.report_type.value,
+            markdown=report.markdown,
+        )
+
+    def generate_legacy_report(self, case_id: str) -> ServiceReportResult:
+        """Generate a legacy closed-case incident report."""
+        runtime = self._ensure_runtime()
+        incident = runtime.generate_report(case_id)
+        from runtime.report_engine import format_incident_report
+
         return ServiceReportResult(
             case_id=case_id,
-            markdown=format_incident_report(report),
+            markdown=format_incident_report(incident),
         )
 
     def generate_change_package(self, case_id: str) -> ServiceChangePackageResult:

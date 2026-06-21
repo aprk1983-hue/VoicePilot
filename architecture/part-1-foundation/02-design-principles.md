@@ -8,9 +8,11 @@ Document the non-negotiable design principles observable in the implemented code
 
 ## Read-Only by Design
 
-VoicePilot is an investigation and advisory platform. The Engineering Change Package (ECP) generates configuration **examples** and rollback **examples** for engineer/CAB review only. See `core/change_package/` and `docs/sprint-10/engineering-change-package-v1.md`.
+VoicePilot is an investigation and advisory platform. The Engineering Change Package (ECP) generates configuration **examples** and rollback **examples** for engineer/CAB review only. The Enterprise Reporting Engine (ERE) produces audience-specific **commercial reports** (executive, customer, CAB, operations) from existing investigation data. See `core/change_package/` and `core/reporting/`.
 
 ## Repository Modules Involved
+
+- [`../../core/reporting/`](../../core/reporting/) — Enterprise Reporting Engine
 
 - [`../../core/model/`](../../core/model/) — immutable CVOM dataclasses
 - [`../../core/parser/parser_engine.py`](../../core/parser/parser_engine.py) — domain-pure parsing (no case mutation)

@@ -77,6 +77,16 @@ class ServiceReportResult:
 
 
 @dataclass(frozen=True)
+class ReportResult:
+    """Generated enterprise report for any audience."""
+
+    case_id: str
+    report_id: str
+    report_type: str
+    markdown: str
+
+
+@dataclass(frozen=True)
 class ServiceChangePackageResult:
     """Generated read-only engineering change package."""
 
