@@ -23,6 +23,9 @@ from discovery.planner_engine import PlannerEngine
 from discovery.planner_models import DiscoveryPlan
 from investigation_quality.quality_engine import InvestigationQualityEngine
 from investigation_quality.quality_models import InvestigationQualityReport
+from investigation.session_bootstrap import default_session_engine
+from investigation.session_engine import InvestigationSessionEngine
+from investigation.session_models import InvestigationSession, SessionContinueResult
 from runtime.correlation_engine import (
     CorrelationEngine,
     CorrelationSummary,
@@ -109,6 +112,7 @@ class RuntimeEngine:
         self._logger = logger
         self._parser_engine = parser_engine
         self._decision_log = DecisionLogEngine()
+        self._session_engine: InvestigationSessionEngine | None = None
 
         # TODO: Register real engine implementations and wire execution pipeline.
         self._engine_registry.register_defaults()
@@ -157,6 +161,13 @@ class RuntimeEngine:
     def decision_log_engine(self) -> DecisionLogEngine:
         """Append-only decision log engine."""
         return self._decision_log
+
+    @property
+    def session_engine(self) -> InvestigationSessionEngine:
+        """Interactive investigation session orchestrator."""
+        if self._session_engine is None:
+            self._session_engine = default_session_engine(self)
+        return self._session_engine
 
     def start(self) -> None:
         """Initialize runtime kernel and warm playbook catalog."""
@@ -329,8 +340,7 @@ class RuntimeEngine:
     def evaluate_investigation_quality(self, case_id: CaseId) -> InvestigationQualityReport:
         """Evaluate and store investigation quality for the case."""
         case = self._case_manager.load_case(case_id)
-        if case.discovery_plan is None:
-            case.discovery_plan = PlannerEngine().evaluate_case(case)
+        case.discovery_plan = PlannerEngine().evaluate_case(case)
 
         report = InvestigationQualityEngine().evaluate_case(case)
         case.investigation_quality_report = report
@@ -345,6 +355,34 @@ class RuntimeEngine:
             )
 
         return report
+
+    def start_investigation_session(self, playbook_id: str) -> InvestigationSession:
+        """Start an interactive investigation session for a playbook."""
+        return self.session_engine.start_session(playbook_id)
+
+    def continue_investigation_session(
+        self,
+        session_id: str,
+        *,
+        user_input: str | None = None,
+        input_provider=None,
+        end_marker: str = "END",
+    ) -> SessionContinueResult:
+        """Advance an investigation session."""
+        return self.session_engine.continue_session(
+            session_id,
+            user_input=user_input,
+            input_provider=input_provider,
+            end_marker=end_marker,
+        )
+
+    def get_investigation_session(self, session_id: str) -> InvestigationSession:
+        """Return a registered investigation session."""
+        return self.session_engine.get_session(session_id)
+
+    def format_investigation_session_status(self, session_id: str) -> str:
+        """Format a read-only investigation session status report."""
+        return self.session_engine.format_session_status(session_id)
 
     def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
         """Generate a recommendation from the top hypothesis."""

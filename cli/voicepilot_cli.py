@@ -62,6 +62,9 @@ from runtime.knowledge_bootstrap import default_knowledge_engine
 from runtime.parser_bootstrap import build_default_parser_engine
 from discovery.planner_report import format_discovery_plan_markdown
 from investigation_quality.quality_report import format_investigation_quality_markdown
+from investigation.session_models import InvestigationSessionStatus, SessionActionType
+from investigation.session_exceptions import SessionNotFoundError
+from runtime.intake_flow import build_investigation_turn, get_next_question_for_phase
 from runtime.scenario_runner import (
     default_scenarios_root,
     format_scenario_markdown_report,
@@ -279,56 +282,106 @@ def run_investigation(
     engine: RuntimeEngine | None = None,
     collect_evidence: bool = True,
 ) -> int:
-    """Run the intake investigation loop and optional evidence collection.
-
-    Args:
-        playbook_id: Cataloged playbook ID (e.g. ``VP-CUBE-0001``).
-        input_provider: Callable returning the next user answer.
-        output_writer: Callable receiving output lines.
-        plugins_root: Optional plugins directory override.
-        engine: Optional pre-built runtime engine for tests.
-        collect_evidence: When ``True``, continue into evidence collection after intake.
-
-    Returns:
-        Process exit code (``0`` on success, ``1`` on playbook error).
-    """
+    """Run an interactive investigation session through the session engine."""
     runtime = engine or build_runtime_engine(plugins_root)
 
     try:
         runtime.start()
-        turn = runtime.start_investigation(playbook_id)
+        session = runtime.start_investigation_session(playbook_id)
     except PlaybookIdNotFoundError:
         output_writer(f"Error: Playbook not found: {playbook_id}")
         return 1
 
     output_writer("Investigation started")
+    output_writer(f"Session:  {session.session_id}")
+    case = runtime.case_manager.load_case(session.case_id)
+    question = get_next_question_for_phase(case, InvestigationState.INTAKE)
+    turn = build_investigation_turn(case, question)
     write_case_header(turn, output_writer)
-    output_writer(format_question(turn))
 
-    while (
-        turn.state == InvestigationState.INTAKE
-        and turn.next_action_type == "ask_question"
-        and turn.question_id
-    ):
-        answer = input_provider().strip()
-        turn = runtime.submit_answer(turn.case_id, turn.question_id, answer)
+    while session.status not in {
+        InvestigationSessionStatus.COMPLETED,
+        InvestigationSessionStatus.FAILED,
+    }:
+        if (
+            not collect_evidence
+            and session.current_action == SessionActionType.DISCOVERY_PLANNING
+        ):
+            break
 
-        if turn.state == InvestigationState.DISCOVERY:
-            output_writer("Intake complete. Next phase: DISCOVERY.")
-            case = runtime.case_manager.load_case(turn.case_id)
-            playbook = runtime.playbook_catalog.get(playbook_id)
-            write_intake_summary(case, output_writer, playbook=playbook)
-            if collect_evidence:
-                return run_evidence_collection(
-                    turn.case_id,
-                    runtime,
-                    playbook_id,
-                    input_provider,
-                    output_writer,
-                )
-            return 0
+        if session.status == InvestigationSessionStatus.AWAITING_INPUT:
+            result = runtime.continue_investigation_session(
+                session.session_id,
+                input_provider=input_provider,
+            )
+        else:
+            result = runtime.continue_investigation_session(session.session_id)
 
-        output_writer(format_question(turn))
+        for message in result.messages:
+            if message:
+                for line in message.splitlines():
+                    output_writer(line)
+        session = result.session
+
+    return 0
+
+
+def run_session_status(
+    session_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """Print the current status of an investigation session."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        output_writer(runtime.format_investigation_session_status(session_id))
+    except SessionNotFoundError:
+        output_writer(f"Error: Session not found: {session_id}")
+        return 1
+    return 0
+
+
+def run_continue_session(
+    session_id: str,
+    input_provider: InputProvider,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """Continue an investigation session from the next input boundary."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        runtime.get_investigation_session(session_id)
+    except SessionNotFoundError:
+        output_writer(f"Error: Session not found: {session_id}")
+        return 1
+
+    session = runtime.get_investigation_session(session_id)
+    while session.status not in {
+        InvestigationSessionStatus.COMPLETED,
+        InvestigationSessionStatus.FAILED,
+    }:
+        if session.status == InvestigationSessionStatus.AWAITING_INPUT:
+            result = runtime.continue_investigation_session(
+                session_id,
+                input_provider=input_provider,
+            )
+        else:
+            result = runtime.continue_investigation_session(session_id)
+
+        for message in result.messages:
+            if message:
+                for line in message.splitlines():
+                    output_writer(line)
+        session = result.session
+
+        if session.status == InvestigationSessionStatus.AWAITING_INPUT:
+            break
 
     return 0
 
@@ -353,6 +406,25 @@ def cmd_investigate(args: argparse.Namespace) -> int:
     """Handle ``voicepilot investigate <playbook_id>``."""
     return run_investigation(
         args.playbook_id,
+        input_provider=lambda: input("> "),
+        output_writer=print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot status <session_id>``."""
+    return run_session_status(
+        args.session_id,
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_continue(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot continue <session_id>``."""
+    return run_continue_session(
+        args.session_id,
         input_provider=lambda: input("> "),
         output_writer=print,
         plugins_root=Path(args.plugins_root) if args.plugins_root else None,
@@ -863,6 +935,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override plugins directory (default: repo plugins/)",
     )
     investigate.set_defaults(func=cmd_investigate)
+
+    status = subparsers.add_parser(
+        "status",
+        help="Show the status of an investigation session",
+    )
+    status.add_argument(
+        "session_id",
+        help="Session ID (e.g. SES-abc123)",
+    )
+    status.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    status.set_defaults(func=cmd_status)
+
+    continue_cmd = subparsers.add_parser(
+        "continue",
+        help="Continue an investigation session from the next input boundary",
+    )
+    continue_cmd.add_argument(
+        "session_id",
+        help="Session ID (e.g. SES-abc123)",
+    )
+    continue_cmd.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    continue_cmd.set_defaults(func=cmd_continue)
 
     decisions = subparsers.add_parser(
         "decisions",

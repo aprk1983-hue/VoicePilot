@@ -225,6 +225,25 @@ class ReportInvestigationQuality:
 
 
 @dataclass(frozen=True)
+class ReportInvestigationJourneyStep:
+    """Single step in an investigation session journey."""
+
+    sequence: int
+    action: str
+    case_state: str
+    summary: str
+
+
+@dataclass(frozen=True)
+class ReportInvestigationJourney:
+    """Investigation session journey summary for an incident report."""
+
+    available: bool
+    session_id: str | None = None
+    steps: tuple[ReportInvestigationJourneyStep, ...] = ()
+
+
+@dataclass(frozen=True)
 class ReportTimelineEntry:
     """Chronological event included in an incident report."""
 
@@ -262,6 +281,7 @@ class IncidentReport:
     learning_lessons: str | None
     discovery_plan: ReportDiscoveryPlan
     investigation_quality: ReportInvestigationQuality
+    investigation_journey: ReportInvestigationJourney
     timeline: tuple[ReportTimelineEntry, ...]
     closed_at: str | None
 
@@ -338,6 +358,7 @@ def build_incident_report(case: Case) -> IncidentReport:
         learning_lessons=learning.lessons_learned if learning else None,
         discovery_plan=_build_discovery_plan(case),
         investigation_quality=_build_investigation_quality(case),
+        investigation_journey=_build_investigation_journey(case),
         timeline=_build_timeline(case),
         closed_at=_format_timestamp(case.closed_at),
     )
@@ -453,6 +474,7 @@ def format_incident_report(report: IncidentReport) -> str:
 
     lines.extend(_format_discovery_plan_section(report.discovery_plan))
     lines.extend(_format_investigation_quality_section(report.investigation_quality))
+    lines.extend(_format_investigation_journey_section(report.investigation_journey))
 
     lines.extend(["", "## Verification", ""])
     if report.verification_outcome:
@@ -1068,6 +1090,59 @@ def _format_investigation_quality_section(
         generated_at=datetime.now(timezone.utc),
     )
     return format_investigation_quality_report_section(report)
+
+
+def _build_investigation_journey(case: Case) -> ReportInvestigationJourney:
+    session_data = case.metadata.get("investigation_session")
+    if not isinstance(session_data, dict):
+        return ReportInvestigationJourney(available=False)
+
+    raw_journey = session_data.get("journey", [])
+    if not isinstance(raw_journey, list):
+        return ReportInvestigationJourney(
+            available=True,
+            session_id=str(session_data.get("session_id")) if session_data.get("session_id") else None,
+        )
+
+    steps = tuple(
+        ReportInvestigationJourneyStep(
+            sequence=int(item.get("sequence", index)),
+            action=str(item.get("action", "unknown")),
+            case_state=str(item.get("case_state", "unknown")),
+            summary=str(item.get("summary", "")),
+        )
+        for index, item in enumerate(raw_journey, start=1)
+        if isinstance(item, dict)
+    )
+    session_id = session_data.get("session_id")
+    return ReportInvestigationJourney(
+        available=True,
+        session_id=str(session_id) if session_id else None,
+        steps=steps,
+    )
+
+
+def _format_investigation_journey_section(journey: ReportInvestigationJourney) -> list[str]:
+    lines = ["", "## Investigation Journey", ""]
+    if not journey.available:
+        lines.append("_No investigation session recorded._")
+        return lines
+
+    if journey.session_id:
+        lines.append(f"- **Session ID:** {journey.session_id}")
+    lines.append(f"- **Steps:** {len(journey.steps)}")
+    lines.append("")
+    lines.append("**Journey:**")
+    if journey.steps:
+        for step in journey.steps:
+            lines.append(
+                f"{step.sequence}. `{step.action}` "
+                f"({step.case_state}) — {step.summary}"
+            )
+    else:
+        lines.append("_No journey steps recorded._")
+    lines.append("")
+    return lines
 
 
 def _format_timestamp(value: datetime | None) -> str | None:
