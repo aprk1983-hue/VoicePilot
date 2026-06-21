@@ -1,47 +1,56 @@
-asset_id: VP-CISCO-CUCM-000008
-title: SIP trunk OPTIONS keepalive failure
+asset_id: VP-CISCO-CUCM-000007
+title: CUCM SIP trunk OPTIONS failure
 asset_type: INCIDENT
 vendor: Cisco
 product: CUCM
 category: SIP
-severity: medium
-summary: SIP trunk marked unavailable when periodic OPTIONS probes receive no response.
-description: SIP trunk marked unavailable when periodic OPTIONS probes receive no
-  response.
+severity: high
+summary: CUCM SIP trunk OPTIONS failure affecting Cisco Unified CM operations.
+description: CUCM SIP trunk OPTIONS failure affecting Cisco Unified CM operations.
 symptoms:
-- Trunk intermittently unavailable
-- OPTIONS timeout in SDL traces
-- Calls fail during trunk probe window
+  - Trunk flaps between Up and Down
+  - OPTIONS timeout alarms
+  - Intermittent outbound failures
 required_evidence:
-- SIP trunk keepalive settings
-- SDL trace with OPTIONS
-- Peer SBC logs
-- Network latency metrics
+  - SIP OPTIONS trace
+  - Trunk security profile review
+  - RTMT alert history
 expected_findings:
-- sip_trunk_options_failure
-- sip_options_timeout
+  - sip_trunk_options_failure
+  - sip_options_timeout
 expected_hypotheses:
-- SIP trunk OPTIONS keepalive failure
-related_health_rules:
-- sip_trunk_options_failure
+  - Far-end not responding to OPTIONS
+  - SBC timeout mismatch
+  - One-way ACL
+known_causes:
+  - Far-end not responding to OPTIONS
+  - SBC timeout mismatch
+  - One-way ACL
+known_resolution:
+  - Align OPTIONS keepalive timers with provider
+  - Open SIP signaling path bidirectionally
 recommended_actions:
-- Review collected evidence against expected findings
-- Follow linked runbook and verification guide
+  - Align OPTIONS keepalive timers with provider
+  - Open SIP signaling path bidirectionally
+rollback_steps:
+  - Restore previous keepalive timer values
 verification_steps:
-- Confirm expected findings are present in collected evidence
-- Validate remediation using linked verification guide
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - sip_trunk_options_failure
+  - sip_options_timeout
 related_asset_ids:
-- VP-CISCO-CUCM-RB-003
-- VP-CISCO-CUCM-VG-003
-- VP-CISCO-CUCM-REF-005
+  - VP-CISCO-CUCM-RB-002
+  - VP-CISCO-CUCM-VG-002
+  - VP-CISCO-CUCM-REF-003
 tags:
-- sip-trunk
-- options
-- keepalive
+  - cucm
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-- VoicePilot CUCM knowledge library v1
-confidence: 0.92
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
 status: ACTIVE
 version: '1.0'
 created_at: '2026-06-19T12:00:00+00:00'

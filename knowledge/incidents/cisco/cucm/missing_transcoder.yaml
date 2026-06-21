@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000019
+title: CUCM missing transcoder resource
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: high
+summary: CUCM missing transcoder resource affecting Cisco Unified CM operations.
+description: CUCM missing transcoder resource affecting Cisco Unified CM operations.
+symptoms:
+  - Calls fail between disparate codec regions
+  - Transcoder allocation failure
+  - Music on hold silent
+required_evidence:
+  - Transcoder device status
+  - MRGL audit
+  - Codec path test call
+expected_findings:
+  - missing_transcoder
+  - transcoder_allocation_failure
+expected_hypotheses:
+  - No transcoder in MRGL
+  - Hardware transcoder offline
+  - Transcoder count exhausted
+known_causes:
+  - No transcoder in MRGL
+  - Hardware transcoder offline
+  - Transcoder count exhausted
+known_resolution:
+  - Add transcoder to MRGL or enable SW transcoder
+  - Restore hardware transcoder service
+recommended_actions:
+  - Add transcoder to MRGL or enable SW transcoder
+  - Restore hardware transcoder service
+rollback_steps:
+  - Restore previous MRGL and transcoder assignment
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - missing_transcoder
+  - transcoder_allocation_failure
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-006
+  - VP-CISCO-CUCM-VG-006
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

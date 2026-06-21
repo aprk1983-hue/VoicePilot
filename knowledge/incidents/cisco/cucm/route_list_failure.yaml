@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000014
+title: CUCM route list failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: ROUTING
+severity: high
+summary: CUCM route list failure affecting Cisco Unified CM operations.
+description: CUCM route list failure affecting Cisco Unified CM operations.
+symptoms:
+  - Calls fail when primary gateway busy
+  - Route list does not overflow
+  - All digits fail via one RL
+required_evidence:
+  - Route list member status
+  - Gateway/trunk availability
+  - DNA with route list detail
+expected_findings:
+  - route_list_failure
+  - route_list_unreachable
+expected_hypotheses:
+  - Route list member inactive
+  - Circular RL reference
+  - RL not assigned to RP
+known_causes:
+  - Route list member inactive
+  - Circular RL reference
+  - RL not assigned to RP
+known_resolution:
+  - Repair route list membership and ordering
+  - Activate disabled trunk/gateway members
+recommended_actions:
+  - Repair route list membership and ordering
+  - Activate disabled trunk/gateway members
+rollback_steps:
+  - Restore previous route list configuration
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - route_list_failure
+  - route_list_unreachable
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-010
+  - VP-CISCO-CUCM-VG-009
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

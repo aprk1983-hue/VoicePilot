@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000023
+title: CUCM TFTP service stopped
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: GENERAL
+severity: high
+summary: CUCM TFTP service stopped affecting Cisco Unified CM operations.
+description: CUCM TFTP service stopped affecting Cisco Unified CM operations.
+symptoms:
+  - Phones cannot download config
+  - TFTP service not running
+  - Firmware upgrade failures
+required_evidence:
+  - show status
+  - TFTP file integrity check
+  - Phone config download test
+expected_findings:
+  - tftp_service_stopped
+  - tftp_service_down
+expected_hypotheses:
+  - Service stopped manually
+  - Publisher disk full
+  - Failed upgrade left TFTP down
+known_causes:
+  - Service stopped manually
+  - Publisher disk full
+  - Failed upgrade left TFTP down
+known_resolution:
+  - Start Cisco TFTP service
+  - Free disk space and verify config files present
+recommended_actions:
+  - Start Cisco TFTP service
+  - Free disk space and verify config files present
+rollback_steps:
+  - Restore TFTP service auto-start and prior config export
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - tftp_service_stopped
+  - tftp_service_down
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-004
+  - VP-CISCO-CUCM-VG-003
+  - VP-CISCO-CUCM-REF-004
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -4,24 +4,39 @@ asset_type: RUNBOOK
 vendor: Cisco
 product: CUCM
 category: COLLABORATION
-severity: medium
-summary: Restore TFTP reachability and phone authentication for failed registrations.
-description: Restore TFTP reachability and phone authentication for failed registrations.
+severity: high
+summary: Restore CUCM phone registration for Cisco Unified CM.
+symptoms:
+  - Service degradation requiring runbook remediation
+expected_findings:
+  - runbook_remediation_required
+expected_hypotheses:
+  - Known CUCM failure pattern matched
+known_causes:
+  - Configuration or service fault on CUCM cluster
+known_resolution:
+  - Execute runbook steps and validate with verification guide
+description: Restore CUCM phone registration for Cisco Unified CM. Professional pack runbook RB-CUCM-PHONE-REGISTRATION.
 recommended_actions:
-- Verify TFTP and network path
-- Validate phone security profile
-- Reset phone and confirm registration
+  - Verify network and DHCP option 150
+  - Confirm device and CM group assignment
+  - Reset phone and monitor RIS registration
+rollback_steps:
+  - Reset phone to factory if config corrupt
+  - Reassociate device to correct device pool
 verification_steps:
-- Confirm operational state matches expected baseline
+  - Execute linked verification guide after remediation
 related_asset_ids:
-- VP-CISCO-CUCM-000001
-- VP-CISCO-CUCM-000002
-- VP-CISCO-CUCM-000005
+  - VP-CISCO-CUCM-VG-001
+  - VP-CISCO-CUCM-VG-007
 tags:
-- runbook
-- cucm
+  - cucm
+  - runbook
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-confidence: 0.9
+  - Cisco CUCM Professional Pack v1
+  - RB-CUCM-PHONE-REGISTRATION
+confidence: 0.93
 status: ACTIVE
 version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

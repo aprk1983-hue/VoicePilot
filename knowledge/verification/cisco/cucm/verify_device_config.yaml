@@ -1,11 +1,11 @@
-asset_id: VP-CISCO-CUCM-VG-001
-title: Verify phone registration via RIS
+asset_id: VP-CISCO-CUCM-VG-007
+title: Verify CUCM device configuration
 asset_type: VERIFICATION_GUIDE
 vendor: Cisco
 product: CUCM
 category: COLLABORATION
 severity: medium
-summary: Verify phone registration via RIS for Cisco Unified CM.
+summary: Verify CUCM device configuration for Cisco Unified CM.
 symptoms:
   - Post-remediation validation required
 expected_findings:
@@ -16,14 +16,14 @@ known_causes:
   - Remediation not yet validated
 known_resolution:
   - Complete verification steps and attach evidence
-description: Verify phone registration via RIS for Cisco Unified CM. Professional pack guide VG-CUCM-RIS.
+description: Verify CUCM device configuration for Cisco Unified CM. Professional pack guide VG-CUCM-DEVICE.
 required_evidence:
   - RTMT or CLI command output
   - Test call results
 verification_steps:
-  - Run RIS query for affected devices
-  - Confirm Registered state and active CM
-  - Place on-hook/off-hook test
+  - Audit device, line, and MRGL settings
+  - Confirm CM group and device pool
+  - Validate phone security profile
 recommended_actions:
   - Compare results against expected operational baseline
 related_asset_ids:
@@ -35,7 +35,7 @@ tags:
   - professional-pack
 references:
   - Cisco CUCM Professional Pack v1
-  - VG-CUCM-RIS
+  - VG-CUCM-DEVICE
 confidence: 0.92
 status: ACTIVE
 version: '1.0'

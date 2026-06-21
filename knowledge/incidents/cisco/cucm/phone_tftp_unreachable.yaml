@@ -1,48 +1,57 @@
-asset_id: VP-CISCO-CUCM-000001
-title: CUCM phone not registering — TFTP unreachable
+asset_id: VP-CISCO-CUCM-000005
+title: CUCM TFTP unreachable during registration
 asset_type: INCIDENT
 vendor: Cisco
 product: CUCM
-category: COLLABORATION
+category: NETWORK
 severity: high
-summary: IP phones fail registration when TFTP server is unreachable from the phone
-  subnet.
-description: IP phones fail registration when TFTP server is unreachable from the
-  phone subnet.
+summary: CUCM TFTP unreachable during registration affecting Cisco Unified CM operations.
+description: CUCM TFTP unreachable during registration affecting Cisco Unified CM operations.
 symptoms:
-- Phones stuck at Registering
-- TFTP timeout in phone syslog
-- Bulk registration failure after VLAN change
+  - Phones stuck at Registering
+  - TFTP timeout in phone syslog
+  - Bulk failure after network change
 required_evidence:
-- Phone syslog export
-- TFTP server reachability test
-- CUCM TFTP service status
-- Network ACL review
+  - TFTP server reachability test
+  - CUCM service status
+  - Phone syslog export
 expected_findings:
-- phone_tftp_unreachable
-- tftp_service_unreachable
+  - phone_tftp_unreachable
+  - tftp_service_unreachable
 expected_hypotheses:
-- CUCM phone not registering — TFTP unreachable
-related_health_rules:
-- phone_tftp_unreachable
+  - ACL blocks UDP 69
+  - Wrong TFTP server in DHCP option 150
+  - TFTP service down
+known_causes:
+  - ACL blocks UDP 69
+  - Wrong TFTP server in DHCP option 150
+  - TFTP service down
+known_resolution:
+  - Restore TFTP reachability and correct option 150
+  - Start TFTP service on publisher/subscriber
 recommended_actions:
-- Review collected evidence against expected findings
-- Follow linked runbook and verification guide
+  - Restore TFTP reachability and correct option 150
+  - Start TFTP service on publisher/subscriber
+rollback_steps:
+  - Revert ACL or routing change
+  - Restore previous DHCP scope options
 verification_steps:
-- Confirm expected findings are present in collected evidence
-- Validate remediation using linked verification guide
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - phone_tftp_unreachable
+  - tftp_service_unreachable
 related_asset_ids:
-- VP-CISCO-CUCM-RB-001
-- VP-CISCO-CUCM-VG-001
-- VP-CISCO-CUCM-REF-001
+  - VP-CISCO-CUCM-RB-004
+  - VP-CISCO-CUCM-VG-003
+  - VP-CISCO-CUCM-REF-004
 tags:
-- phone-registration
-- tftp
-- registration
+  - cucm
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-- VoicePilot CUCM knowledge library v1
-confidence: 0.92
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
 status: ACTIVE
 version: '1.0'
 created_at: '2026-06-19T12:00:00+00:00'

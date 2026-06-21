@@ -1,11 +1,11 @@
-asset_id: VP-CISCO-CUCM-RB-005
-title: Recover CUCM cluster replication and services
+asset_id: VP-CISCO-CUCM-RB-004
+title: Restore CUCM TFTP service and file delivery
 asset_type: RUNBOOK
 vendor: Cisco
 product: CUCM
 category: COLLABORATION
 severity: high
-summary: Recover CUCM cluster replication and services for Cisco Unified CM.
+summary: Restore CUCM TFTP service and file delivery for Cisco Unified CM.
 symptoms:
   - Service degradation requiring runbook remediation
 expected_findings:
@@ -16,25 +16,24 @@ known_causes:
   - Configuration or service fault on CUCM cluster
 known_resolution:
   - Execute runbook steps and validate with verification guide
-description: Recover CUCM cluster replication and services for Cisco Unified CM. Professional pack runbook RB-CUCM-REPLICATION.
+description: Restore CUCM TFTP service and file delivery for Cisco Unified CM. Professional pack runbook RB-CUCM-TFTP.
 recommended_actions:
-  - Check utils dbreplication status
-  - Resolve network and NTP skew
-  - Run Cisco replication recovery procedure
+  - Start Cisco TFTP service
+  - Verify phone config files exist
+  - Test TFTP download from phone subnet
 rollback_steps:
-  - Abort recovery and restore snapshot if replication repair fails
+  - Stop TFTP and restore prior config file set from backup
 verification_steps:
   - Execute linked verification guide after remediation
 related_asset_ids:
-  - VP-CISCO-CUCM-VG-004
-  - VP-CISCO-CUCM-VG-010
+  - VP-CISCO-CUCM-VG-003
 tags:
   - cucm
   - runbook
   - professional-pack
 references:
   - Cisco CUCM Professional Pack v1
-  - RB-CUCM-REPLICATION
+  - RB-CUCM-TFTP
 confidence: 0.93
 status: ACTIVE
 version: '1.0'

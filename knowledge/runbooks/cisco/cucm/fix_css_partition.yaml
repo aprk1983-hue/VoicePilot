@@ -1,11 +1,11 @@
-asset_id: VP-CISCO-CUCM-RB-005
-title: Recover CUCM cluster replication and services
+asset_id: VP-CISCO-CUCM-RB-003
+title: Fix CUCM CSS and partition access
 asset_type: RUNBOOK
 vendor: Cisco
 product: CUCM
 category: COLLABORATION
 severity: high
-summary: Recover CUCM cluster replication and services for Cisco Unified CM.
+summary: Fix CUCM CSS and partition access for Cisco Unified CM.
 symptoms:
   - Service degradation requiring runbook remediation
 expected_findings:
@@ -16,25 +16,25 @@ known_causes:
   - Configuration or service fault on CUCM cluster
 known_resolution:
   - Execute runbook steps and validate with verification guide
-description: Recover CUCM cluster replication and services for Cisco Unified CM. Professional pack runbook RB-CUCM-REPLICATION.
+description: Fix CUCM CSS and partition access for Cisco Unified CM. Professional pack runbook RB-CUCM-CSS.
 recommended_actions:
-  - Check utils dbreplication status
-  - Resolve network and NTP skew
-  - Run Cisco replication recovery procedure
+  - Identify blocked partition in CSS
+  - Add partition or reorder CSS
+  - Validate with Dialed Number Analyzer
 rollback_steps:
-  - Abort recovery and restore snapshot if replication repair fails
+  - Import previous CSS export from change window backup
 verification_steps:
   - Execute linked verification guide after remediation
 related_asset_ids:
-  - VP-CISCO-CUCM-VG-004
-  - VP-CISCO-CUCM-VG-010
+  - VP-CISCO-CUCM-VG-008
+  - VP-CISCO-CUCM-VG-009
 tags:
   - cucm
   - runbook
   - professional-pack
 references:
   - Cisco CUCM Professional Pack v1
-  - RB-CUCM-REPLICATION
+  - RB-CUCM-CSS
 confidence: 0.93
 status: ACTIVE
 version: '1.0'

@@ -32,6 +32,9 @@ _METADATA_EXTENSION_FIELDS = (
     "related_knowledge_packs",
     "recommended_actions",
     "verification_steps",
+    "rollback_steps",
+    "known_causes",
+    "known_resolution",
 )
 
 

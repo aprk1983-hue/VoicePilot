@@ -1,0 +1,57 @@
+asset_id: VP-CISCO-CUCM-000009
+title: CUCM SIP trunk 488 codec mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CODEC
+severity: high
+summary: CUCM SIP trunk 488 codec mismatch affecting Cisco Unified CM operations.
+description: CUCM SIP trunk 488 codec mismatch affecting Cisco Unified CM operations.
+symptoms:
+  - Calls fail with 488 Not Acceptable
+  - No audio on established calls
+  - MTP invoked unexpectedly
+required_evidence:
+  - SDP offer/answer capture
+  - Region and trunk codec settings
+  - ISDN cause / SIP response log
+expected_findings:
+  - sip_trunk_codec_mismatch
+  - sip_488_detected
+expected_hypotheses:
+  - No common codec between CUCM and provider
+  - Region codec policy too restrictive
+  - DTMF relay mismatch
+known_causes:
+  - No common codec between CUCM and provider
+  - Region codec policy too restrictive
+  - DTMF relay mismatch
+known_resolution:
+  - Align allowed codecs on trunk and region
+  - Enable required MTP/transcoder if needed
+recommended_actions:
+  - Align allowed codecs on trunk and region
+  - Enable required MTP/transcoder if needed
+rollback_steps:
+  - Restore previous codec preference list
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - sip_trunk_codec_mismatch
+  - sip_488_detected
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-002
+  - VP-CISCO-CUCM-VG-002
+  - VP-CISCO-CUCM-VG-006
+  - VP-CISCO-CUCM-REF-003
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

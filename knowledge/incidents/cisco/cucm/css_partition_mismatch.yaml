@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000011
+title: CUCM CSS partition mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: ROUTING
+severity: medium
+summary: CUCM CSS partition mismatch affecting Cisco Unified CM operations.
+description: CUCM CSS partition mismatch affecting Cisco Unified CM operations.
+symptoms:
+  - External calls fail with fast busy
+  - On-net calls work
+  - CSS shows restricted partition
+required_evidence:
+  - Route plan report
+  - Line CSS and partition review
+  - Dialed Number Analyzer output
+expected_findings:
+  - css_partition_mismatch
+  - css_blocks_route
+expected_hypotheses:
+  - Device CSS missing partition
+  - Partition not in CSS
+  - Wrong line CSS
+known_causes:
+  - Device CSS missing partition
+  - Partition not in CSS
+  - Wrong line CSS
+known_resolution:
+  - Add required partition to CSS
+  - Assign correct CSS to device line
+recommended_actions:
+  - Add required partition to CSS
+  - Assign correct CSS to device line
+rollback_steps:
+  - Restore previous CSS membership export
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - css_partition_mismatch
+  - css_blocks_route
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-003
+  - VP-CISCO-CUCM-VG-008
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

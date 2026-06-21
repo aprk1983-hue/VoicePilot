@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000012
+title: CUCM partition access mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: ROUTING
+severity: medium
+summary: CUCM partition access mismatch affecting Cisco Unified CM operations.
+description: CUCM partition access mismatch affecting Cisco Unified CM operations.
+symptoms:
+  - Calls blocked to specific destinations
+  - Partition visible but unreachable
+  - Translation succeeds but route fails
+required_evidence:
+  - CSS order analysis
+  - Partition time schedule review
+  - DNA for blocked call
+expected_findings:
+  - partition_access_mismatch
+  - partition_not_accessible
+expected_hypotheses:
+  - Partition in wrong CSS order
+  - Time-of-day partition restriction
+  - Geo-specific partition missing
+known_causes:
+  - Partition in wrong CSS order
+  - Time-of-day partition restriction
+  - Geo-specific partition missing
+known_resolution:
+  - Reorder CSS or add missing partition
+  - Review partition time schedules
+recommended_actions:
+  - Reorder CSS or add missing partition
+  - Review partition time schedules
+rollback_steps:
+  - Restore exported CSS/partition configuration
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - partition_access_mismatch
+  - partition_not_accessible
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-003
+  - VP-CISCO-CUCM-VG-008
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

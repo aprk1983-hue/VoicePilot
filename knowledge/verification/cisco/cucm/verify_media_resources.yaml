@@ -1,27 +1,42 @@
-asset_id: VP-CISCO-CUCM-VG-007
-title: Verify media resource availability
+asset_id: VP-CISCO-CUCM-VG-006
+title: Verify CUCM media resources
 asset_type: VERIFICATION_GUIDE
 vendor: Cisco
 product: CUCM
-category: MEDIA
+category: COLLABORATION
 severity: medium
-summary: Confirm conference, MTP, and transcoder resources available in MRGL.
-description: Confirm conference, MTP, and transcoder resources available in MRGL.
-recommended_actions:
-- Execute steps documented in this asset
+summary: Verify CUCM media resources for Cisco Unified CM.
+symptoms:
+  - Post-remediation validation required
+expected_findings:
+  - verification_passed
+expected_hypotheses:
+  - Service restored to operational baseline
+known_causes:
+  - Remediation not yet validated
+known_resolution:
+  - Complete verification steps and attach evidence
+description: Verify CUCM media resources for Cisco Unified CM. Professional pack guide VG-CUCM-MEDIA.
+required_evidence:
+  - RTMT or CLI command output
+  - Test call results
 verification_steps:
-- Confirm operational state matches expected baseline
+  - Check MTP/transcoder availability
+  - Place codec traversal test call
+  - Validate MOH and conference
+recommended_actions:
+  - Compare results against expected operational baseline
 related_asset_ids:
-- VP-CISCO-CUCM-000016
-- VP-CISCO-CUCM-000017
-- VP-CISCO-CUCM-000018
+  - VP-CISCO-CUCM-RB-006
+  - VP-CISCO-CUCM-000018
 tags:
-- verification
-- cucm
+  - cucm
+  - verification
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-confidence: 0.9
+  - Cisco CUCM Professional Pack v1
+  - VG-CUCM-MEDIA
+confidence: 0.92
 status: ACTIVE
 version: '1.0'
-required_evidence:
-- CUCM CLI and admin verification outputs
+created_at: '2026-06-19T12:00:00+00:00'

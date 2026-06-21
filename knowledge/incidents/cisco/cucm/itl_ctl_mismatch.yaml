@@ -1,0 +1,57 @@
+asset_id: VP-CISCO-CUCM-000025
+title: CUCM ITL/CTL mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: SECURITY
+severity: high
+summary: CUCM ITL/CTL mismatch affecting Cisco Unified CM operations.
+description: CUCM ITL/CTL mismatch affecting Cisco Unified CM operations.
+symptoms:
+  - Phones fail secure registration
+  - ITL file mismatch alarm
+  - LSC installation failures
+required_evidence:
+  - CTL/ITL comparison
+  - Phone security status
+  - CAPF operation log
+expected_findings:
+  - itl_ctl_mismatch
+  - certificate_trust_mismatch
+expected_hypotheses:
+  - CTL updated without phone reset
+  - Mixed CAPF policies
+  - Manual ITL override
+known_causes:
+  - CTL updated without phone reset
+  - Mixed CAPF policies
+  - Manual ITL override
+known_resolution:
+  - Regenerate CTL/ITL and reset affected phones
+  - Align CAPF and security profiles
+recommended_actions:
+  - Regenerate CTL/ITL and reset affected phones
+  - Align CAPF and security profiles
+rollback_steps:
+  - Restore previous CTL backup per Cisco security procedure
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - itl_ctl_mismatch
+  - certificate_trust_mismatch
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-009
+  - VP-CISCO-CUCM-VG-005
+  - VP-CISCO-CUCM-VG-007
+  - VP-CISCO-CUCM-REF-005
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

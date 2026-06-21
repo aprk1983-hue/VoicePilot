@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000024
+title: CUCM Tomcat certificate issue
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CERTIFICATES
+severity: high
+summary: CUCM Tomcat certificate issue affecting Cisco Unified CM operations.
+description: CUCM Tomcat certificate issue affecting Cisco Unified CM operations.
+symptoms:
+  - Administration page certificate warning
+  - Phone security alert for CAPF
+  - Tomcat service restart loop
+required_evidence:
+  - Certificate management GUI export
+  - Tomcat logs
+  - CAPF trust list review
+expected_findings:
+  - tomcat_certificate_issue
+  - certificate_expired
+expected_hypotheses:
+  - Expired Tomcat certificate
+  - Incomplete cert chain
+  - CAPF trust mismatch
+known_causes:
+  - Expired Tomcat certificate
+  - Incomplete cert chain
+  - CAPF trust mismatch
+known_resolution:
+  - Regenerate and install Tomcat certificates
+  - Distribute updated trust list to phones
+recommended_actions:
+  - Regenerate and install Tomcat certificates
+  - Distribute updated trust list to phones
+rollback_steps:
+  - Restore previous Tomcat cert backup if new cert breaks services
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - tomcat_certificate_issue
+  - certificate_expired
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-009
+  - VP-CISCO-CUCM-VG-005
+  - VP-CISCO-CUCM-REF-005
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

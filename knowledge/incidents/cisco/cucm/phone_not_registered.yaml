@@ -1,0 +1,59 @@
+asset_id: VP-CISCO-CUCM-000001
+title: CUCM phone not registered
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: COLLABORATION
+severity: high
+summary: CUCM phone not registered affecting Cisco Unified CM operations.
+description: CUCM phone not registered affecting Cisco Unified CM operations.
+symptoms:
+  - Phones show Not Registered
+  - No dial tone on affected devices
+  - RIS shows unregistered state
+required_evidence:
+  - show risdb query phone
+  - Phone status screen capture
+  - Network reachability test to CUCM
+expected_findings:
+  - phone_not_registered
+  - device_unregistered
+expected_hypotheses:
+  - Stale DHCP option 150
+  - CM group unreachable
+  - Device deleted in CUCM
+known_causes:
+  - Stale DHCP option 150
+  - CM group unreachable
+  - Device deleted in CUCM
+known_resolution:
+  - Validate phone network reachability to CUCM and TFTP
+  - Confirm device exists and is associated with correct CM group
+recommended_actions:
+  - Validate phone network reachability to CUCM and TFTP
+  - Confirm device exists and is associated with correct CM group
+rollback_steps:
+  - Restore previous CM group assignment if changed
+  - Revert VLAN or DHCP option 150 if misapplied
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - phone_not_registered
+  - device_unregistered
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-001
+  - VP-CISCO-CUCM-VG-001
+  - VP-CISCO-CUCM-VG-007
+  - VP-CISCO-CUCM-REF-001
+  - VP-CISCO-CUCM-REF-004
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

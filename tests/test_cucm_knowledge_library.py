@@ -1,4 +1,4 @@
-"""Tests for the Cisco CUCM engineering knowledge library."""
+"""Tests for the Cisco CUCM Professional Pack engineering knowledge library."""
 
 from __future__ import annotations
 
@@ -6,7 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from cli.voicepilot_cli import main, run_assets_search, run_assets_show, run_assets_stats
+from asset_factory import EngineeringAssetFactory
+from cli.voicepilot_cli import (
+    main,
+    run_assets_quality,
+    run_assets_search,
+    run_assets_show,
+    run_assets_stats,
+    run_assets_validate,
+)
 from domain.models import AnalysisFinding
 from engineering_assets import EngineeringAssetType
 from engineering_knowledge import (
@@ -19,6 +27,7 @@ from engineering_knowledge.engineering_knowledge_bootstrap import default_engine
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INCIDENT_IDS = tuple(f"VP-CISCO-CUCM-{index:06d}" for index in range(1, 26))
+CUCM_ASSET_COUNT = 50
 
 
 @pytest.fixture(autouse=True)
@@ -67,21 +76,48 @@ class TestCiscoCucmKnowledgeLibrary:
 
         for asset in _cucm_assets(library, EngineeringAssetType.INCIDENT):
             assert asset.metadata.get("symptoms")
-            assert asset.metadata.get("required_evidence")
             assert asset.metadata.get("expected_findings")
+            assert asset.metadata.get("expected_hypotheses")
             assert asset.metadata.get("recommended_actions")
+            assert asset.metadata.get("rollback_steps")
             assert asset.metadata.get("verification_steps")
+            assert asset.related_asset_ids
 
     def test_support_asset_counts(self, library) -> None:
+        assert len(_cucm_assets(library)) == CUCM_ASSET_COUNT
         assert len(_cucm_assets(library, EngineeringAssetType.VERIFICATION_GUIDE)) == 10
         assert len(_cucm_assets(library, EngineeringAssetType.RUNBOOK)) == 10
-        assert len(_cucm_assets(library, EngineeringAssetType.REFERENCE)) == 10
+        assert len(_cucm_assets(library, EngineeringAssetType.REFERENCE)) == 5
+
+    def test_factory_validation_passes(self, library) -> None:
+        assets = tuple(_cucm_assets(library))
+        report = EngineeringAssetFactory().validate_assets(assets)
+
+        assert report.valid
+        assert not report.duplicate_ids
+        assert not report.duplicate_titles
+
+    def test_quality_scores_meet_professional_threshold(self, library) -> None:
+        assets = tuple(_cucm_assets(library))
+        scores = EngineeringAssetFactory().score_quality(assets)
+
+        assert scores
+        for score in scores:
+            assert score.score >= 90, f"{score.asset_id} scored {score.score}"
+
+    def test_statistics_include_cucm_assets(self, library) -> None:
+        assets = tuple(_cucm_assets(library))
+        stats = EngineeringAssetFactory().asset_statistics(assets)
+
+        assert stats.total_assets == CUCM_ASSET_COUNT
+        assert stats.average_quality >= 90
+        assert ("Cisco", CUCM_ASSET_COUNT) in stats.vendor_counts
 
     def test_search_finds_phone_registration_incident(self, library) -> None:
         results = search_assets(library, "tftp")
         ids = {asset.asset_id for asset in results if asset.product == "CUCM"}
 
-        assert "VP-CISCO-CUCM-000001" in ids
+        assert "VP-CISCO-CUCM-000005" in ids
 
     def test_search_finds_sip_trunk_incident(self, library) -> None:
         results = search_assets(library, "sip trunk")
@@ -107,7 +143,7 @@ class TestCiscoCucmKnowledgeLibrary:
             if entry.knowledge_id.startswith("VP-CISCO-CUCM-")
         }
 
-        assert len(knowledge_ids) == 55
+        assert len(knowledge_ids) == CUCM_ASSET_COUNT
 
     def test_ekf_matches_phone_registration_finding(self, library) -> None:
         engine = default_engineering_knowledge_engine()
@@ -117,7 +153,7 @@ class TestCiscoCucmKnowledgeLibrary:
         report = engine.evaluate_findings(findings)
 
         matched_ids = {match.knowledge_id for match in report.matches}
-        assert "VP-CISCO-CUCM-000001" in matched_ids
+        assert "VP-CISCO-CUCM-000005" in matched_ids
 
     def test_ekf_matches_sip_trunk_finding(self, library) -> None:
         engine = default_engineering_knowledge_engine()
@@ -144,11 +180,11 @@ class TestCucmAssetsCli:
     def test_cli_search_show_and_stats(self, library) -> None:
         search_output: list[str] = []
         assert run_assets_search("tftp", search_output.append, library=library) == 0
-        assert "VP-CISCO-CUCM-000001" in "\n".join(search_output)
+        assert "VP-CISCO-CUCM-000005" in "\n".join(search_output)
 
         show_output: list[str] = []
         assert run_assets_show("VP-CISCO-CUCM-000001", show_output.append, library=library) == 0
-        assert "TFTP unreachable" in "\n".join(show_output)
+        assert "phone not registered" in "\n".join(show_output).lower()
 
         stats_output: list[str] = []
         assert run_assets_stats(stats_output.append, library=library) == 0
@@ -156,7 +192,17 @@ class TestCucmAssetsCli:
         assert "Total Assets:" in stats_text
         assert "INCIDENT: 35" in stats_text
 
+    def test_cli_validate_and_quality(self, library) -> None:
+        validate_output: list[str] = []
+        assert run_assets_validate(validate_output.append, library=library) == 0
+
+        quality_output: list[str] = []
+        assert run_assets_quality(quality_output.append, library=library) == 0
+        assert "Average Quality:" in "\n".join(quality_output)
+
     def test_main_assets_commands_include_cucm(self) -> None:
         assert main(["assets", "search", "sip trunk"]) == 0
         assert main(["assets", "show", "VP-CISCO-CUCM-000006"]) == 0
         assert main(["assets", "stats"]) == 0
+        assert main(["assets", "validate"]) == 0
+        assert main(["assets", "quality"]) == 0

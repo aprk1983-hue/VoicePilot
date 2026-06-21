@@ -1,0 +1,58 @@
+asset_id: VP-CISCO-CUCM-000003
+title: CUCM unknown device registration
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: COLLABORATION
+severity: medium
+summary: CUCM unknown device registration affecting Cisco Unified CM operations.
+description: CUCM unknown device registration affecting Cisco Unified CM operations.
+symptoms:
+  - Phone displays unknown device
+  - Auto-registration blocked
+  - Device not found in CUCM
+required_evidence:
+  - show risdb query phone
+  - Device configuration export
+  - Auto-registration policy review
+expected_findings:
+  - phone_unknown_device
+  - auto_registration_denied
+expected_hypotheses:
+  - MAC not in CUCM database
+  - Auto-registration disabled
+  - Wrong device pool
+known_causes:
+  - MAC not in CUCM database
+  - Auto-registration disabled
+  - Wrong device pool
+known_resolution:
+  - Add device with correct MAC or enable controlled auto-registration
+  - Assign device to correct device pool
+recommended_actions:
+  - Add device with correct MAC or enable controlled auto-registration
+  - Assign device to correct device pool
+rollback_steps:
+  - Remove auto-created device if incorrect
+  - Disable auto-registration if opened inadvertently
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - phone_unknown_device
+  - auto_registration_denied
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-001
+  - VP-CISCO-CUCM-VG-007
+  - VP-CISCO-CUCM-REF-001
+  - VP-CISCO-CUCM-REF-004
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

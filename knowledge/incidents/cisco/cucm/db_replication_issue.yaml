@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000021
+title: CUCM database replication issue
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: GENERAL
+severity: critical
+summary: CUCM database replication issue affecting Cisco Unified CM operations.
+description: CUCM database replication issue affecting Cisco Unified CM operations.
+symptoms:
+  - Replication status shows 0
+  - Config changes not propagating
+  - Subscriber DB out of sync
+required_evidence:
+  - utils dbreplication status
+  - RTMT replication alerts
+  - Network latency test between nodes
+expected_findings:
+  - db_replication_issue
+  - db_replication_broken
+expected_hypotheses:
+  - Network partition between nodes
+  - Excessive DB latency
+  - Publisher disk full
+known_causes:
+  - Network partition between nodes
+  - Excessive DB latency
+  - Publisher disk full
+known_resolution:
+  - Restore publisher-subscriber connectivity
+  - Run replication repair procedure during maintenance window
+recommended_actions:
+  - Restore publisher-subscriber connectivity
+  - Run replication repair procedure during maintenance window
+rollback_steps:
+  - Fail back to known-good DB snapshot per Cisco procedure
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - db_replication_issue
+  - db_replication_broken
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-005
+  - VP-CISCO-CUCM-VG-004
+  - VP-CISCO-CUCM-REF-002
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

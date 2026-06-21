@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000016
+title: CUCM region codec mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CODEC
+severity: medium
+summary: CUCM region codec mismatch affecting Cisco Unified CM operations.
+description: CUCM region codec mismatch affecting Cisco Unified CM operations.
+symptoms:
+  - One-way audio on inter-region calls
+  - Calls connect but no media
+  - Unexpected transcoder use
+required_evidence:
+  - Region codec settings export
+  - Media resource allocation trace
+  - MOH/codec test call
+expected_findings:
+  - region_codec_mismatch
+  - codec_negotiation_failed
+expected_hypotheses:
+  - Region codec list has no overlap
+  - G.729 disabled on one region
+  - Video/audio codec policy conflict
+known_causes:
+  - Region codec list has no overlap
+  - G.729 disabled on one region
+  - Video/audio codec policy conflict
+known_resolution:
+  - Align codec preferences between regions
+  - Enable MTP/transcoder if policy requires
+recommended_actions:
+  - Align codec preferences between regions
+  - Enable MTP/transcoder if policy requires
+rollback_steps:
+  - Restore previous region codec configuration
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - region_codec_mismatch
+  - codec_negotiation_failed
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-007
+  - VP-CISCO-CUCM-VG-006
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

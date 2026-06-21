@@ -1,0 +1,58 @@
+asset_id: VP-CISCO-CUCM-000018
+title: CUCM missing MTP resource
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: high
+summary: CUCM missing MTP resource affecting Cisco Unified CM operations.
+description: CUCM missing MTP resource affecting Cisco Unified CM operations.
+symptoms:
+  - Conference or transfer fails
+  - MTP allocation failure alarm
+  - DTMF relay issues on SIP trunk
+required_evidence:
+  - Media resource list status
+  - MRGL assignment on device/trunk
+  - MTP utilization report
+expected_findings:
+  - missing_mtp
+  - mtp_allocation_failure
+expected_hypotheses:
+  - No MTP in MRGL
+  - MTP device down
+  - Software MTP limit reached
+known_causes:
+  - No MTP in MRGL
+  - MTP device down
+  - Software MTP limit reached
+known_resolution:
+  - Add available MTP to MRGL
+  - Restart MTP service/device
+  - Increase MTP capacity
+recommended_actions:
+  - Add available MTP to MRGL
+  - Restart MTP service/device
+  - Increase MTP capacity
+rollback_steps:
+  - Restore previous MRGL configuration
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - missing_mtp
+  - mtp_allocation_failure
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-006
+  - VP-CISCO-CUCM-VG-006
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

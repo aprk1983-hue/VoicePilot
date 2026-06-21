@@ -1,27 +1,40 @@
-asset_id: VP-CISCO-CUCM-RB-005
-title: Correct route and translation patterns
+asset_id: VP-CISCO-CUCM-RB-010
+title: Correct CUCM route patterns and route lists
 asset_type: RUNBOOK
 vendor: Cisco
 product: CUCM
-category: CALL_ROUTING
-severity: medium
-summary: Repair route patterns, translations, and CSS for blocked calls.
-description: Repair route patterns, translations, and CSS for blocked calls.
+category: COLLABORATION
+severity: high
+summary: Correct CUCM route patterns and route lists for Cisco Unified CM.
+symptoms:
+  - Service degradation requiring runbook remediation
+expected_findings:
+  - runbook_remediation_required
+expected_hypotheses:
+  - Known CUCM failure pattern matched
+known_causes:
+  - Configuration or service fault on CUCM cluster
+known_resolution:
+  - Execute runbook steps and validate with verification guide
+description: Correct CUCM route patterns and route lists for Cisco Unified CM. Professional pack runbook RB-CUCM-ROUTE-PATTERN.
 recommended_actions:
-- Audit route plan report
-- Fix digit manipulation order
-- Update CSS partition access
+  - Create or fix route pattern
+  - Validate route list and route group members
+  - Confirm DNA match for failing digits
+rollback_steps:
+  - Delete misconfigured route pattern or restore route plan export
 verification_steps:
-- Confirm operational state matches expected baseline
+  - Execute linked verification guide after remediation
 related_asset_ids:
-- VP-CISCO-CUCM-000011
-- VP-CISCO-CUCM-000012
-- VP-CISCO-CUCM-000013
+  - VP-CISCO-CUCM-VG-009
 tags:
-- runbook
-- cucm
+  - cucm
+  - runbook
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-confidence: 0.9
+  - Cisco CUCM Professional Pack v1
+  - RB-CUCM-ROUTE-PATTERN
+confidence: 0.93
 status: ACTIVE
 version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

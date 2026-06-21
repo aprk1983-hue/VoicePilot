@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000010
+title: CUCM SIP trunk DNS resolution failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: NETWORK
+severity: high
+summary: CUCM SIP trunk DNS resolution failure affecting Cisco Unified CM operations.
+description: CUCM SIP trunk DNS resolution failure affecting Cisco Unified CM operations.
+symptoms:
+  - Trunk destination unresolved
+  - Intermittent DNS lookup failures
+  - Calls fail after DNS change
+required_evidence:
+  - nslookup from CUCM OS
+  - Trunk destination configuration
+  - DNS change audit
+expected_findings:
+  - sip_trunk_dns_failure
+  - dns_resolution_failed
+expected_hypotheses:
+  - Stale SRV record
+  - DNS server unreachable from CUCM
+  - Typo in trunk FQDN
+known_causes:
+  - Stale SRV record
+  - DNS server unreachable from CUCM
+  - Typo in trunk FQDN
+known_resolution:
+  - Correct DNS records and verify from CUCM CLI
+  - Point CUCM to reliable DNS servers
+recommended_actions:
+  - Correct DNS records and verify from CUCM CLI
+  - Point CUCM to reliable DNS servers
+rollback_steps:
+  - Restore previous DNS records or hosts file entry
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - sip_trunk_dns_failure
+  - dns_resolution_failed
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-002
+  - VP-CISCO-CUCM-VG-002
+  - VP-CISCO-CUCM-REF-003
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

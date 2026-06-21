@@ -1,27 +1,41 @@
-asset_id: VP-CISCO-CUCM-RB-003
-title: Restore SIP trunk connectivity
+asset_id: VP-CISCO-CUCM-RB-002
+title: Restore CUCM SIP trunk connectivity
 asset_type: RUNBOOK
 vendor: Cisco
 product: CUCM
-category: SIP
-severity: medium
-summary: Recover SIP trunk TCP/TLS connectivity and OPTIONS keepalive.
-description: Recover SIP trunk TCP/TLS connectivity and OPTIONS keepalive.
+category: COLLABORATION
+severity: high
+summary: Restore CUCM SIP trunk connectivity for Cisco Unified CM.
+symptoms:
+  - Service degradation requiring runbook remediation
+expected_findings:
+  - runbook_remediation_required
+expected_hypotheses:
+  - Known CUCM failure pattern matched
+known_causes:
+  - Configuration or service fault on CUCM cluster
+known_resolution:
+  - Execute runbook steps and validate with verification guide
+description: Restore CUCM SIP trunk connectivity for Cisco Unified CM. Professional pack runbook RB-CUCM-SIP-TRUNK.
 recommended_actions:
-- Verify trunk destination reachability
-- Renew TLS certificates if needed
-- Confirm trunk In Service
+  - Validate trunk destination and DNS
+  - Review security profile and certificates
+  - Reset trunk and monitor OPTIONS
+rollback_steps:
+  - Revert trunk destination or security profile change
+  - Restore previous certificate trust store
 verification_steps:
-- Confirm operational state matches expected baseline
+  - Execute linked verification guide after remediation
 related_asset_ids:
-- VP-CISCO-CUCM-000006
-- VP-CISCO-CUCM-000007
-- VP-CISCO-CUCM-000008
+  - VP-CISCO-CUCM-VG-002
 tags:
-- runbook
-- cucm
+  - cucm
+  - runbook
+  - professional-pack
 references:
-- Cisco CUCM product documentation
-confidence: 0.9
+  - Cisco CUCM Professional Pack v1
+  - RB-CUCM-SIP-TRUNK
+confidence: 0.93
 status: ACTIVE
 version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

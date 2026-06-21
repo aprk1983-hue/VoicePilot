@@ -1,0 +1,56 @@
+asset_id: VP-CISCO-CUCM-000020
+title: CUCM MRGL resource issue
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: high
+summary: CUCM MRGL resource issue affecting Cisco Unified CM operations.
+description: CUCM MRGL resource issue affecting Cisco Unified CM operations.
+symptoms:
+  - Random media failures on devices
+  - Conference resources unavailable
+  - MOH or annunciator failures
+required_evidence:
+  - MRGL and media resource export
+  - Device pool assignment review
+  - Resource utilization dashboard
+expected_findings:
+  - mrgl_resource_issue
+  - media_resource_unavailable
+expected_hypotheses:
+  - MRGL lists empty resource
+  - Wrong MRGL on device pool
+  - Resource priority misordered
+known_causes:
+  - MRGL lists empty resource
+  - Wrong MRGL on device pool
+  - Resource priority misordered
+known_resolution:
+  - Assign correct MRGL with available resources
+  - Reorder MRGL priority for redundancy
+recommended_actions:
+  - Assign correct MRGL with available resources
+  - Reorder MRGL priority for redundancy
+rollback_steps:
+  - Restore previous device pool MRGL mapping
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - mrgl_resource_issue
+  - media_resource_unavailable
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-006
+  - VP-CISCO-CUCM-VG-006
+  - VP-CISCO-CUCM-REF-001
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

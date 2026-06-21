@@ -1,0 +1,58 @@
+asset_id: VP-CISCO-CUCM-000008
+title: CUCM SIP trunk TLS handshake failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: TLS
+severity: high
+summary: CUCM SIP trunk TLS handshake failure affecting Cisco Unified CM operations.
+description: CUCM SIP trunk TLS handshake failure affecting Cisco Unified CM operations.
+symptoms:
+  - TLS handshake errors in SDL traces
+  - Trunk remains Down with TLS profile
+  - Certificate warnings in RTMT
+required_evidence:
+  - Certificate expiry report
+  - TLS handshake capture
+  - Trunk security profile export
+expected_findings:
+  - sip_trunk_tls_failure
+  - tls_handshake_failed
+expected_hypotheses:
+  - Expired server certificate
+  - Cipher suite mismatch
+  - Untrusted CA chain
+known_causes:
+  - Expired server certificate
+  - Cipher suite mismatch
+  - Untrusted CA chain
+known_resolution:
+  - Install valid certificate chain
+  - Align TLS version and cipher policy with provider
+recommended_actions:
+  - Install valid certificate chain
+  - Align TLS version and cipher policy with provider
+rollback_steps:
+  - Restore previous certificate or trust store
+verification_steps:
+  - Confirm expected findings in collected evidence
+  - Execute linked verification guide after remediation
+related_health_rules:
+  - sip_trunk_tls_failure
+  - tls_handshake_failed
+related_asset_ids:
+  - VP-CISCO-CUCM-RB-002
+  - VP-CISCO-CUCM-VG-002
+  - VP-CISCO-CUCM-VG-005
+  - VP-CISCO-CUCM-REF-003
+  - VP-CISCO-CUCM-REF-005
+tags:
+  - cucm
+  - professional-pack
+references:
+  - Cisco CUCM Professional Pack v1
+  - Cisco product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'
