@@ -1,0 +1,54 @@
+asset_id: VP-MS-TEAMS-000007
+title: Teams Phone Direct Routing SBC unreachable
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: SIP
+severity: critical
+summary: Teams Phone Direct Routing SBC unreachable affecting Microsoft Teams Phone
+  operations.
+description: Teams Phone Direct Routing SBC unreachable affecting Microsoft Teams
+  Phone operations.
+symptoms:
+- All Direct Routing calls fail
+- SBC health shows offline in Teams admin
+- SIP trunk status down on session border controller
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- direct_routing_sbc_unreachable
+- direct_routing_sbc_unreachable_detected
+expected_hypotheses: &id001
+- Network path to SBC blocked
+- SBC service stopped or certificate failure
+known_causes: *id001
+known_resolution: &id002
+- Restore network connectivity to certified SBC
+- Validate SBC trunk registration to Teams
+recommended_actions: *id002
+rollback_steps:
+- Fail over to secondary SBC if configured
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- direct_routing_sbc_unreachable
+- sbc_unreachable
+related_asset_ids:
+- VP-MS-TEAMS-RB-003
+- VP-MS-TEAMS-VG-006
+- VP-MS-TEAMS-REF-002
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- direct-routing
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

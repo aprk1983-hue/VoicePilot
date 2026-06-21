@@ -1,0 +1,52 @@
+asset_id: VP-MS-TEAMS-000011
+title: Teams Phone Auto Attendant transfer failure
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: COLLABORATION
+severity: medium
+summary: Teams Phone Auto Attendant transfer failure affecting Microsoft Teams Phone
+  operations.
+description: Teams Phone Auto Attendant transfer failure affecting Microsoft Teams
+  Phone operations.
+symptoms:
+- Auto attendant cannot transfer to operator or queue
+- Caller hears transfer failed message
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- auto_attendant_transfer_failure
+- auto_attendant_transfer_failure_detected
+expected_hypotheses: &id001
+- Target resource account or queue misconfigured
+- Operator license or routing policy missing on target
+known_causes: *id001
+known_resolution: &id002
+- Validate auto attendant call flow targets
+- Confirm resource account licensing and routing
+recommended_actions: *id002
+rollback_steps:
+- Restore previous auto attendant call flow export
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- auto_attendant_transfer_failure
+related_asset_ids:
+- VP-MS-TEAMS-RB-010
+- VP-MS-TEAMS-VG-010
+- VP-MS-TEAMS-REF-001
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- auto-attendants
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

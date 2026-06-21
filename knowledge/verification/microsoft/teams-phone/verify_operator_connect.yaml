@@ -1,0 +1,46 @@
+asset_id: VP-MS-TEAMS-VG-007
+title: Verify Operator Connect
+asset_type: VERIFICATION_GUIDE
+vendor: Microsoft
+product: Teams Phone
+category: COLLABORATION
+severity: medium
+summary: Verify Operator Connect for Microsoft Teams Phone.
+description: Verify Operator Connect for Microsoft Teams Phone. Professional pack
+  guide VG-TEAMS-OPERATOR-CONNECT.
+symptoms:
+- Post-remediation validation required
+expected_findings:
+- verification_passed
+expected_hypotheses:
+- Service restored to operational baseline
+known_causes:
+- Remediation not yet validated
+known_resolution:
+- Complete verification steps and attach evidence
+required_evidence:
+- Teams admin center validation export
+- Test call results
+- Configuration snapshot after remediation
+verification_steps:
+- Execute VG-TEAMS-OPERATOR-CONNECT validation checklist
+- Compare results against expected operational baseline
+- Attach evidence to investigation record
+recommended_actions:
+- Compare results against expected operational baseline
+related_asset_ids:
+- VP-MS-TEAMS-RB-004
+- VP-MS-TEAMS-000006
+- VP-MS-TEAMS-000023
+tags:
+- teams-phone
+- verification
+- professional-pack
+- microsoft
+references:
+- Microsoft Teams Professional Pack v1
+- VG-TEAMS-OPERATOR-CONNECT
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

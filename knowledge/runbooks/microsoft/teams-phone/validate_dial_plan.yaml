@@ -1,0 +1,45 @@
+asset_id: VP-MS-TEAMS-RB-008
+title: Validate Dial Plan
+asset_type: RUNBOOK
+vendor: Microsoft
+product: Teams Phone
+category: COLLABORATION
+severity: high
+summary: Validate Dial Plan for Microsoft Teams Phone.
+description: Validate Dial Plan for Microsoft Teams Phone. Professional pack runbook
+  RB-TEAMS-DIAL-PLAN.
+symptoms:
+- Service degradation requiring runbook remediation
+expected_findings:
+- runbook_remediation_required
+expected_hypotheses:
+- Known Teams Phone failure pattern matched
+known_causes:
+- Configuration or routing fault in Teams Phone tenant
+known_resolution:
+- Execute runbook steps and validate with verification guide
+recommended_actions:
+- Follow RB-TEAMS-DIAL-PLAN remediation steps in order
+- Document changes in change record
+- Validate outcome with linked verification guide
+rollback_steps:
+- Restore exported Teams voice configuration
+- Revert policy assignment to previous baseline
+verification_steps:
+- Execute linked verification guide after remediation
+related_asset_ids:
+- VP-MS-TEAMS-VG-008
+- VP-MS-TEAMS-000004
+- VP-MS-TEAMS-000005
+tags:
+- teams-phone
+- runbook
+- professional-pack
+- microsoft
+references:
+- Microsoft Teams Professional Pack v1
+- RB-TEAMS-DIAL-PLAN
+confidence: 0.93
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

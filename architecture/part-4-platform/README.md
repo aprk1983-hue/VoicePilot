@@ -12,6 +12,7 @@ Delivery surfaces, packaging, plugins, and operational entry points.
 | [04 — Knowledge Packs](04-knowledge-packs.md) | Implemented | Bundled YAML knowledge under `knowledge/packs/` |
 | [05 — Cisco Plugin](05-cisco-plugin.md) | Implemented | Official Cisco parser and playbook plugin |
 | [06 — CUCM Investigation Pipeline](06-cucm-investigation-pipeline.md) | Implemented | VP-CUCM-0001 deterministic CUCM investigation |
+| [07 — Microsoft Teams Knowledge Library](07-microsoft-teams-knowledge-library.md) | Implemented | Microsoft Teams Phone professional knowledge pack |
 
 ## Related Documentation
 

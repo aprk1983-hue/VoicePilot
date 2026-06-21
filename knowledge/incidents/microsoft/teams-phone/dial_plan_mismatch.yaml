@@ -1,0 +1,50 @@
+asset_id: VP-MS-TEAMS-000004
+title: Teams Phone Dial Plan mismatch
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: ROUTING
+severity: high
+summary: Teams Phone Dial Plan mismatch affecting Microsoft Teams Phone operations.
+description: Teams Phone Dial Plan mismatch affecting Microsoft Teams Phone operations.
+symptoms:
+- Users cannot dial expected external numbers
+- Normalization produces unexpected dial strings
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- dial_plan_mismatch
+- dial_plan_mismatch_detected
+expected_hypotheses: &id001
+- Tenant dial plan does not match user location
+- Incorrect normalization rules applied
+known_causes: *id001
+known_resolution: &id002
+- Assign correct tenant or user dial plan
+- Validate normalization rules for target numbering plan
+recommended_actions: *id002
+rollback_steps:
+- Restore previous dial plan assignment
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- dial_plan_mismatch
+related_asset_ids:
+- VP-MS-TEAMS-RB-008
+- VP-MS-TEAMS-VG-008
+- VP-MS-TEAMS-REF-001
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- dial-plan
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

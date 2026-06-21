@@ -1,0 +1,52 @@
+asset_id: VP-MS-TEAMS-000020
+title: Teams Phone Location Based Routing blocked
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: ROUTING
+severity: high
+summary: Teams Phone Location Based Routing blocked affecting Microsoft Teams Phone
+  operations.
+description: Teams Phone Location Based Routing blocked affecting Microsoft Teams
+  Phone operations.
+symptoms:
+- PSTN calls blocked for users at specific sites
+- Location policy shows routing restricted
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- location_based_routing_blocked
+- location_based_routing_blocked_detected
+expected_hypotheses: &id001
+- Location Based Routing policy blocks PSTN at site
+- Network site not associated with correct policy
+known_causes: *id001
+known_resolution: &id002
+- Validate network site and LBR policy assignment
+- Confirm user network site detection is correct
+recommended_actions: *id002
+rollback_steps:
+- Restore previous location policy configuration
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- location_based_routing_blocked
+related_asset_ids:
+- VP-MS-TEAMS-RB-002
+- VP-MS-TEAMS-VG-002
+- VP-MS-TEAMS-REF-001
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- location-policy
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

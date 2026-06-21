@@ -1,0 +1,52 @@
+asset_id: VP-MS-TEAMS-000016
+title: Teams Phone Calling Plans license mismatch
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: LICENSING
+severity: high
+summary: Teams Phone Calling Plans license mismatch affecting Microsoft Teams Phone
+  operations.
+description: Teams Phone Calling Plans license mismatch affecting Microsoft Teams
+  Phone operations.
+symptoms:
+- Calling Plans user cannot dial out
+- License SKU does not include domestic calling plan
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- calling_plans_license_mismatch
+- calling_plans_license_mismatch_detected
+expected_hypotheses: &id001
+- Wrong Calling Plans SKU assigned
+- Domestic or international plan not provisioned
+known_causes: *id001
+known_resolution: &id002
+- Assign correct Microsoft Calling Plans license
+- Validate calling plan coverage for user country
+recommended_actions: *id002
+rollback_steps:
+- Restore previous Calling Plans license assignment
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- calling_plans_license_mismatch
+related_asset_ids:
+- VP-MS-TEAMS-RB-006
+- VP-MS-TEAMS-VG-001
+- VP-MS-TEAMS-REF-004
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- calling-plans
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

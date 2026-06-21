@@ -1,0 +1,50 @@
+asset_id: VP-MS-TEAMS-000008
+title: Teams Phone TLS certificate expired
+asset_type: INCIDENT
+vendor: Microsoft
+product: Teams Phone
+category: TLS
+severity: critical
+summary: Teams Phone TLS certificate expired affecting Microsoft Teams Phone operations.
+description: Teams Phone TLS certificate expired affecting Microsoft Teams Phone operations.
+symptoms:
+- Direct Routing TLS handshake failures
+- SBC logs show certificate validation errors
+required_evidence:
+- Teams admin center export
+- Tenant voice configuration snapshot
+- Affected user or resource account details
+expected_findings:
+- tls_certificate_expired
+- tls_certificate_expired_detected
+expected_hypotheses: &id001
+- SBC or reverse proxy certificate expired
+- Incomplete certificate chain presented to Teams
+known_causes: *id001
+known_resolution: &id002
+- Renew TLS certificate on SBC or proxy
+- Validate full certificate chain and SAN entries
+recommended_actions: *id002
+rollback_steps:
+- Restore previous valid certificate if renewal fails
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- tls_certificate_expired
+related_asset_ids:
+- VP-MS-TEAMS-RB-005
+- VP-MS-TEAMS-VG-004
+- VP-MS-TEAMS-REF-002
+tags:
+- teams-phone
+- professional-pack
+- microsoft
+- tls-certificate
+references:
+- Microsoft Teams Professional Pack v1
+- Microsoft Teams Phone product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,39 @@
+asset_id: VP-MS-TEAMS-REF-005
+title: Emergency Calling Reference
+asset_type: REFERENCE
+vendor: Microsoft
+product: Teams Phone
+category: COLLABORATION
+severity: low
+summary: Emergency Calling Reference reference for Microsoft Teams Phone engineering
+  investigations.
+description: Emergency Calling Reference for Microsoft Teams Phone deployments and
+  troubleshooting.
+symptoms:
+- Engineering reference consultation required
+expected_findings:
+- reference_applicable
+expected_hypotheses:
+- Authoritative Microsoft guidance applies
+known_causes:
+- Misconfiguration relative to Microsoft Teams best practice
+known_resolution:
+- Align design and remediation with Microsoft Teams guidance
+recommended_actions:
+- Consult this reference during investigation and remediation
+verification_steps:
+- Confirm document version matches deployed Teams Phone configuration
+related_asset_ids:
+- VP-MS-TEAMS-000014
+tags:
+- teams-phone
+- reference
+- professional-pack
+- microsoft
+references:
+- https://learn.microsoft.com/microsoftteams/cloud-voice-cloud-voice-overview
+- Microsoft Teams Professional Pack v1
+confidence: 0.99
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'
