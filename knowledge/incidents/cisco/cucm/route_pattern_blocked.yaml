@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000011
+title: Route pattern misconfiguration — call blocked
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: high
+summary: Calls fail with reorder tone when dialed digits do not match any active route
+  pattern.
+description: Calls fail with reorder tone when dialed digits do not match any active
+  route pattern.
+symptoms:
+- Fast busy or reorder on dialed number
+- Specific prefix range affected
+- Route plan report shows no match
+required_evidence:
+- Route plan report
+- Dialed number analysis
+- Route pattern config export
+- CSS assignment on device
+expected_findings:
+- route_pattern_blocked
+- no_route_match
+expected_hypotheses:
+- Route pattern misconfiguration — call blocked
+related_health_rules:
+- route_pattern_blocked
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-005
+- VP-CISCO-CUCM-VG-005
+- VP-CISCO-CUCM-REF-007
+tags:
+- call-routing
+- route-pattern
+- dial-plan
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-VG-003
+title: Verify SIP trunk status
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: medium
+summary: Confirm SIP trunk In Service with successful OPTIONS and test call.
+description: Confirm SIP trunk In Service with successful OPTIONS and test call.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000006
+- VP-CISCO-CUCM-000007
+- VP-CISCO-CUCM-000008
+tags:
+- verification
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'
+required_evidence:
+- CUCM CLI and admin verification outputs

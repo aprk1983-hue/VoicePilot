@@ -1,0 +1,47 @@
+asset_id: VP-CISCO-CUCM-000008
+title: SIP trunk OPTIONS keepalive failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: medium
+summary: SIP trunk marked unavailable when periodic OPTIONS probes receive no response.
+description: SIP trunk marked unavailable when periodic OPTIONS probes receive no
+  response.
+symptoms:
+- Trunk intermittently unavailable
+- OPTIONS timeout in SDL traces
+- Calls fail during trunk probe window
+required_evidence:
+- SIP trunk keepalive settings
+- SDL trace with OPTIONS
+- Peer SBC logs
+- Network latency metrics
+expected_findings:
+- sip_trunk_options_failure
+- sip_options_timeout
+expected_hypotheses:
+- SIP trunk OPTIONS keepalive failure
+related_health_rules:
+- sip_trunk_options_failure
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-003
+- VP-CISCO-CUCM-VG-003
+- VP-CISCO-CUCM-REF-005
+tags:
+- sip-trunk
+- options
+- keepalive
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

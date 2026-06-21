@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-RB-008
+title: Fix annunciator and MOH resources
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: medium
+summary: Restore call progress tones and music on hold streams.
+description: Restore call progress tones and music on hold streams.
+recommended_actions:
+- Restart annunciator device
+- Verify MOH server and multicast
+- Align MOH codec with endpoints
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000019
+- VP-CISCO-CUCM-000020
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

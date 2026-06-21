@@ -31,7 +31,7 @@ def default_engineering_knowledge_library() -> EngineeringKnowledgeLibrary:
 
 
 def default_engineering_knowledge_engine() -> EngineeringKnowledgeEngine:
-    """Return an EKF engine backed by bundled Cisco CUBE and future libraries."""
+    """Return an EKF engine backed by bundled engineering knowledge libraries."""
     global _default_engine
     if _default_engine is None:
         library = default_engineering_knowledge_library()

@@ -1,0 +1,25 @@
+asset_id: VP-CISCO-CUCM-REF-007
+title: CUCM dial plan reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Reference for route patterns, translations, CSS, and partitions.
+description: Reference for route patterns, translations, CSS, and partitions.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000011
+- VP-CISCO-CUCM-000012
+- VP-CISCO-CUCM-000013
+tags:
+- reference
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

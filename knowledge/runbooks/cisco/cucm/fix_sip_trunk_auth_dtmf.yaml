@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-RB-004
+title: Fix SIP trunk authentication and DTMF
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: medium
+summary: Align digest credentials and DTMF relay settings with provider.
+description: Align digest credentials and DTMF relay settings with provider.
+recommended_actions:
+- Update trunk credentials
+- Set RFC2833 or SIP INFO per peer
+- Place test call with DTMF
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000009
+- VP-CISCO-CUCM-000010
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

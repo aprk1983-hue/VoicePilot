@@ -1,0 +1,46 @@
+asset_id: VP-CISCO-CUCM-000007
+title: SIP trunk TLS handshake failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: TLS
+severity: high
+summary: TLS-enabled SIP trunk fails when certificate or cipher negotiation fails.
+description: TLS-enabled SIP trunk fails when certificate or cipher negotiation fails.
+symptoms:
+- Trunk flaps between In Service and OOS
+- TLS alert in Tomcat logs
+- Cipher mismatch after upgrade
+required_evidence:
+- Tomcat security logs
+- Trunk certificate inventory
+- TLS profile settings
+- Packet capture of handshake
+expected_findings:
+- sip_trunk_tls_failure
+- tls_handshake_failed
+expected_hypotheses:
+- SIP trunk TLS handshake failure
+related_health_rules:
+- sip_trunk_tls_failure
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-003
+- VP-CISCO-CUCM-VG-003
+- VP-CISCO-CUCM-REF-006
+tags:
+- sip-trunk
+- tls
+- certificate
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

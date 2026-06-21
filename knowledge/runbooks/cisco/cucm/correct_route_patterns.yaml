@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-RB-005
+title: Correct route and translation patterns
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Repair route patterns, translations, and CSS for blocked calls.
+description: Repair route patterns, translations, and CSS for blocked calls.
+recommended_actions:
+- Audit route plan report
+- Fix digit manipulation order
+- Update CSS partition access
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000011
+- VP-CISCO-CUCM-000012
+- VP-CISCO-CUCM-000013
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

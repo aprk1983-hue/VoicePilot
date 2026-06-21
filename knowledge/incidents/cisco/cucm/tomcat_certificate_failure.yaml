@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000025
+title: Certificate management service failure — Tomcat
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CERTIFICATES
+severity: high
+summary: Tomcat certificate or CAPF issues break secure administration and SIP TLS
+  services.
+description: Tomcat certificate or CAPF issues break secure administration and SIP
+  TLS services.
+symptoms:
+- Admin page certificate warnings
+- Secure SIP trunk failures
+- CAPF enrollment errors
+required_evidence:
+- Certificate management status
+- Tomcat logs
+- CAPF policy settings
+- Certificate expiry report
+expected_findings:
+- tomcat_certificate_failure
+- capf_enrollment_failed
+expected_hypotheses:
+- Certificate management service failure — Tomcat
+related_health_rules:
+- tomcat_certificate_failure
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-010
+- VP-CISCO-CUCM-VG-010
+- VP-CISCO-CUCM-REF-006
+tags:
+- cluster-health
+- certificate
+- tomcat
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

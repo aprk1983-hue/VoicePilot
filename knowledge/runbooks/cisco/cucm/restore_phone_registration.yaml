@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-RB-001
+title: Restore CUCM phone registration
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: COLLABORATION
+severity: medium
+summary: Restore TFTP reachability and phone authentication for failed registrations.
+description: Restore TFTP reachability and phone authentication for failed registrations.
+recommended_actions:
+- Verify TFTP and network path
+- Validate phone security profile
+- Reset phone and confirm registration
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000001
+- VP-CISCO-CUCM-000002
+- VP-CISCO-CUCM-000005
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

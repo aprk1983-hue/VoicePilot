@@ -40,7 +40,11 @@ def library():
 
 class TestCiscoCubeKnowledgeLibrary:
     def test_all_ten_incident_assets_load(self, library) -> None:
-        incidents = library.asset_registry.find_by_type(EngineeringAssetType.INCIDENT)
+        incidents = [
+            asset
+            for asset in library.asset_registry.find_by_type(EngineeringAssetType.INCIDENT)
+            if asset.product == "CUBE"
+        ]
         incident_ids = {asset.asset_id for asset in incidents}
 
         assert len(incidents) == 10
@@ -54,6 +58,8 @@ class TestCiscoCubeKnowledgeLibrary:
 
     def test_required_fields_validate(self, library) -> None:
         for asset in library.asset_registry.list_assets():
+            if asset.product != "CUBE":
+                continue
             assert asset.asset_id
             assert asset.title
             assert asset.summary
@@ -128,7 +134,7 @@ class TestAssetsCli:
         stats_output: list[str] = []
         assert run_assets_stats(stats_output.append, library=library) == 0
         assert "Total Assets:" in "\n".join(stats_output)
-        assert "INCIDENT: 10" in "\n".join(stats_output)
+        assert "INCIDENT: 35" in "\n".join(stats_output)
 
     def test_main_assets_commands(self) -> None:
         assert main(["assets", "search", "sip-ua"]) == 0

@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000016
+title: Conference bridge unavailable — MTP exhaustion
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: high
+summary: Ad-hoc conference fails when software conference or MTP resources are fully
+  allocated.
+description: Ad-hoc conference fails when software conference or MTP resources are
+  fully allocated.
+symptoms:
+- Cannot start conference
+- MTP unavailable alarm
+- Transcoding requests queued
+required_evidence:
+- Media resource group list
+- Conference bridge utilization
+- MTP device count
+- RTMT media resource chart
+expected_findings:
+- mtp_exhausted
+- conference_bridge_unavailable
+expected_hypotheses:
+- Conference bridge unavailable — MTP exhaustion
+related_health_rules:
+- mtp_exhausted
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-007
+- VP-CISCO-CUCM-VG-007
+- VP-CISCO-CUCM-REF-009
+tags:
+- media-resources
+- conference
+- mtp
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

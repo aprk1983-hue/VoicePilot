@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-VG-009
+title: Verify cluster replication
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUCM
+category: MONITORING
+severity: medium
+summary: Confirm dbreplication status and NTP sync across nodes.
+description: Confirm dbreplication status and NTP sync across nodes.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000021
+- VP-CISCO-CUCM-000022
+tags:
+- verification
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'
+required_evidence:
+- CUCM CLI and admin verification outputs

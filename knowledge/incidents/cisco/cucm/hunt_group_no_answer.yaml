@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000014
+title: Hunt group no answer — forwarding misconfiguration
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Calls to hunt pilot fail when line group members are unavailable or forward
+  settings conflict.
+description: Calls to hunt pilot fail when line group members are unavailable or forward
+  settings conflict.
+symptoms:
+- Hunt pilot rings once then fails
+- Voicemail not reached
+- Queue statistics show zero answered
+required_evidence:
+- Hunt pilot config
+- Line group member status
+- Call forward settings
+- CUCM call manager traces
+expected_findings:
+- hunt_group_no_answer
+- hunt_forward_misconfig
+expected_hypotheses:
+- Hunt group no answer — forwarding misconfiguration
+related_health_rules:
+- hunt_group_no_answer
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-006
+- VP-CISCO-CUCM-VG-006
+- VP-CISCO-CUCM-REF-008
+tags:
+- call-routing
+- hunt-group
+- forwarding
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

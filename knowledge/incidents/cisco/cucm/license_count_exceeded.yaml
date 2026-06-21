@@ -1,0 +1,46 @@
+asset_id: VP-CISCO-CUCM-000023
+title: License count exceeded — node service impact
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: LICENSING
+severity: high
+summary: CUCM denies new registrations or features when license capacity is exceeded.
+description: CUCM denies new registrations or features when license capacity is exceeded.
+symptoms:
+- New device cannot register
+- License violation alarm
+- Feature entitlement errors in logs
+required_evidence:
+- License MAC report
+- Device count vs entitlement
+- Smart license status
+- Recent device additions
+expected_findings:
+- license_count_exceeded
+- license_violation
+expected_hypotheses:
+- License count exceeded — node service impact
+related_health_rules:
+- license_count_exceeded
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-010
+- VP-CISCO-CUCM-VG-010
+- VP-CISCO-CUCM-REF-010
+tags:
+- cluster-health
+- licensing
+- entitlement
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

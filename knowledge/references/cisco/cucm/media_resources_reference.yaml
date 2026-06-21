@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-REF-009
+title: CUCM media resources reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: medium
+summary: Reference for MRGL, conference, MOH, transcoder, and annunciator.
+description: Reference for MRGL, conference, MOH, transcoder, and annunciator.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000016
+- VP-CISCO-CUCM-000017
+- VP-CISCO-CUCM-000018
+- VP-CISCO-CUCM-000019
+- VP-CISCO-CUCM-000020
+tags:
+- reference
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

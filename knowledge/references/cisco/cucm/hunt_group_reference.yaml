@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUCM-REF-008
+title: CUCM hunt group reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Reference for hunt pilots, line groups, and time-of-day routing.
+description: Reference for hunt pilots, line groups, and time-of-day routing.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000014
+- VP-CISCO-CUCM-000015
+tags:
+- reference
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

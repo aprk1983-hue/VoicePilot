@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-VG-004
+title: Verify trunk auth and DTMF
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: medium
+summary: Validate digest auth and DTMF on controlled trunk test call.
+description: Validate digest auth and DTMF on controlled trunk test call.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000009
+- VP-CISCO-CUCM-000010
+tags:
+- verification
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'
+required_evidence:
+- CUCM CLI and admin verification outputs

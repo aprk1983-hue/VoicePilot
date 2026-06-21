@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000013
+title: CSS restriction blocks external route
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Partition CSS does not include partition containing required route pattern
+  for external dialing.
+description: Partition CSS does not include partition containing required route pattern
+  for external dialing.
+symptoms:
+- Internal calls work, external fail
+- Call forward to PSTN blocked
+- CSS/partition audit shows gap
+required_evidence:
+- Device CSS assignment
+- Partition membership
+- Route pattern partition
+- Route plan report
+expected_findings:
+- css_blocks_external_route
+- partition_access_denied
+expected_hypotheses:
+- CSS restriction blocks external route
+related_health_rules:
+- css_blocks_external_route
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-005
+- VP-CISCO-CUCM-VG-005
+- VP-CISCO-CUCM-REF-007
+tags:
+- call-routing
+- css
+- partition
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

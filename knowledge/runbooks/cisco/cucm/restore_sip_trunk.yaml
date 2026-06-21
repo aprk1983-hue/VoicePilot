@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-RB-003
+title: Restore SIP trunk connectivity
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: medium
+summary: Recover SIP trunk TCP/TLS connectivity and OPTIONS keepalive.
+description: Recover SIP trunk TCP/TLS connectivity and OPTIONS keepalive.
+recommended_actions:
+- Verify trunk destination reachability
+- Renew TLS certificates if needed
+- Confirm trunk In Service
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000006
+- VP-CISCO-CUCM-000007
+- VP-CISCO-CUCM-000008
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

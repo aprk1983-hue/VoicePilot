@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000018
+title: Transcoder allocation failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: MEDIA
+severity: high
+summary: Calls with codec mismatch fail when no transcoder resource is available in
+  MRGL.
+description: Calls with codec mismatch fail when no transcoder resource is available
+  in MRGL.
+symptoms:
+- One-way audio on G.729 calls
+- Call setup failure with codec mismatch
+- Transcoder count at zero available
+required_evidence:
+- MRGL assignment
+- Transcoder device status
+- Codec preference list
+- Call manager traces
+expected_findings:
+- transcoder_allocation_failure
+- codec_transcode_unavailable
+expected_hypotheses:
+- Transcoder allocation failure
+related_health_rules:
+- transcoder_allocation_failure
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-007
+- VP-CISCO-CUCM-VG-007
+- VP-CISCO-CUCM-REF-009
+tags:
+- media-resources
+- transcoder
+- codec
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

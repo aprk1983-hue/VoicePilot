@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUCM-REF-006
+title: CUCM TLS and certificate reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUCM
+category: TLS
+severity: medium
+summary: Reference for Tomcat, CAPF, and SIP TLS certificate management.
+description: Reference for Tomcat, CAPF, and SIP TLS certificate management.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000007
+- VP-CISCO-CUCM-000025
+tags:
+- reference
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

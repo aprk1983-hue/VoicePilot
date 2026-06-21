@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUCM-RB-010
+title: Restore licensing and critical services
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: LICENSING
+severity: medium
+summary: Resolve license violations and restart failed cluster services.
+description: Resolve license violations and restart failed cluster services.
+recommended_actions:
+- Reconcile license count
+- Restart Cisco DB/Tomcat
+- Validate CAPF and admin access
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000023
+- VP-CISCO-CUCM-000024
+- VP-CISCO-CUCM-000025
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

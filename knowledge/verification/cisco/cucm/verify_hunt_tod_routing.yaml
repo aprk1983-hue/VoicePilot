@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-VG-006
+title: Verify hunt and TOD routing
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: medium
+summary: Test hunt pilot answer and after-hours routing behavior.
+description: Test hunt pilot answer and after-hours routing behavior.
+recommended_actions:
+- Execute steps documented in this asset
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000014
+- VP-CISCO-CUCM-000015
+tags:
+- verification
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'
+required_evidence:
+- CUCM CLI and admin verification outputs

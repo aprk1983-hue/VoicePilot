@@ -1,0 +1,26 @@
+asset_id: VP-CISCO-CUCM-RB-009
+title: Recover cluster replication and NTP
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUCM
+category: MONITORING
+severity: medium
+summary: Restore database replication and cluster time synchronization.
+description: Restore database replication and cluster time synchronization.
+recommended_actions:
+- Run dbreplication recovery
+- Fix NTP sources
+- Validate replication count
+verification_steps:
+- Confirm operational state matches expected baseline
+related_asset_ids:
+- VP-CISCO-CUCM-000021
+- VP-CISCO-CUCM-000022
+tags:
+- runbook
+- cucm
+references:
+- Cisco CUCM product documentation
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

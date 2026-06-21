@@ -1,0 +1,47 @@
+asset_id: VP-CISCO-CUCM-000006
+title: SIP trunk down — TCP connection timeout
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: SIP
+severity: high
+summary: SIP trunk shows Out of Service when TCP connection to peer cannot be established.
+description: SIP trunk shows Out of Service when TCP connection to peer cannot be
+  established.
+symptoms:
+- Trunk status Out of Service
+- All calls via trunk fail
+- TCP SYN timeout in network trace
+required_evidence:
+- SIP trunk status
+- Network connectivity test
+- Trunk security profile
+- Route pattern test call
+expected_findings:
+- sip_trunk_down
+- sip_trunk_tcp_timeout
+expected_hypotheses:
+- SIP trunk down — TCP connection timeout
+related_health_rules:
+- sip_trunk_down
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-003
+- VP-CISCO-CUCM-VG-003
+- VP-CISCO-CUCM-REF-005
+tags:
+- sip-trunk
+- tcp
+- connectivity
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

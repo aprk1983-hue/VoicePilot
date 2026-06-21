@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000001
+title: CUCM phone not registering — TFTP unreachable
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: COLLABORATION
+severity: high
+summary: IP phones fail registration when TFTP server is unreachable from the phone
+  subnet.
+description: IP phones fail registration when TFTP server is unreachable from the
+  phone subnet.
+symptoms:
+- Phones stuck at Registering
+- TFTP timeout in phone syslog
+- Bulk registration failure after VLAN change
+required_evidence:
+- Phone syslog export
+- TFTP server reachability test
+- CUCM TFTP service status
+- Network ACL review
+expected_findings:
+- phone_tftp_unreachable
+- tftp_service_unreachable
+expected_hypotheses:
+- CUCM phone not registering — TFTP unreachable
+related_health_rules:
+- phone_tftp_unreachable
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-001
+- VP-CISCO-CUCM-VG-001
+- VP-CISCO-CUCM-REF-001
+tags:
+- phone-registration
+- tftp
+- registration
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

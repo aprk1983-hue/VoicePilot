@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUCM-000015
+title: Time-of-day routing denies after-hours call
+asset_type: INCIDENT
+vendor: Cisco
+product: CUCM
+category: CALL_ROUTING
+severity: low
+summary: After-hours calls rejected when time schedule on route or translation does
+  not match local time zone.
+description: After-hours calls rejected when time schedule on route or translation
+  does not match local time zone.
+symptoms:
+- Calls fail only outside business hours
+- Correct digits during business hours
+- Time period misaligned to site TZ
+required_evidence:
+- Time-of-day route config
+- CUCM date/time group
+- Site time zone settings
+- Route plan report
+expected_findings:
+- tod_routing_denied
+- time_schedule_blocked
+expected_hypotheses:
+- Time-of-day routing denies after-hours call
+related_health_rules:
+- tod_routing_denied
+recommended_actions:
+- Review collected evidence against expected findings
+- Follow linked runbook and verification guide
+verification_steps:
+- Confirm expected findings are present in collected evidence
+- Validate remediation using linked verification guide
+related_asset_ids:
+- VP-CISCO-CUCM-RB-006
+- VP-CISCO-CUCM-VG-006
+- VP-CISCO-CUCM-REF-008
+tags:
+- call-routing
+- time-of-day
+- schedule
+references:
+- Cisco CUCM product documentation
+- VoicePilot CUCM knowledge library v1
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'
