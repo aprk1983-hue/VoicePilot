@@ -24,6 +24,7 @@ class TestPackaging:
 
         assert config["where"] == [".", "core"]
         assert "cli*" in config["include"]
+        assert "services*" in config["include"]
         assert "sdk*" in config["include"]
         assert "plugins*" in config["include"]
         assert "knowledge.packs*" in config["exclude"]
@@ -35,6 +36,11 @@ class TestPackaging:
 
         assert module.main is not None
         assert callable(module.main)
+
+    def test_services_import_succeeds(self) -> None:
+        module = importlib.import_module("services")
+
+        assert module.VoicePilotService is not None
 
     def test_console_entry_point_target_exists(self) -> None:
         scripts = entry_points(group="console_scripts")
@@ -60,11 +66,13 @@ class TestPackaging:
             REPO_ROOT / "voicepilot.egg-info" / "top_level.txt"
         ).read_text(encoding="utf-8")
         assert "cli" in top_level.splitlines()
+        assert "services" in top_level.splitlines()
 
     def test_voicepilot_console_script_runs_health(self) -> None:
+        voicepilot = Path(sys.executable).with_name("voicepilot")
         completed = subprocess.run(
             [
-                "voicepilot",
+                str(voicepilot),
                 "health",
                 "--samples",
                 str(SAMPLE_DIR),

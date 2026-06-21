@@ -46,6 +46,8 @@ from runtime.learning_engine import format_learning_closure_summary
 from runtime.report_engine import format_incident_report
 from runtime.recommendation_engine import format_recommendation_summary
 from runtime.runtime_engine import RuntimeEngine
+from services import VoicePilotService
+from services.service_exceptions import ServiceCaseNotFoundError
 from runtime.verification_engine import (
     OUTCOME_COMPLETE,
     VerificationResultSubmission,
@@ -987,8 +989,13 @@ def run_plan_scenario(
 
     scenario_dir = scenario_dirs[0]
     runtime, case_id = run_scenario_to_correlation(scenario_dir, playbook_id=playbook_id)
+    service = VoicePilotService(runtime_engine=runtime)
     try:
-        plan = runtime.plan_discovery(case_id)
+        service.plan_discovery(case_id)
+        plan = runtime.case_manager.load_case(case_id).discovery_plan
+        if plan is None:
+            output_writer("Error: Discovery plan not available.")
+            return 1
         output_writer(format_discovery_plan_markdown(plan))
         return 0
     finally:
@@ -1009,14 +1016,18 @@ def run_plan_case(
     """Generate and print a discovery plan for an in-memory case."""
     runtime = build_runtime_engine(plugins_root)
     runtime.start()
+    service = VoicePilotService(runtime_engine=runtime)
     try:
-        plan = runtime.plan_discovery(case_id)
-    except CaseNotFoundError:
-        output_writer(f"Error: Case not found: {case_id}")
-        return 1
-    else:
+        service.plan_discovery(case_id)
+        plan = runtime.case_manager.load_case(case_id).discovery_plan
+        if plan is None:
+            output_writer(f"Error: Discovery plan not available for case: {case_id}")
+            return 1
         output_writer(format_discovery_plan_markdown(plan))
         return 0
+    except ServiceCaseNotFoundError:
+        output_writer(f"Error: Case not found: {case_id}")
+        return 1
     finally:
         runtime.shutdown()
 
