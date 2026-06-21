@@ -39,6 +39,12 @@ PARSER_ID_BY_COMMAND: dict[str, str] = {
     DIAL_PEER_SUMMARY_COMMAND: "cisco_show_dial_peer_voice_summary",
     CCSIP_DEBUG_COMMAND: "cisco_debug_ccsip_messages",
     SHOW_RUN_VOICE_SERVICE_VOIP_COMMAND: "cisco_show_run_voice_service_voip",
+    "show risdb query phone": "cisco_show_risdb",
+    "utils dbreplication runtimestate": "cisco_utils_dbreplication",
+    "utils service list": "cisco_utils_service_list",
+    "show cert list": "cisco_show_cert_list",
+    "show route plan": "cisco_show_route_plan",
+    "show sip trunk": "cisco_show_sip_trunk",
 }
 
 

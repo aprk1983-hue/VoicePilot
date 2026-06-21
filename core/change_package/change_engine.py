@@ -16,6 +16,7 @@ from change_package.change_models import (
 from change_package.change_risk import ChangeRiskLevel, assess_change_risk, format_risk_summary
 from domain.models import Case, Hypothesis, Recommendation
 from runtime.recommendation_engine import ACTION_LIKELY_ROOT_CAUSE, VP_CUBE_0001_ACTION_PLANS
+from runtime.cucm_investigation import VP_CUCM_0001_ACTION_PLANS, VP_CUCM_0001_PLAYBOOK_ID
 from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
 
 _EXAMPLE_PREFIX = "! Example configuration for engineer review — not applied by VoicePilot"
@@ -139,6 +140,94 @@ VP_CUBE_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
     ),
 }
 
+VP_CUCM_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
+    "HYP-CUCM-PHONE-REG": _ChangeTemplate(
+        current_state="One or more phones are not registered to CUCM.",
+        recommended_state="Phones registered to correct CM group and device pool.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Review device pool, CM group, and network reachability per runbook VP-CISCO-CUCM-RB-001\n"
+            "! Example: verify phone can reach TFTP and CallManager on required ports\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior device pool and CM group assignment from change record\n"
+        ),
+        impacted_objects=("Phone", "Device pool", "CM group"),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Cisco CUCM", "IP phones"),
+        vendor_references=("VP-CISCO-CUCM-RB-001", "VP-CISCO-CUCM-VG-001"),
+    ),
+    "HYP-CUCM-DB-REP": _ChangeTemplate(
+        current_state="CUCM database replication is unhealthy between cluster nodes.",
+        recommended_state="All cluster nodes report replication state 2 (Connected).",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Follow VP-CISCO-CUCM-RB-005 cluster replication runbook\n"
+            "! Verify NTP, network connectivity, and utils dbreplication status output\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! No configuration rollback — resolve replication per Cisco cluster recovery guide\n"
+        ),
+        impacted_objects=("CUCM cluster", "Database replication"),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Cisco CUCM publisher", "CUCM subscribers"),
+        vendor_references=("VP-CISCO-CUCM-RB-005", "VP-CISCO-CUCM-VG-004"),
+    ),
+    "HYP-CUCM-CM-SVC": _ChangeTemplate(
+        current_state="Cisco CallManager service is stopped on a cluster node.",
+        recommended_state="Cisco CallManager service running on all cluster nodes.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Follow VP-CISCO-CUCM-RB-005 service recovery runbook\n"
+            "! utils service list should show Cisco CallManager Started\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Document service restart window; no config rollback typically required\n"
+        ),
+        impacted_objects=("Cisco CallManager service",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Cisco CUCM", "Phone registration"),
+        vendor_references=("VP-CISCO-CUCM-RB-005", "VP-CISCO-CUCM-VG-010"),
+    ),
+    "HYP-CUCM-CERT": _ChangeTemplate(
+        current_state="Tomcat or phone trust certificate is expired.",
+        recommended_state="Valid certificates installed; CTL/ITL updated on phones.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Follow VP-CISCO-CUCM-RB-009 certificate runbook\n"
+            "! Renew Tomcat certificates and update phone trust list\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior certificate and trust list from backup if renewal fails\n"
+        ),
+        impacted_objects=("Tomcat certificate", "CTL/ITL"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Cisco CUCM", "Secure SIP/TLS endpoints"),
+        vendor_references=("VP-CISCO-CUCM-RB-009", "VP-CISCO-CUCM-VG-005"),
+    ),
+    "HYP-CUCM-SIP-TRUNK": _ChangeTemplate(
+        current_state="CUCM SIP trunk is down or unreachable.",
+        recommended_state="SIP trunk registered and OPTIONS healthy.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Follow VP-CISCO-CUCM-RB-002 SIP trunk runbook\n"
+            "! Verify trunk destination, security profile, and provider status\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior SIP trunk configuration from change record\n"
+        ),
+        impacted_objects=("SIP trunk", "SIP trunk security profile"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Cisco CUCM", "ITSP SIP trunk"),
+        vendor_references=("VP-CISCO-CUCM-RB-002", "VP-CISCO-CUCM-VG-002"),
+    ),
+}
+
 _DEFAULT_APPROVAL_SECTIONS: tuple[ApprovalSection, ...] = (
     ApprovalSection(
         name="Technical Reviewer",
@@ -215,8 +304,10 @@ class EngineeringChangePackageEngine:
             )
 
         category = _hypothesis_category(top_hypothesis, recommendation)
-        plan = VP_CUBE_0001_ACTION_PLANS.get(category)
-        template = VP_CUBE_0001_CHANGE_TEMPLATES.get(category)
+        plans = _action_plans_for_playbook(case.playbook_id)
+        templates = _change_templates_for_playbook(case.playbook_id)
+        plan = plans.get(category)
+        template = templates.get(category)
 
         recommended_changes = _build_recommended_changes(
             recommendation,
@@ -287,6 +378,18 @@ def _hypothesis_category(
     if hypothesis is not None and hypothesis.category:
         return hypothesis.category
     return "insufficient-evidence"
+
+
+def _action_plans_for_playbook(playbook_id: str | None) -> dict:
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return VP_CUCM_0001_ACTION_PLANS
+    return VP_CUBE_0001_ACTION_PLANS
+
+
+def _change_templates_for_playbook(playbook_id: str | None) -> dict[str, _ChangeTemplate]:
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return VP_CUCM_0001_CHANGE_TEMPLATES
+    return VP_CUBE_0001_CHANGE_TEMPLATES
 
 
 def _package_confidence(

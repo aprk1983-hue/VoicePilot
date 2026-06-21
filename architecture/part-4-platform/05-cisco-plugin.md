@@ -10,7 +10,8 @@ Document the official Cisco plugin: manifest, VP-CUBE-0001 playbook, Cisco CLI p
 
 - [`../../plugins/cisco/manifest.yaml`](../../plugins/cisco/manifest.yaml)
 - [`../../plugins/cisco/playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml`](../../plugins/cisco/playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml)
-- [`../../plugins/cisco/parser/`](../../plugins/cisco/parser/) — four Cisco parsers
+- [`../../plugins/cisco/playbooks/cucm/vp-cucm-0001-cisco-cucm-investigation.vpb.yaml`](../../plugins/cisco/playbooks/cucm/vp-cucm-0001-cisco-cucm-investigation.vpb.yaml)
+- [`../../plugins/cisco/parser/`](../../plugins/cisco/parser/) — CUBE and CUCM parsers
 - [`../../core/runtime/parser_bootstrap.py`](../../core/runtime/parser_bootstrap.py)
 
 ## Related Tests

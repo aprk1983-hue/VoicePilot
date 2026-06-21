@@ -51,7 +51,7 @@ class TestPluginRegistry:
         registry.discover()
         assert registry.is_registered("cisco")
         cisco_paths = registry.list_playbook_paths_for("cisco")
-        assert len(cisco_paths) == 1
+        assert len(cisco_paths) == 2
 
     def test_lookup_missing_plugin_raises(self, registry: PluginRegistry) -> None:
         registry.discover()

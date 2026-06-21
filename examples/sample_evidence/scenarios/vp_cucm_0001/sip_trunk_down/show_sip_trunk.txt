@@ -1,0 +1,3 @@
+show sip trunk
+Trunk ITSP-TRUNK Status: Down
+Trunk state: Not In Service

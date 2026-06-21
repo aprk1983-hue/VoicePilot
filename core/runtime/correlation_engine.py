@@ -181,11 +181,12 @@ class CorrelationEngine:
                 "no hypotheses",
             )
 
+        rules = _rules_for_playbook(case.playbook_id, self._rules)
         finding_codes = _collect_finding_codes(case)
         correlations: list[CorrelationResult] = []
         hypotheses_updated = 0
 
-        for rule in self._rules:
+        for rule in rules:
             if not rule.required_codes.issubset(finding_codes):
                 continue
 
@@ -229,6 +230,17 @@ class CorrelationEngine:
 
 def _collect_finding_codes(case: Case) -> set[str]:
     return {finding.signal for finding in case.analysis_findings}
+
+
+def _rules_for_playbook(
+    playbook_id: str | None,
+    default_rules: tuple[CorrelationRule, ...],
+) -> tuple[CorrelationRule, ...]:
+    from runtime.cucm_investigation import VP_CUCM_0001_CORRELATION_RULES, VP_CUCM_0001_PLAYBOOK_ID
+
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return VP_CUCM_0001_CORRELATION_RULES
+    return default_rules
 
 
 def _find_hypothesis_by_title(

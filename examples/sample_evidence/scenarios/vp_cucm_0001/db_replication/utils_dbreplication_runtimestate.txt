@@ -1,0 +1,5 @@
+utils dbreplication runtimestate
+Publisher state = 0
+Subscriber state = 0
+Replication state: Not Connected
+DB replication broken

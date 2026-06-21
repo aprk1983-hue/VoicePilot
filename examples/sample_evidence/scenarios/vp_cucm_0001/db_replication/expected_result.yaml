@@ -1,0 +1,3 @@
+scenario_id: db_replication
+expected_root_cause: "Database replication issue"
+min_confidence: 92

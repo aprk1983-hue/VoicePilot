@@ -227,9 +227,11 @@ class TestHealthEngine:
 class TestHealthRuleRegistry:
     def test_default_registry_contains_builtin_rules(self) -> None:
         registry = default_health_rule_registry()
+        rule_ids = {rule.id for rule in registry.all_rules()}
 
-        assert len(registry.all_rules()) == len(BUILTIN_HEALTH_RULES)
+        assert len(registry.all_rules()) == len(BUILTIN_HEALTH_RULES) + 10
         assert registry.get("sip_ua_disabled") is not None
+        assert "phone_not_registered" in rule_ids
 
     def test_lookup_by_object_type(self) -> None:
         registry = default_health_rule_registry()

@@ -1,0 +1,3 @@
+utils service list
+Cisco CallManager        Started
+Cisco TFTP               Started

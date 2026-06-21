@@ -1,0 +1,231 @@
+playbook:
+  api_version: voicepilot.io/v1
+  kind: Playbook
+
+  metadata:
+    id: VP-CUCM-0001
+    version: "1.0.0"
+    title: Cisco CUCM Investigation
+    description: >
+      TAC-grade deterministic investigation for Cisco Unified Communications Manager
+      using uploaded CLI evidence only. Covers phone registration, cluster services,
+      database replication, routing, certificates, and SIP trunks. Read-only — never
+      connects to CUCM or executes configuration changes.
+    category: cucm
+    vendor: cisco
+    status: active
+    author: voicepilot-curator
+    reviewed_by: tac-sme
+    effective_from: 2026-06-19
+    tags: [cucm, registration, replication, routing, sip, certificate, cluster]
+    related_playbooks: []
+
+  platforms:
+    - vendor: cisco
+      products: [cucm]
+      min_version: "12.5"
+      roles: [call_manager]
+
+  symptoms:
+    - id: SYM-PHONE-UNREG
+      match:
+        summary_contains: [phone, registration, unregistered, not registered]
+      weight: 1.0
+    - id: SYM-ROUTING-FAIL
+      match:
+        summary_contains: [routing, css, partition, route pattern]
+      weight: 0.8
+
+  business_impact:
+    default_severity: high
+    description: Users cannot register phones or place calls through CUCM
+    escalation_threshold_minutes: 30
+    user_impact: voice_service_degraded
+
+  topology:
+    pattern: cucm_cluster
+    description: Cisco CUCM publisher-subscriber cluster with phones and SIP trunks
+    required_components:
+      - type: cucm
+        role: call_manager
+        min_count: 1
+      - type: phone
+        role: endpoint
+        min_count: 1
+
+  intake:
+    questions:
+      - id: Q-CUCM-001
+        text: Did phone registration and calling ever work in this environment?
+        category: intake
+        phase: INTAKE
+        target_field: known_facts.worked_previously
+        required: true
+      - id: Q-CUCM-002
+        text: When did the issue start?
+        category: intake
+        phase: INTAKE
+        target_field: timeline.onset
+        required: true
+      - id: Q-CUCM-003
+        text: Describe the symptom (registration, routing, trunk, certificate).
+        category: scope
+        phase: INTAKE
+        target_field: known_facts.symptom_detail
+        required: true
+      - id: Q-CUCM-004
+        text: Which site or device pool is affected?
+        category: scope
+        phase: INTAKE
+        target_field: affected_scope.sites
+        required: true
+      - id: Q-CUCM-005
+        text: Are cluster services and replication healthy to your knowledge?
+        category: topology
+        phase: DISCOVERY
+        target_field: known_facts.cluster_health
+        required: false
+
+  evidence:
+    requirements:
+      - id: EVD-RISDB
+        title: RIS phone registration status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-DBREP
+        title: Database replication runtime state
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-SERVICES
+        title: CUCM service list
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-SIP-TRUNK
+        title: SIP trunk status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-CERT
+        title: Certificate list
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+
+    commands:
+      - id: CMD-RISDB
+        requirement_id: EVD-RISDB
+        device_role: call_manager
+        command: show risdb query phone
+        cost: low
+        privilege: show
+      - id: CMD-DBREP
+        requirement_id: EVD-DBREP
+        device_role: call_manager
+        command: utils dbreplication runtimestate
+        cost: low
+        privilege: admin
+      - id: CMD-SERVICES
+        requirement_id: EVD-SERVICES
+        device_role: call_manager
+        command: utils service list
+        cost: low
+        privilege: admin
+      - id: CMD-SIP-TRUNK
+        requirement_id: EVD-SIP-TRUNK
+        device_role: call_manager
+        command: show sip trunk
+        cost: low
+        privilege: show
+      - id: CMD-CERT
+        requirement_id: EVD-CERT
+        device_role: call_manager
+        command: show cert list
+        cost: low
+        privilege: show
+      - id: CMD-NETWORK-CLUSTER
+        device_role: call_manager
+        command: show network cluster
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-ROUTE-PLAN
+        device_role: call_manager
+        command: show route plan
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-DEVICE
+        device_role: call_manager
+        command: show device
+        cost: low
+        privilege: show
+        optional: true
+      - id: CMD-PERF
+        device_role: call_manager
+        command: show perf query
+        cost: medium
+        privilege: show
+        optional: true
+      - id: CMD-STATUS
+        device_role: call_manager
+        command: show status
+        cost: low
+        privilege: show
+        optional: true
+
+  hypotheses:
+    - id: HYP-CUCM-PHONE-REG
+      title: Phone registration failure
+      category: registration
+      initial_status: candidate
+    - id: HYP-CUCM-DB-REP
+      title: Database replication issue
+      category: cluster
+      initial_status: candidate
+    - id: HYP-CUCM-CM-SVC
+      title: CallManager service failure
+      category: cluster
+      initial_status: candidate
+    - id: HYP-CUCM-TFTP
+      title: TFTP issue
+      category: cluster
+      initial_status: candidate
+    - id: HYP-CUCM-CERT
+      title: Certificate issue
+      category: security
+      initial_status: candidate
+    - id: HYP-CUCM-SIP-TRUNK
+      title: SIP trunk issue
+      category: provider
+      initial_status: candidate
+    - id: HYP-CUCM-ROUTE
+      title: Routing configuration issue
+      category: routing
+      initial_status: candidate
+    - id: HYP-CUCM-CSS
+      title: CSS mismatch
+      category: routing
+      initial_status: candidate
+    - id: HYP-CUCM-PARTITION
+      title: Partition mismatch
+      category: routing
+      initial_status: candidate
+    - id: HYP-CUCM-MEDIA
+      title: Media resource issue
+      category: media
+      initial_status: candidate
+
+  report:
+    sections:
+      - id: executive_summary
+        title: Executive Summary
+        required: true
+      - id: technical_summary
+        title: Technical Summary
+        required: true
+      - id: root_cause_analysis
+        title: Root Cause Analysis
+        required: true

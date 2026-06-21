@@ -6,7 +6,7 @@ plugin_type: vendor
 description: Official Cisco voice investigation playbooks for CUBE, CUCM, and SIP troubleshooting.
 capabilities:
   - cube_playbooks
-  - cucm_playbooks_future
+  - cucm_playbooks
   - sip_troubleshooting
 supported_platforms:
   - Cisco CUBE
@@ -14,3 +14,4 @@ supported_platforms:
 entry_points:
   playbooks:
     - playbooks/cube/vp-cube-0001-outbound-calls-fail.vpb.yaml
+    - playbooks/cucm/vp-cucm-0001-cisco-cucm-investigation.vpb.yaml

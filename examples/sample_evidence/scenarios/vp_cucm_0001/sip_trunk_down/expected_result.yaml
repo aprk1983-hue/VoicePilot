@@ -1,0 +1,3 @@
+scenario_id: sip_trunk_down
+expected_root_cause: "SIP trunk issue"
+min_confidence: 89

@@ -1,0 +1,3 @@
+scenario_id: phone_not_registered
+expected_root_cause: "Phone registration failure"
+min_confidence: 88

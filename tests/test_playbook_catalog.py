@@ -56,8 +56,9 @@ class TestPlaybookCatalog:
     def test_list_playbooks_by_plugin_cisco(self, playbook_catalog: PlaybookCatalog) -> None:
         playbook_catalog.load_all()
         cisco_playbooks = playbook_catalog.list_for_plugin("cisco")
-        assert len(cisco_playbooks) == 1
-        assert cisco_playbooks[0].playbook_id == "VP-CUBE-0001"
+        playbook_ids = {entry.playbook_id for entry in cisco_playbooks}
+        assert "VP-CUBE-0001" in playbook_ids
+        assert "VP-CUCM-0001" in playbook_ids
 
     def test_unknown_playbook_id_raises(self, playbook_catalog: PlaybookCatalog) -> None:
         playbook_catalog.load_all()

@@ -1,0 +1,3 @@
+utils dbreplication runtimestate
+Publisher state = 2
+Subscriber state = 2

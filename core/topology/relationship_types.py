@@ -18,3 +18,4 @@ class RelationshipType(str, Enum):
     REFERENCES = "references"
     TRANSLATES_TO = "translates_to"
     AUTHENTICATES_TO = "authenticates_to"
+    REGISTERED_TO = "registered_to"

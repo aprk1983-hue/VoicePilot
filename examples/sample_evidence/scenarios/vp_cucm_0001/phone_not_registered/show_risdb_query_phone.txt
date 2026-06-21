@@ -1,0 +1,5 @@
+admin:show risdb query phone
+Total phones listed: 3
+SEP0011111111  Not Registered  HQ-PHONE-01
+SEP0022222222  Not Registered  HQ-PHONE-02
+SEP0033333333  Registered      HQ-PHONE-03

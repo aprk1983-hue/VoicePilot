@@ -1,0 +1,3 @@
+scenario_id: callmanager_service_down
+expected_root_cause: "CallManager service failure"
+min_confidence: 94

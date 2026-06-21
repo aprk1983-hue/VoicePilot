@@ -1,0 +1,2 @@
+Publisher state = 2
+Subscriber state = 2

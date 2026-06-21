@@ -32,12 +32,15 @@ class TestPluginManifest:
         assert manifest.version == "0.1.0"
         assert manifest.plugin_type == PluginType.VENDOR
         assert "cube_playbooks" in manifest.capabilities
+        assert "cucm_playbooks" in manifest.capabilities
         assert "Cisco CUBE" in manifest.supported_platforms
 
     def test_resolve_playbook_paths(self, manifest_data: dict) -> None:
         root = MANIFEST_PATH.parent
         manifest = PluginManifest.from_mapping(manifest_data, root)
         paths = manifest.resolve_playbook_paths()
-        assert len(paths) == 1
-        assert paths[0].name == "vp-cube-0001-outbound-calls-fail.vpb.yaml"
-        assert paths[0].exists()
+        path_names = {path.name for path in paths}
+        assert len(paths) == 2
+        assert "vp-cube-0001-outbound-calls-fail.vpb.yaml" in path_names
+        assert "vp-cucm-0001-cisco-cucm-investigation.vpb.yaml" in path_names
+        assert all(path.exists() for path in paths)

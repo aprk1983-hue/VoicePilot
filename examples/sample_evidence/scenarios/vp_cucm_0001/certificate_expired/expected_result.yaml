@@ -1,0 +1,3 @@
+scenario_id: certificate_expired
+expected_root_cause: "Certificate issue"
+min_confidence: 91

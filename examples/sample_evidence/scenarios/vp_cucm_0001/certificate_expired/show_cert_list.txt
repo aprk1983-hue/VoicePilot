@@ -1,0 +1,3 @@
+show cert list
+Tomcat certificate expired on 2020-01-01
+Certificate not valid after 2020-01-01

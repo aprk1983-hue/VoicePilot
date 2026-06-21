@@ -17,6 +17,12 @@ from runtime.plugin_registry import PluginRegistry
 from runtime.runtime_engine import RuntimeEngine
 from shared.config import RuntimeConfig
 
+from runtime.cucm_investigation import (
+    CUCM_EVIDENCE_FILES,
+    CUCM_INTAKE_ANSWERS,
+    VP_CUCM_0001_PLAYBOOK_ID,
+)
+
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
 
 SCENARIO_COMPARISON_PAIRS: dict[str, str] = {
@@ -67,11 +73,31 @@ def default_plugins_root(repo_root: Path | None = None) -> Path:
     return (repo_root or default_repo_root()) / "plugins"
 
 
+def evidence_files_for_playbook(playbook_id: str) -> tuple[tuple[str, str], ...]:
+    """Return evidence command/file pairs for a supported playbook."""
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return CUCM_EVIDENCE_FILES
+    if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
+        return EVIDENCE_FILES
+    raise UnsupportedPlaybookScenarioError(playbook_id)
+
+
+def intake_answers_for_playbook(playbook_id: str) -> list[str]:
+    """Return scripted intake answers for a supported playbook."""
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return list(CUCM_INTAKE_ANSWERS)
+    if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
+        return list(INTAKE_ANSWERS)
+    raise UnsupportedPlaybookScenarioError(playbook_id)
+
+
 def default_scenarios_root(playbook_id: str, repo_root: Path | None = None) -> Path:
     """Return the default scenario evidence root for a supported playbook."""
     root = repo_root or default_repo_root()
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return root / "examples" / "sample_evidence" / "scenarios" / "vp_cube_0001"
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return root / "examples" / "sample_evidence" / "scenarios" / "vp_cucm_0001"
     raise UnsupportedPlaybookScenarioError(playbook_id)
 
 
@@ -154,7 +180,7 @@ def resolve_scenario_dirs(
     repo_root: Path | None = None,
 ) -> list[Path]:
     """Resolve scenario directories to execute for a playbook."""
-    if playbook_id != VP_CUBE_0001_PLAYBOOK_ID:
+    if playbook_id not in {VP_CUBE_0001_PLAYBOOK_ID, VP_CUCM_0001_PLAYBOOK_ID}:
         raise UnsupportedPlaybookScenarioError(playbook_id)
 
     root = resolve_scenarios_root(playbook_id, scenarios_root, repo_root=repo_root)
@@ -188,7 +214,7 @@ def run_scenario(
 
     try:
         turn = runtime.start_investigation(playbook_id)
-        for answer in INTAKE_ANSWERS:
+        for answer in intake_answers_for_playbook(playbook_id):
             turn = runtime.submit_answer(turn.case_id, turn.question_id, answer)
 
         case = runtime.case_manager.load_case(turn.case_id)
@@ -196,7 +222,7 @@ def run_scenario(
         initialize_evidence_collection(case, runtime.case_manager, playbook)
         case = runtime.case_manager.load_case(case.case_id)
 
-        for command, filename in EVIDENCE_FILES:
+        for command, filename in evidence_files_for_playbook(playbook_id):
             raw_text = (scenario_dir / filename).read_text(encoding="utf-8")
             submit_evidence(
                 case,
@@ -281,10 +307,10 @@ def run_scenario_to_correlation(
 ) -> tuple[RuntimeEngine, str]:
     """Run a scenario through correlation and return the runtime and case ID."""
     active_runtime = runtime or build_scenario_runtime_engine(plugins_root)
-    files = evidence_files or EVIDENCE_FILES
+    files = evidence_files or evidence_files_for_playbook(playbook_id)
 
     turn = active_runtime.start_investigation(playbook_id)
-    for answer in INTAKE_ANSWERS:
+    for answer in intake_answers_for_playbook(playbook_id):
         turn = active_runtime.submit_answer(turn.case_id, turn.question_id, answer)
 
     case = active_runtime.case_manager.load_case(turn.case_id)
@@ -303,7 +329,7 @@ def run_scenario_to_correlation(
         )
         case = active_runtime.case_manager.load_case(case.case_id)
 
-    if len(files) < len(EVIDENCE_FILES) and case.status == InvestigationState.COLLECTION:
+    if len(files) < len(evidence_files_for_playbook(playbook_id)) and case.status == InvestigationState.COLLECTION:
         active_runtime.case_manager.transition_state(case.case_id, InvestigationState.ANALYSIS)
         case = active_runtime.case_manager.load_case(case.case_id)
 

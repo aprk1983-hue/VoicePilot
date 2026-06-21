@@ -1,0 +1,3 @@
+admin:show risdb query phone
+SEP0011111111  Not Registered  HQ-PHONE-01
+SEP0022222222  Not Registered  HQ-PHONE-02

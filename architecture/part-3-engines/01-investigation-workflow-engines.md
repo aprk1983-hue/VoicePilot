@@ -26,7 +26,9 @@ Document the deterministic investigation pipeline engines: analysis, hypothesis 
 - [`../../tests/test_recommendation_engine.py`](../../tests/test_recommendation_engine.py)
 - [`../../tests/test_verification_engine.py`](../../tests/test_verification_engine.py)
 - [`../../tests/test_learning_engine.py`](../../tests/test_learning_engine.py)
-- [`../../tests/test_decision_log_engine.py`](../../tests/test_decision_log_engine.py)
+- [`../../tests/test_vp_cube_0001_scenarios.py`](../../tests/test_vp_cube_0001_scenarios.py)
+- [`../../tests/test_cucm_investigation_engine.py`](../../tests/test_cucm_investigation_engine.py)
+- [`../../tests/test_vp_cucm_0001_scenarios.py`](../../tests/test_vp_cucm_0001_scenarios.py)
 
 ## Related Documentation
 

@@ -183,7 +183,7 @@ class RecommendationEngine:
         if top_hypothesis is None:
             return _insufficient_recommendation(case)
 
-        plan = _plan_for_hypothesis(top_hypothesis)
+        plan = _plan_for_hypothesis(top_hypothesis, case)
         evidence = _evidence_for_hypothesis(case, top_hypothesis)
         confidence = top_hypothesis.confidence
 
@@ -285,8 +285,12 @@ def _top_hypothesis(case: Case) -> Hypothesis | None:
     return min(case.hypotheses, key=lambda hypothesis: hypothesis.rank or 999)
 
 
-def _plan_for_hypothesis(hypothesis: Hypothesis) -> HypothesisActionPlan:
+def _plan_for_hypothesis(hypothesis: Hypothesis, case: Case) -> HypothesisActionPlan:
+    from runtime.cucm_investigation import VP_CUCM_0001_ACTION_PLANS, VP_CUCM_0001_PLAYBOOK_ID
+
     category = hypothesis.category or ""
+    if case.playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return VP_CUCM_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
     return VP_CUBE_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
 
 

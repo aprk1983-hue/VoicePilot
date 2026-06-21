@@ -8,6 +8,8 @@ from typing import Any
 from domain.enums import InvestigationState
 from domain.models import Case, Playbook
 
+from runtime.cucm_investigation import CUCM_ALL_FAIL_EVIDENCE, VP_CUCM_0001_PLAYBOOK_ID
+
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
 
 VP_CUBE_0001_ALL_FAIL_EVIDENCE = [
@@ -41,6 +43,8 @@ def build_intake_summary(case: Case, playbook: Playbook | None = None) -> Intake
 
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return _build_vp_cube_0001_summary(case, known_facts)
+    if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+        return _build_vp_cucm_0001_summary(case, known_facts)
 
     return IntakeSummary(
         case_id=case.case_id,
@@ -155,6 +159,22 @@ def _build_vp_cube_0001_summary(
         missing_evidence=missing_evidence,
         recommended_strategy=recommended_strategy,
         next_required_commands=next_required_commands,
+    )
+
+
+def _build_vp_cucm_0001_summary(
+    case: Case,
+    known_facts: dict[str, Any],
+) -> IntakeSummary:
+    """Apply VP-CUCM-0001 deterministic summary rules."""
+    return IntakeSummary(
+        case_id=case.case_id,
+        playbook_id=VP_CUCM_0001_PLAYBOOK_ID,
+        current_state=case.status,
+        known_facts=known_facts,
+        missing_evidence=list(CUCM_ALL_FAIL_EVIDENCE),
+        recommended_strategy="Registration-first",
+        next_required_commands=list(CUCM_ALL_FAIL_EVIDENCE),
     )
 
 

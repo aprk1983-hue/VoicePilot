@@ -8,6 +8,7 @@ from domain.enums import HypothesisStatus, InvestigationState
 from domain.models import AnalysisFinding, Case, Hypothesis
 
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
+VP_CUCM_0001_PLAYBOOK_ID = "VP-CUCM-0001"
 INSUFFICIENT_EVIDENCE_TITLE = "Insufficient evidence to rank root cause"
 INSUFFICIENT_EVIDENCE_CONFIDENCE = 25.0
 
@@ -146,14 +147,20 @@ class HypothesisEngine:
         if not case.analysis_findings:
             return [_insufficient_evidence_hypothesis(case)]
 
-        if case.playbook_id != VP_CUBE_0001_PLAYBOOK_ID:
+        if case.playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
+            from runtime.cucm_investigation import VP_CUCM_0001_RULES
+
+            rules = VP_CUCM_0001_RULES
+        elif case.playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
+            rules = VP_CUBE_0001_RULES
+        else:
             return [_insufficient_evidence_hypothesis(case)]
 
         signals = {finding.signal for finding in case.analysis_findings}
         finding_ids_by_signal = _finding_ids_by_signal(case.analysis_findings)
         hypotheses: list[Hypothesis] = []
 
-        for rule in VP_CUBE_0001_RULES:
+        for rule in rules:
             if not _rule_matches(rule, signals):
                 continue
             hypotheses.append(_build_hypothesis(case.case_id, rule, finding_ids_by_signal))
