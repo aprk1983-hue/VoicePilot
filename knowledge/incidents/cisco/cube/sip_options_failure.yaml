@@ -1,0 +1,47 @@
+asset_id: VP-CISCO-CUBE-000006
+title: SIP OPTIONS failure
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Provider or CUBE SIP OPTIONS keepalive failures cause trunk instability.
+description: Provider or CUBE SIP OPTIONS keepalive failures cause trunk instability.
+symptoms:
+  - OPTIONS timeouts
+  - Intermittent trunk unavailability
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - sip_options_failure
+  - provider_options_timeout
+expected_hypotheses:
+  - SIP OPTIONS keepalive failure
+related_health_rules:
+  - provider_options_failure
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-VG-003
+  - VP-CISCO-CUBE-REF-003
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - sip-options
+  - keepalive
+  - trunk
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

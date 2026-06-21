@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUBE-VG-004
+title: Verify codec policy alignment
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUBE
+category: CODEC
+severity: medium
+summary: Confirm allowed codecs match provider requirements.
+description: Confirm allowed codecs match provider requirements.
+symptoms: []
+required_evidence:
+  - show sip-ua status
+recommended_actions:
+  - Execute verification commands and compare against expected state
+verification_steps:
+  - Collect verification command output
+  - Confirm operational state matches expected baseline
+related_asset_ids:
+  - VP-CISCO-CUBE-000004
+tags:
+  - codec
+  - verification
+references:
+  - Cisco CUBE verification best practice
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

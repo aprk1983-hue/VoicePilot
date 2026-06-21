@@ -51,4 +51,11 @@ include = [
     "engineering_assets*",
     "engineering_knowledge*",
 ]
-exclude = ["knowledge.packs*", "brain.*"]
+exclude = [
+    "knowledge.packs*",
+    "knowledge.incidents*",
+    "knowledge.runbooks*",
+    "knowledge.verification*",
+    "knowledge.references*",
+    "brain.*",
+]

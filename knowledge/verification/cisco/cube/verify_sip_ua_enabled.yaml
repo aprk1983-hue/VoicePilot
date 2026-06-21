@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUBE-VG-001
+title: Verify SIP-UA enabled
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: medium
+summary: Confirm SIP-UA is enabled and registered before closing the incident.
+description: Confirm SIP-UA is enabled and registered before closing the incident.
+symptoms: []
+required_evidence:
+  - show sip-ua status
+recommended_actions:
+  - Execute verification commands and compare against expected state
+verification_steps:
+  - Collect verification command output
+  - Confirm operational state matches expected baseline
+related_asset_ids:
+  - VP-CISCO-CUBE-000001
+tags:
+  - sip-ua
+  - verification
+references:
+  - Cisco CUBE verification best practice
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

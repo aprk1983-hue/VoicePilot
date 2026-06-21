@@ -1,0 +1,46 @@
+asset_id: VP-CISCO-CUBE-000009
+title: SIP profile header issue
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Incorrect SIP header manipulation causes provider rejection.
+description: Incorrect SIP header manipulation causes provider rejection.
+symptoms:
+  - Provider rejects calls due to header policy
+  - Missing or malformed P-Asserted-Identity
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - sip_profile_header_mismatch
+  - sip_header_policy_violation
+expected_hypotheses:
+  - SIP profile header issue
+related_health_rules:
+  - sip_profile_header_mismatch
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-REF-003
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - sip-profile
+  - headers
+  - provider
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUBE-RB-002
+title: Restore outbound dial peer
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUBE
+category: CALL_ROUTING
+severity: high
+summary: Create or repair outbound dial peer configuration.
+description: Create or repair outbound dial peer configuration.
+recommended_actions:
+  - Review dial-peer summary
+  - Configure destination pattern
+verification_steps:
+  - Place controlled test call after remediation
+related_asset_ids:
+  - VP-CISCO-CUBE-000002
+tags:
+  - dial-peer
+  - runbook
+references:
+  - Cisco CUBE operational runbook
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

@@ -1,0 +1,46 @@
+asset_id: VP-CISCO-CUBE-000010
+title: One-way audio / RTP path issue
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: MEDIA
+severity: high
+summary: Calls connect but media is one-way due to RTP or firewall path issues.
+description: Calls connect but media is one-way due to RTP or firewall path issues.
+symptoms:
+  - One-way audio
+  - RTP stream missing in one direction
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - rtp_one_way_audio
+  - media_path_asymmetric
+expected_hypotheses:
+  - One-way audio / RTP path issue
+related_health_rules:
+  - rtp_one_way_audio
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-REF-005
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - rtp
+  - media
+  - one-way-audio
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,47 @@
+asset_id: VP-CISCO-CUBE-000007
+title: TLS certificate expired
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: TLS
+severity: high
+summary: Secure SIP trunk fails when TLS certificate is expired or invalid.
+description: Secure SIP trunk fails when TLS certificate is expired or invalid.
+symptoms:
+  - TLS handshake failures
+  - Secure trunk registration failure
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - tls_certificate_expired
+  - tls_handshake_failure
+expected_hypotheses:
+  - Expired or invalid TLS certificate
+related_health_rules:
+  - tls_certificate_expired
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-VG-005
+  - VP-CISCO-CUBE-REF-004
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - tls
+  - certificate
+  - security
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

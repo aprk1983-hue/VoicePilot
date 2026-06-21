@@ -1,0 +1,20 @@
+asset_id: VP-CISCO-CUBE-REF-003
+title: SIP response code reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: low
+summary: Reference for common SIP response codes on CUBE trunks.
+description: Reference for common SIP response codes on CUBE trunks.
+related_asset_ids:
+  - VP-CISCO-CUBE-000003
+  - VP-CISCO-CUBE-000009
+tags:
+  - sip
+  - reference
+references:
+  - Cisco CUBE product documentation
+confidence: 0.85
+status: ACTIVE
+version: '1.0'

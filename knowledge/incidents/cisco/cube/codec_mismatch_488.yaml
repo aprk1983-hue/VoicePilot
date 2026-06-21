@@ -1,0 +1,47 @@
+asset_id: VP-CISCO-CUBE-000004
+title: Codec mismatch 488
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: CODEC
+severity: high
+summary: Outbound calls fail with SIP 488 when codec or SDP negotiation fails.
+description: Outbound calls fail with SIP 488 when codec or SDP negotiation fails.
+symptoms:
+  - 488 Not Acceptable Here
+  - Calls fail after INVITE/SDP exchange
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - sip_488_detected
+expected_hypotheses:
+  - Codec / SDP negotiation issue
+related_health_rules:
+  - codec_policy_mismatch
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-RB-004
+  - VP-CISCO-CUBE-VG-004
+  - VP-CISCO-CUBE-REF-005
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - codec
+  - 488
+  - sdp
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUBE-000005
+title: Dial peer shutdown or out of service
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: CALL_ROUTING
+severity: high
+summary: Outbound calls fail when the selected dial peer is shutdown or out of service.
+description: Outbound calls fail when the selected dial peer is shutdown or out of service.
+symptoms:
+  - Dial peer administratively down
+  - 404 or fast busy on outbound calls
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - dial_peer_down
+  - dial_peer_out_of_service
+expected_hypotheses:
+  - Outbound dial peer administratively down/out of service
+related_health_rules:
+  - dial_peer_shutdown
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-RB-005
+  - VP-CISCO-CUBE-VG-002
+  - VP-CISCO-CUBE-REF-002
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - dial-peer
+  - shutdown
+  - out-of-service
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,28 @@
+asset_id: VP-CISCO-CUBE-VG-003
+title: Verify provider SIP registration
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: medium
+summary: Confirm provider trunk registration and OPTIONS health.
+description: Confirm provider trunk registration and OPTIONS health.
+symptoms: []
+required_evidence:
+  - show sip-ua status
+recommended_actions:
+  - Execute verification commands and compare against expected state
+verification_steps:
+  - Collect verification command output
+  - Confirm operational state matches expected baseline
+related_asset_ids:
+  - VP-CISCO-CUBE-000003
+  - VP-CISCO-CUBE-000006
+tags:
+  - provider
+  - verification
+references:
+  - Cisco CUBE verification best practice
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

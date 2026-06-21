@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUBE-RB-001
+title: Enable SIP-UA on CUBE
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Enable SIP-UA and validate registration.
+description: Enable SIP-UA and validate registration.
+recommended_actions:
+  - Enable SIP-UA in voice service voip
+  - Verify show sip-ua status
+verification_steps:
+  - Place controlled test call after remediation
+related_asset_ids:
+  - VP-CISCO-CUBE-000001
+tags:
+  - sip-ua
+  - runbook
+references:
+  - Cisco CUBE operational runbook
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

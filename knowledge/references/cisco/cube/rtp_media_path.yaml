@@ -1,0 +1,21 @@
+asset_id: VP-CISCO-CUBE-REF-005
+title: RTP and media path reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUBE
+category: MEDIA
+severity: low
+summary: Reference for RTP path validation and firewall requirements.
+description: Reference for RTP path validation and firewall requirements.
+related_asset_ids:
+  - VP-CISCO-CUBE-000010
+  - VP-CISCO-CUBE-000004
+tags:
+  - rtp
+  - media
+  - reference
+references:
+  - Cisco CUBE product documentation
+confidence: 0.85
+status: ACTIVE
+version: '1.0'

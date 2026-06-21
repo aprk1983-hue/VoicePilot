@@ -1,0 +1,19 @@
+asset_id: VP-CISCO-CUBE-REF-001
+title: CUBE SIP-UA configuration reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: low
+summary: Reference for SIP-UA configuration and registration checks.
+description: Reference for SIP-UA configuration and registration checks.
+related_asset_ids:
+  - VP-CISCO-CUBE-000001
+tags:
+  - sip-ua
+  - reference
+references:
+  - Cisco CUBE product documentation
+confidence: 0.85
+status: ACTIVE
+version: '1.0'

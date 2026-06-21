@@ -1,0 +1,27 @@
+asset_id: VP-CISCO-CUBE-VG-005
+title: Verify TLS certificate validity
+asset_type: VERIFICATION_GUIDE
+vendor: Cisco
+product: CUBE
+category: TLS
+severity: medium
+summary: Confirm TLS certificates are valid and trusted.
+description: Confirm TLS certificates are valid and trusted.
+symptoms: []
+required_evidence:
+  - show sip-ua status
+recommended_actions:
+  - Execute verification commands and compare against expected state
+verification_steps:
+  - Collect verification command output
+  - Confirm operational state matches expected baseline
+related_asset_ids:
+  - VP-CISCO-CUBE-000007
+tags:
+  - tls
+  - verification
+references:
+  - Cisco CUBE verification best practice
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

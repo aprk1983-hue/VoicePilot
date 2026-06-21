@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUBE-RB-004
+title: Resolve codec mismatch
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUBE
+category: CODEC
+severity: high
+summary: Align codec policy with provider requirements.
+description: Align codec policy with provider requirements.
+recommended_actions:
+  - Review allowed codecs
+  - Adjust dial-peer codec class
+verification_steps:
+  - Place controlled test call after remediation
+related_asset_ids:
+  - VP-CISCO-CUBE-000004
+tags:
+  - codec
+  - runbook
+references:
+  - Cisco CUBE operational runbook
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

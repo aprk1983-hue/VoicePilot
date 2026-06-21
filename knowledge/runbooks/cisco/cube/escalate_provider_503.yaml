@@ -1,0 +1,25 @@
+asset_id: VP-CISCO-CUBE-RB-003
+title: Escalate provider 503 rejection
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Engage provider when CUBE is healthy but 503 persists.
+description: Engage provider when CUBE is healthy but 503 persists.
+recommended_actions:
+  - Collect debug ccsip messages
+  - Open provider ticket with SIP trace
+verification_steps:
+  - Place controlled test call after remediation
+related_asset_ids:
+  - VP-CISCO-CUBE-000003
+tags:
+  - provider
+  - 503
+  - runbook
+references:
+  - Cisco CUBE operational runbook
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

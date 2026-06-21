@@ -1,0 +1,19 @@
+asset_id: VP-CISCO-CUBE-REF-004
+title: TLS certificate management reference
+asset_type: REFERENCE
+vendor: Cisco
+product: CUBE
+category: TLS
+severity: low
+summary: Reference for TLS certificate lifecycle on secure trunks.
+description: Reference for TLS certificate lifecycle on secure trunks.
+related_asset_ids:
+  - VP-CISCO-CUBE-000007
+tags:
+  - tls
+  - reference
+references:
+  - Cisco CUBE product documentation
+confidence: 0.85
+status: ACTIVE
+version: '1.0'

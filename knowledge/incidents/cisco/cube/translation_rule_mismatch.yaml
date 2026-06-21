@@ -1,0 +1,46 @@
+asset_id: VP-CISCO-CUBE-000008
+title: Translation rule mismatch
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: ROUTING
+severity: high
+summary: Misapplied translation rules cause dialed number or caller ID mismatch.
+description: Misapplied translation rules cause dialed number or caller ID mismatch.
+symptoms:
+  - Wrong destination pattern after translation
+  - Unexpected called number at provider
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - translation_rule_mismatch
+  - called_number_transformed
+expected_hypotheses:
+  - Translation rule mismatch
+related_health_rules:
+  - translation_rule_mismatch
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-REF-002
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - translation
+  - dial-plan
+  - routing
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

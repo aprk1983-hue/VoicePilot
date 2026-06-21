@@ -1,0 +1,49 @@
+asset_id: VP-CISCO-CUBE-000003
+title: Provider SIP 503 rejection
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Provider trunk returns SIP 503 while CUBE configuration appears healthy.
+description: Provider trunk returns SIP 503 while CUBE configuration appears healthy.
+symptoms:
+  - 503 Service Unavailable from provider
+  - Healthy CUBE SIP-UA and dial peers
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - sip_503_detected
+  - sip_ua_enabled
+  - dial_peer_config_present
+expected_hypotheses:
+  - Provider or SIP trunk service issue
+related_health_rules:
+  - provider_unreachable
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-RB-003
+  - VP-CISCO-CUBE-VG-003
+  - VP-CISCO-CUBE-REF-003
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - provider
+  - 503
+  - trunk
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUBE-000001
+title: CUBE SIP-UA disabled
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: SIP
+severity: high
+summary: Outbound SIP calls fail when CUBE SIP-UA is administratively disabled.
+description: Outbound SIP calls fail when CUBE SIP-UA is administratively disabled.
+symptoms:
+  - All outbound calls fail
+  - SIP-UA status shows disabled
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - sip_ua_disabled
+  - sip_ua_disabled_by_config
+expected_hypotheses:
+  - CUBE SIP user agent disabled
+related_health_rules:
+  - sip_ua_disabled
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-RB-001
+  - VP-CISCO-CUBE-VG-001
+  - VP-CISCO-CUBE-REF-001
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - sip-ua
+  - disabled
+  - outbound
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

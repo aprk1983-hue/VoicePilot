@@ -1,0 +1,24 @@
+asset_id: VP-CISCO-CUBE-RB-005
+title: Recover shutdown dial peer
+asset_type: RUNBOOK
+vendor: Cisco
+product: CUBE
+category: CALL_ROUTING
+severity: high
+summary: Remove shutdown and restore dial peer service.
+description: Remove shutdown and restore dial peer service.
+recommended_actions:
+  - Identify shutdown dial peer
+  - No shutdown and verify state
+verification_steps:
+  - Place controlled test call after remediation
+related_asset_ids:
+  - VP-CISCO-CUBE-000005
+tags:
+  - dial-peer
+  - runbook
+references:
+  - Cisco CUBE operational runbook
+confidence: 0.9
+status: ACTIVE
+version: '1.0'

@@ -21,6 +21,19 @@ _REQUIRED_FIELDS = (
     "summary",
 )
 
+_METADATA_EXTENSION_FIELDS = (
+    "severity",
+    "symptoms",
+    "required_evidence",
+    "expected_findings",
+    "expected_hypotheses",
+    "related_health_rules",
+    "related_discovery_rules",
+    "related_knowledge_packs",
+    "recommended_actions",
+    "verification_steps",
+)
+
 
 class EngineeringAssetLoader:
     """Load vendor-neutral engineering assets from YAML documents."""
@@ -68,9 +81,12 @@ class EngineeringAssetLoader:
         if not isinstance(confidence, (int, float)):
             raise EngineeringAssetValidationError("confidence must be numeric")
 
-        metadata = data.get("metadata", {})
-        if not isinstance(metadata, dict):
+        metadata = dict(data.get("metadata", {})) if isinstance(data.get("metadata", {}), dict) else {}
+        if not isinstance(data.get("metadata", {}), dict) and "metadata" in data:
             raise EngineeringAssetValidationError("metadata must be a mapping")
+        for field_name in _METADATA_EXTENSION_FIELDS:
+            if field_name in data:
+                metadata[field_name] = data[field_name]
 
         return EngineeringAsset(
             asset_id=str(data["asset_id"]),

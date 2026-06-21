@@ -1,0 +1,48 @@
+asset_id: VP-CISCO-CUBE-000002
+title: Missing outbound dial peer
+asset_type: INCIDENT
+vendor: Cisco
+product: CUBE
+category: CALL_ROUTING
+severity: high
+summary: Outbound calls fail when no matching outbound dial peer exists.
+description: Outbound calls fail when no matching outbound dial peer exists.
+symptoms:
+  - 404 Not Found on outbound calls
+  - No matching dial peer
+required_evidence:
+  - show dial-peer voice summary
+  - show sip-ua status
+  - show run | sec voice service voip
+  - debug ccsip messages
+expected_findings:
+  - dial_peer_summary_missing_or_empty
+  - sip_404_detected
+expected_hypotheses:
+  - Missing or unmatched outbound dial-peer
+related_health_rules:
+  - dial_peer_missing_destination
+related_discovery_rules:
+  - collect_missing_evidence
+recommended_actions:
+  - Review collected evidence against expected findings
+  - Follow linked runbook and verification guide
+verification_steps:
+  - Confirm expected findings are present in collected evidence
+  - Validate remediation using linked verification guide
+related_asset_ids:
+  - VP-CISCO-CUBE-RB-002
+  - VP-CISCO-CUBE-VG-002
+  - VP-CISCO-CUBE-REF-002
+related_knowledge_packs:
+  - CISCO-BP-SIP-UA-ENABLED
+tags:
+  - dial-peer
+  - 404
+  - routing
+references:
+  - VoicePilot VP-CUBE-0001 scenario library
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-19T12:00:00+00:00'

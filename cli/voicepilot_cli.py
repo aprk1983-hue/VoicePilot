@@ -81,7 +81,14 @@ from brain.brain_store import (
     persist_brain_session,
     restore_brain_session_to_runtime,
 )
-from investigation.session_exceptions import SessionNotFoundError
+from engineering_assets import EngineeringAssetNotFoundError
+from engineering_knowledge import (
+    asset_stats,
+    default_engineering_knowledge_library,
+    format_asset_details,
+    reset_default_engineering_knowledge_engine,
+    search_assets,
+)
 from runtime.intake_flow import build_investigation_turn, get_next_question_for_phase
 from runtime.scenario_runner import (
     default_scenarios_root,
@@ -604,6 +611,83 @@ def cmd_brain_next(args: argparse.Namespace) -> int:
         print,
         plugins_root=Path(args.plugins_root) if args.plugins_root else None,
     )
+
+
+def run_assets_search(
+    query: str,
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Search bundled engineering knowledge assets."""
+    active_library = library or default_engineering_knowledge_library()
+    results = search_assets(active_library, query)
+    output_writer(f"Engineering Asset Search — {query!r}")
+    output_writer("")
+    if not results:
+        output_writer("_No assets matched._")
+        return 0
+    for asset in results:
+        output_writer(
+            f"- {asset.asset_id} | {asset.asset_type.value} | {asset.title} | {asset.vendor}/{asset.product}"
+        )
+    return 0
+
+
+def run_assets_show(
+    asset_id: str,
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Show one engineering knowledge asset."""
+    active_library = library or default_engineering_knowledge_library()
+    try:
+        asset = active_library.asset_registry.get(asset_id)
+    except EngineeringAssetNotFoundError:
+        output_writer(f"Error: Asset not found: {asset_id}")
+        return 1
+    output_writer(format_asset_details(asset))
+    return 0
+
+
+def run_assets_stats(
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Show engineering knowledge library statistics."""
+    active_library = library or default_engineering_knowledge_library()
+    stats = asset_stats(active_library)
+    output_writer("Engineering Knowledge Library Stats")
+    output_writer("")
+    output_writer(f"Total Assets:            {stats['total_assets']}")
+    output_writer(f"Knowledge Entries:       {stats['total_knowledge_entries']}")
+    output_writer(f"Relationships:           {stats['total_relationships']}")
+    output_writer("")
+    output_writer("Asset Types:")
+    for asset_type, count in sorted(stats["type_counts"].items()):
+        output_writer(f"  {asset_type}: {count}")
+    output_writer("")
+    output_writer("Vendors:")
+    for vendor, count in sorted(stats["vendor_counts"].items()):
+        output_writer(f"  {vendor}: {count}")
+    return 0
+
+
+def cmd_assets_search(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets search <query>``."""
+    return run_assets_search(args.query, print)
+
+
+def cmd_assets_show(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets show <asset_id>``."""
+    return run_assets_show(args.asset_id, print)
+
+
+def cmd_assets_stats(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets stats``."""
+    return run_assets_stats(print)
 
 
 def cmd_decisions(args: argparse.Namespace) -> int:
@@ -1416,6 +1500,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override plugins directory (default: repo plugins/)",
     )
     brain_next.set_defaults(func=cmd_brain_next)
+
+    assets = subparsers.add_parser(
+        "assets",
+        help="Search and inspect engineering knowledge assets",
+    )
+    assets_sub = assets.add_subparsers(dest="assets_command", required=True)
+
+    assets_search = assets_sub.add_parser(
+        "search",
+        help="Search engineering knowledge assets",
+    )
+    assets_search.add_argument(
+        "query",
+        help='Search text (e.g. "sip-ua")',
+    )
+    assets_search.set_defaults(func=cmd_assets_search)
+
+    assets_show = assets_sub.add_parser(
+        "show",
+        help="Show one engineering knowledge asset",
+    )
+    assets_show.add_argument(
+        "asset_id",
+        help="Asset ID (e.g. VP-CISCO-CUBE-000001)",
+    )
+    assets_show.set_defaults(func=cmd_assets_show)
+
+    assets_stats = assets_sub.add_parser(
+        "stats",
+        help="Show engineering knowledge library statistics",
+    )
+    assets_stats.set_defaults(func=cmd_assets_stats)
 
     return parser
 
