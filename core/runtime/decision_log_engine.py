@@ -31,6 +31,7 @@ VERIFICATION_ENGINE_NAME = "verification-engine"
 LEARNING_ENGINE_NAME = "learning-engine"
 DISCOVERY_ENGINE_NAME = "discovery-engine"
 RUNTIME_ENGINE_NAME = "runtime-engine"
+BRAIN_ENGINE_NAME = "brain-engine"
 
 
 class DecisionLogImmutableError(RuntimeError):
@@ -325,6 +326,31 @@ class DecisionLogEngine:
                 engine=RUNTIME_ENGINE_NAME,
                 selected_hypothesis=case.root_cause_id,
                 metadata={"closed_at": _format_timestamp(case.closed_at)},
+            ),
+        )
+
+    def append_brain_orchestration(
+        self,
+        case: Case,
+        *,
+        title: str,
+        description: str,
+        brain_stage: str,
+        metadata: JsonDict | None = None,
+    ) -> DecisionLogEntry:
+        """Append a Brain orchestration decision."""
+        entry_metadata = {"brain_stage": brain_stage}
+        if metadata:
+            entry_metadata.update(metadata)
+        return self.append(
+            case,
+            _build_entry(
+                case,
+                decision_type=DecisionLogEntryType.BRAIN_ORCHESTRATION,
+                title=title,
+                description=description,
+                engine=BRAIN_ENGINE_NAME,
+                metadata=entry_metadata,
             ),
         )
 

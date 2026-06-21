@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Document the `voicepilot` console application: bootstrap import paths, investigation command, decisions command, and health assessment with optional Markdown export.
+Document the `voicepilot` console application: bootstrap import paths, investigation commands, Brain orchestration, decisions command, and health assessment with optional Markdown export.
 
 ## Repository Modules Involved
 
@@ -15,11 +15,13 @@ Document the `voicepilot` console application: bootstrap import paths, investiga
 ## Related Tests
 
 - [`../../tests/test_cli.py`](../../tests/test_cli.py)
+- [`../../tests/test_brain_engine.py`](../../tests/test_brain_engine.py)
 - [`../../tests/test_cli_health.py`](../../tests/test_cli_health.py)
 - [`../../tests/test_packaging.py`](../../tests/test_packaging.py)
 
 ## Related Documentation
 
+- [`../../docs/sprint-9/brain-v1.md`](../../docs/sprint-9/brain-v1.md)
 - [`../../docs/sprint-1/cli-v1.md`](../../docs/sprint-1/cli-v1.md)
 - [`../../docs/sprint-7/health-cli-v1.md`](../../docs/sprint-7/health-cli-v1.md)
 - [`../../docs/sprint-7/health-cli-export-v1.md`](../../docs/sprint-7/health-cli-export-v1.md)

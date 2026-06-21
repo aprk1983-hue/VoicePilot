@@ -63,6 +63,8 @@ from runtime.parser_bootstrap import build_default_parser_engine
 from discovery.planner_report import format_discovery_plan_markdown
 from investigation_quality.quality_report import format_investigation_quality_markdown
 from investigation.session_models import InvestigationSessionStatus, SessionActionType
+from brain.brain_report import format_brain_replay, format_brain_session_list, format_brain_status
+from brain.brain_exceptions import BrainSessionNotFoundError
 from investigation.session_exceptions import SessionNotFoundError
 from runtime.intake_flow import build_investigation_turn, get_next_question_for_phase
 from runtime.scenario_runner import (
@@ -384,6 +386,119 @@ def run_continue_session(
             break
 
     return 0
+
+
+def run_brain_start(
+    playbook_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """Start a VoicePilot Brain session for a playbook."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        session = runtime.start_brain_session(playbook_id)
+    except PlaybookIdNotFoundError:
+        output_writer(f"Error: Playbook not found: {playbook_id}")
+        return 1
+
+    context = runtime.brain_engine.build_context(session.session_id)
+    output_writer("Brain session started")
+    output_writer("")
+    output_writer(format_brain_status(session, context))
+    return 0
+
+
+def run_brain_status(
+    session_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """Print Brain session status."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        session = runtime.get_brain_session(session_id)
+        context = runtime.brain_engine.build_context(session_id)
+    except BrainSessionNotFoundError:
+        output_writer(f"Error: Brain session not found: {session_id}")
+        return 1
+
+    output_writer(format_brain_status(session, context))
+    return 0
+
+
+def run_brain_replay(
+    session_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """Print Brain investigation replay."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    try:
+        session = runtime.get_brain_session(session_id)
+        context = runtime.brain_engine.build_context(session_id)
+    except BrainSessionNotFoundError:
+        output_writer(f"Error: Brain session not found: {session_id}")
+        return 1
+
+    output_writer(format_brain_replay(session, context))
+    return 0
+
+
+def run_brain_list(
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+) -> int:
+    """List registered Brain sessions."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    runtime.start()
+    output_writer(format_brain_session_list(runtime.list_brain_sessions()))
+    return 0
+
+
+def cmd_brain_start(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain start <playbook_id>``."""
+    return run_brain_start(
+        args.playbook_id,
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_brain_status(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain status <session_id>``."""
+    return run_brain_status(
+        args.session_id,
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_brain_replay(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain replay <session_id>``."""
+    return run_brain_replay(
+        args.session_id,
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_brain_list(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain list``."""
+    return run_brain_list(
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
 
 
 def cmd_decisions(args: argparse.Namespace) -> int:
@@ -1087,6 +1202,68 @@ def build_parser() -> argparse.ArgumentParser:
         help="Scenario folder to run (e.g. provider_503)",
     )
     quality_scenario.set_defaults(func=cmd_quality_scenario)
+
+    brain = subparsers.add_parser(
+        "brain",
+        help="VoicePilot Brain orchestration commands",
+    )
+    brain_sub = brain.add_subparsers(dest="brain_command", required=True)
+
+    brain_start = brain_sub.add_parser(
+        "start",
+        help="Start a Brain orchestration session for a playbook",
+    )
+    brain_start.add_argument(
+        "playbook_id",
+        help="Cataloged playbook ID (e.g. VP-CUBE-0001)",
+    )
+    brain_start.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_start.set_defaults(func=cmd_brain_start)
+
+    brain_status = brain_sub.add_parser(
+        "status",
+        help="Show Brain session status",
+    )
+    brain_status.add_argument(
+        "session_id",
+        help="Brain session ID (e.g. BRN-abc123)",
+    )
+    brain_status.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_status.set_defaults(func=cmd_brain_status)
+
+    brain_replay = brain_sub.add_parser(
+        "replay",
+        help="Show Brain investigation replay",
+    )
+    brain_replay.add_argument(
+        "session_id",
+        help="Brain session ID (e.g. BRN-abc123)",
+    )
+    brain_replay.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_replay.set_defaults(func=cmd_brain_replay)
+
+    brain_list = brain_sub.add_parser(
+        "list",
+        help="List registered Brain sessions",
+    )
+    brain_list.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_list.set_defaults(func=cmd_brain_list)
 
     return parser
 

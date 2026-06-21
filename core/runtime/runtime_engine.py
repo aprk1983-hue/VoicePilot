@@ -26,6 +26,9 @@ from investigation_quality.quality_models import InvestigationQualityReport
 from investigation.session_bootstrap import default_session_engine
 from investigation.session_engine import InvestigationSessionEngine
 from investigation.session_models import InvestigationSession, SessionContinueResult
+from brain.brain_bootstrap import default_brain_engine
+from brain.brain_engine import BrainEngine
+from brain.brain_models import BrainAdvanceResult, BrainSession
 from runtime.correlation_engine import (
     CorrelationEngine,
     CorrelationSummary,
@@ -113,6 +116,7 @@ class RuntimeEngine:
         self._parser_engine = parser_engine
         self._decision_log = DecisionLogEngine()
         self._session_engine: InvestigationSessionEngine | None = None
+        self._brain_engine: BrainEngine | None = None
 
         # TODO: Register real engine implementations and wire execution pipeline.
         self._engine_registry.register_defaults()
@@ -168,6 +172,13 @@ class RuntimeEngine:
         if self._session_engine is None:
             self._session_engine = default_session_engine(self)
         return self._session_engine
+
+    @property
+    def brain_engine(self) -> BrainEngine:
+        """VoicePilot Brain orchestrator."""
+        if self._brain_engine is None:
+            self._brain_engine = default_brain_engine(self)
+        return self._brain_engine
 
     def start(self) -> None:
         """Initialize runtime kernel and warm playbook catalog."""
@@ -383,6 +394,22 @@ class RuntimeEngine:
     def format_investigation_session_status(self, session_id: str) -> str:
         """Format a read-only investigation session status report."""
         return self.session_engine.format_session_status(session_id)
+
+    def start_brain_session(self, playbook_id: str) -> BrainSession:
+        """Start a VoicePilot Brain orchestration session."""
+        return self.brain_engine.start_session(playbook_id)
+
+    def advance_brain_session(self, session_id: str) -> BrainAdvanceResult:
+        """Advance a Brain session through orchestrated runtime calls."""
+        return self.brain_engine.advance_session(session_id)
+
+    def get_brain_session(self, session_id: str) -> BrainSession:
+        """Return a registered Brain session."""
+        return self.brain_engine.get_session(session_id)
+
+    def list_brain_sessions(self) -> tuple[BrainSession, ...]:
+        """Return all registered Brain sessions."""
+        return self.brain_engine.list_sessions()
 
     def generate_recommendation(self, case_id: CaseId) -> RecommendationSummary:
         """Generate a recommendation from the top hypothesis."""

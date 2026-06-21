@@ -78,6 +78,7 @@ class DecisionLogEntryType(str, Enum):
     LEARNING_CREATED = "learning_created"
     DISCOVERY_PLANNED = "discovery_planned"
     CASE_CLOSED = "case_closed"
+    BRAIN_ORCHESTRATION = "brain_orchestration"
 
 
 class QuestionStatus(str, Enum):
@@ -126,3 +127,9 @@ class DomainEventType(str, Enum):
     CASE_SAVED = auto()
     PLAYBOOK_LOADED = auto()
     ENGINE_REGISTERED = auto()
+    BRAIN_SESSION_STARTED = auto()
+    BRAIN_STAGE_CHANGED = auto()
+    BRAIN_WAITING_FOR_EVIDENCE = auto()
+    BRAIN_ANALYSIS_COMPLETED = auto()
+    BRAIN_RECOMMENDATION_READY = auto()
+    BRAIN_COMPLETED = auto()

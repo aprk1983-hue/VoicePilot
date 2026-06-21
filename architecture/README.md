@@ -18,7 +18,8 @@ Enterprise architecture documentation for the VoicePilot platform. This book des
 
 - **Implementation:** `core/`, `cli/`, `sdk/`, `plugins/`, `knowledge/`
 - **Sprint documentation:** `docs/sprint-*`
-- **Brain design stubs (not implemented as code):** `brain/`
+- **Brain orchestrator (implemented):** `core/brain/`
+- **Brain design stubs (extended engines):** `brain/`
 - **Tests:** `tests/`
 
 ## Documentation Status Legend
@@ -37,5 +38,6 @@ VoicePilot v0.1.0 is a deterministic, vendor-neutral voice operations investigat
 
 - Platform README: [`../README.md`](../README.md)
 - Core platform overview: [`../core/README.md`](../core/README.md)
-- Brain design (planned): [`../brain/README.md`](../brain/README.md)
+- Brain orchestrator: [`../core/brain/README.md`](../core/brain/README.md)
+- Brain design stubs: [`../brain/README.md`](../brain/README.md)
 - Sprint documentation index: [`../docs/`](../docs/)
