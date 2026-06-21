@@ -29,11 +29,14 @@ def _load_export_module() -> ModuleType:
 export_cases = _load_export_module()
 
 
-def _mock_page_with_controls(controls: list[tuple[str, bool]]) -> MagicMock:
+def _mock_page_with_controls(
+    controls: list[tuple[str, bool]],
+    *,
+    frames: list[MagicMock] | None = None,
+) -> MagicMock:
     """Build a Playwright page mock with visible controls."""
     page = MagicMock()
     control_mocks: list[MagicMock] = []
-    visible_texts: list[str] = []
 
     for text, visible in controls:
         control = MagicMock()
@@ -41,8 +44,6 @@ def _mock_page_with_controls(controls: list[tuple[str, bool]]) -> MagicMock:
         control.inner_text.return_value = text
         control.text_content.return_value = text
         control_mocks.append(control)
-        if visible and text:
-            visible_texts.append(text)
 
     controls_locator = MagicMock()
     controls_locator.count.return_value = len(control_mocks)
@@ -57,7 +58,20 @@ def _mock_page_with_controls(controls: list[tuple[str, bool]]) -> MagicMock:
 
     page.locator.side_effect = _locator
     page.content.return_value = "<html><body>Case page</body></html>"
+    page.url = "https://example.test/case/6991234567"
+    page.title.return_value = "Case Detail"
+    page.inner_text.return_value = "Case page body"
+    page.frames = frames or []
+    page.main_frame = page
+    page.wait_for_load_state.return_value = None
+    page.wait_for_timeout.return_value = None
     return page
+
+
+def _mock_frame_with_controls(controls: list[tuple[str, bool]]) -> MagicMock:
+    frame = _mock_page_with_controls(controls)
+    frame.url = "https://example.test/iframe/case"
+    return frame
 
 
 @pytest.fixture
@@ -210,12 +224,15 @@ class TestFailureLogging:
             output_dir=tmp_output,
             case_url_template="https://example.test/case/{case_number}",
             logger=logger,
+            export_retry_count=1,
+            case_load_wait_ms=0,
         )
 
         assert entry.status == "failed"
         assert entry.error is not None
+        assert entry.debug_dump is not None
+        assert entry.debug_dump["url"] == "https://example.test/case/6991234567"
         assert "Export control not found" in entry.error
-        assert "Visible controls: Close Case" in entry.error
         assert Path(entry.html_path).exists()
         assert Path(entry.screenshot_path).exists()
         page.screenshot.assert_called_once()
@@ -237,6 +254,8 @@ class TestFailureLogging:
             output_dir=tmp_output,
             case_url_template="https://example.test/case/{case_number}",
             logger=logger,
+            export_retry_count=1,
+            case_load_wait_ms=0,
         )
 
         assert entry.status == "success"
@@ -278,8 +297,9 @@ class TestSaveAsPdfDetection:
 
     def test_find_save_as_pdf_control_directly(self) -> None:
         page = _mock_page_with_controls([("Save As PDF", True)])
-        control = export_cases.find_export_button(page)
-        assert control is not None
+        match = export_cases.find_export_button(page)
+        assert match is not None
+        _context, control = match
         assert export_cases.matches_export_label(export_cases._control_text(control))
 
     def test_find_save_as_pdf_inside_actions_menu(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -288,17 +308,107 @@ class TestSaveAsPdfDetection:
         save_control = MagicMock()
         calls = {"direct": 0}
 
-        def fake_find_direct(_page: MagicMock) -> MagicMock | None:
+        def fake_find_direct(_context: MagicMock) -> MagicMock | None:
             calls["direct"] += 1
             if calls["direct"] == 1:
                 return None
             return save_control
 
         monkeypatch.setattr(export_cases, "find_direct_export_control", fake_find_direct)
-        monkeypatch.setattr(export_cases, "find_menu_trigger_control", lambda _page: menu_trigger)
+        monkeypatch.setattr(export_cases, "find_menu_trigger_control", lambda _context: menu_trigger)
+        monkeypatch.setattr(export_cases, "iter_search_contexts", lambda _page: [_page])
 
-        control = export_cases.find_export_button(page)
+        match = export_cases.find_export_button(page)
 
+        assert match is not None
+        _context, control = match
         assert control is save_control
         menu_trigger.click.assert_called_once()
         page.wait_for_timeout.assert_called_once_with(500)
+
+
+class TestIframeAndRetryBehavior:
+    def test_find_export_control_inside_iframe(self) -> None:
+        page = _mock_page_with_controls([])
+        iframe = _mock_frame_with_controls([("Save As PDF", True)])
+        page.frames = [iframe]
+
+        match = export_cases.find_export_button(page)
+
+        assert match is not None
+        context, control = match
+        assert context is iframe
+        assert export_cases.matches_export_label(export_cases._control_text(control))
+
+    def test_find_export_button_with_retries(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        page = MagicMock()
+        attempts = {"count": 0}
+
+        def fake_find_export_button(_page: MagicMock) -> tuple[MagicMock, MagicMock] | None:
+            attempts["count"] += 1
+            if attempts["count"] < 3:
+                return None
+            return page, MagicMock()
+
+        monkeypatch.setattr(export_cases, "find_export_button", fake_find_export_button)
+
+        match = export_cases.find_export_button_with_retries(
+            page,
+            retry_count=5,
+            retry_delay_ms=0,
+        )
+
+        assert match is not None
+        assert attempts["count"] == 3
+
+
+class TestUrlTemplateDiscovery:
+    def test_infer_case_url_template(self) -> None:
+        template = export_cases.infer_case_url_template(
+            "https://mycase.cloudapps.cisco.com/case/detail/6991234567/view",
+            "6991234567",
+        )
+        assert template == "https://mycase.cloudapps.cisco.com/case/detail/{case_number}/view"
+
+    def test_discover_case_url_template_from_frame(self) -> None:
+        page = MagicMock()
+        page.url = "https://mycase.cloudapps.cisco.com/home"
+        frame = MagicMock()
+        frame.url = "https://mycase.cloudapps.cisco.com/case/detail/6991234567/view"
+        page.frames = [frame]
+
+        template = export_cases.discover_case_url_template(page, "6991234567")
+
+        assert "{case_number}" in template
+        assert "6991234567" not in template
+
+
+class TestDebugPause:
+    def test_debug_pause_on_failure(self, tmp_output: Path) -> None:
+        page = _mock_page_with_controls([("Close Case", True)])
+
+        def _write_screenshot(*, path: str, full_page: bool) -> None:
+            Path(path).write_bytes(b"png")
+
+        page.screenshot.side_effect = _write_screenshot
+        prompts: list[str] = []
+
+        def fake_input(prompt: str = "") -> str:
+            prompts.append(prompt)
+            return ""
+
+        entry = export_cases.export_case_with_browser(
+            page,
+            case_number="6991234567",
+            output_dir=tmp_output,
+            case_url_template="https://example.test/case/{case_number}",
+            logger=logging.getLogger("test.cisco_mycase_export.debug_pause"),
+            debug_pause_on_failure=True,
+            input_func=fake_input,
+            export_retry_count=1,
+            case_load_wait_ms=0,
+        )
+
+        assert entry.status == "failed"
+        assert prompts
+        assert "Press Enter to continue" in prompts[0]

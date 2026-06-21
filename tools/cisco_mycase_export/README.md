@@ -100,8 +100,47 @@ exports/cisco_mycase/
 | `--resume` | off | Skip cases already marked successful in manifest |
 | `--profile-dir` | `.browser_profile` | Persistent browser profile directory |
 | `--login-url` | Cisco MyCase sign-in URL | Page opened for manual login |
-| `--case-url-template` | Cisco case URL template | `{case_number}` placeholder |
+| `--case-url-template` | Cisco case URL template | `{case_number}` placeholder; override when direct URLs fail |
+| `--manual-first-case` | off | Open first case manually and discover the working URL pattern |
+| `--debug-pause-on-failure` | off | Keep browser open and pause when export control is not found |
 | `--headless` | off | Run headless (not recommended for manual login) |
+
+## Manual First Case Mode
+
+Closed cases often cannot be opened with a direct URL template. Use `--manual-first-case` when MyCase requires search/list navigation:
+
+```bash
+python export_cases.py \
+  --case-list SCMCaseList.xlsx \
+  --output exports/cisco_mycase \
+  --manual-first-case \
+  --debug-pause-on-failure \
+  --resume
+```
+
+Flow:
+
+1. MyCase home opens after login.
+2. You manually open the **first case** and navigate until **Save As PDF** is visible.
+3. Press **Enter** — the script records the URL pattern from the current page or iframe.
+4. Remaining cases use the discovered `--case-url-template` stored in `export_manifest.json`.
+
+## Case Page Detection
+
+The assistant waits for `networkidle`, then waits **10 seconds** before searching for export controls. Detection retries **5 times** and searches:
+
+- Main page
+- All iframes
+- Buttons, links, and menu items
+
+If export still fails, the manifest stores a debug dump with:
+
+- Current URL and page title
+- First 3000 characters of visible page text
+- All frame URLs
+- All visible button/link/menu text
+
+Use `--debug-pause-on-failure` to inspect the live browser before continuing.
 
 ## Resume
 
@@ -112,7 +151,9 @@ With `--resume`, cases that already have a successful PDF and manifest entry are
 | Issue | Action |
 |-------|--------|
 | Login page loops | Complete MFA/SSO manually, then press Enter |
-| Export control not found | Check saved `.html`, `.png`, and `export.log` for listed visible button/menu text |
+| Export control not found | Use `--manual-first-case`, inspect manifest `debug_dump`, or run with `--debug-pause-on-failure` |
+| Blank screenshots / no controls | Case detail may be in an iframe; manual-first-case mode helps discover the correct navigation path |
+| Direct case URL fails | Replace `--case-url-template` or let `--manual-first-case` discover the working pattern |
 | Save As PDF hidden in menu | Confirm the case page shows Actions/More; the tool opens that menu automatically |
 | Excel parse error | Install `openpyxl` or export the list as CSV |
 | Session expired mid-run | Re-run with `--resume` after logging in again |

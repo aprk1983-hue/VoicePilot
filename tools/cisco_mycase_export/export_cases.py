@@ -13,12 +13,16 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
 DEFAULT_LOGIN_URL = "https://mycase.cloudapps.cisco.com/"
 DEFAULT_CASE_URL_TEMPLATE = "https://mycase.cloudapps.cisco.com/case/{case_number}"
 MANIFEST_NAME = "export_manifest.json"
 LOG_NAME = "export.log"
+CASE_LOAD_WAIT_MS = 10_000
+EXPORT_RETRY_COUNT = 5
+EXPORT_RETRY_DELAY_MS = 2_000
+VISIBLE_TEXT_PREVIEW_CHARS = 3_000
 
 CASE_COLUMN_NAMES = (
     "case number",
@@ -61,7 +65,7 @@ EXPORT_BUTTON_SELECTORS = (
     "[aria-label*='save as pdf' i]",
 )
 
-CONTROL_SELECTOR = "button, a, [role='menuitem'], [role='button']"
+CONTROL_SELECTOR = "button, a, [role='menuitem'], [role='button'], [role='link']"
 MENU_TRIGGER_SELECTORS = (
     "button:has-text('Actions')",
     "button:has-text('More')",
@@ -71,6 +75,7 @@ MENU_TRIGGER_SELECTORS = (
 )
 
 CASE_NUMBER_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
+InputFunc = Callable[[str], str]
 
 
 @dataclass(frozen=True)
@@ -83,6 +88,7 @@ class ExportManifestEntry:
     html_path: str | None = None
     screenshot_path: str | None = None
     error: str | None = None
+    debug_dump: dict[str, Any] | None = None
     updated_at: str = field(default_factory=lambda: _utc_now())
 
     def to_dict(self) -> dict[str, Any]:
@@ -99,6 +105,8 @@ class ExportManifestEntry:
             payload["screenshot_path"] = self.screenshot_path
         if self.error is not None:
             payload["error"] = self.error
+        if self.debug_dump is not None:
+            payload["debug_dump"] = self.debug_dump
         return payload
 
     @classmethod
@@ -110,6 +118,7 @@ class ExportManifestEntry:
             html_path=data.get("html_path"),
             screenshot_path=data.get("screenshot_path"),
             error=data.get("error"),
+            debug_dump=data.get("debug_dump"),
             updated_at=str(data.get("updated_at") or _utc_now()),
         )
 
@@ -121,11 +130,12 @@ class ExportManifest:
     case_list: str
     output_dir: str
     entries: dict[str, ExportManifestEntry] = field(default_factory=dict)
+    case_url_template: str | None = None
     created_at: str = field(default_factory=lambda: _utc_now())
     updated_at: str = field(default_factory=lambda: _utc_now())
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "case_list": self.case_list,
             "output_dir": self.output_dir,
             "created_at": self.created_at,
@@ -135,6 +145,9 @@ class ExportManifest:
                 for case_number, entry in sorted(self.entries.items())
             },
         }
+        if self.case_url_template is not None:
+            payload["case_url_template"] = self.case_url_template
+        return payload
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExportManifest:
@@ -146,6 +159,7 @@ class ExportManifest:
             case_list=str(data.get("case_list") or ""),
             output_dir=str(data.get("output_dir") or ""),
             entries=entries,
+            case_url_template=data.get("case_url_template"),
             created_at=str(data.get("created_at") or _utc_now()),
             updated_at=str(data.get("updated_at") or _utc_now()),
         )
@@ -350,6 +364,28 @@ def build_case_url(case_number: str, template: str) -> str:
     return template.format(case_number=case_number)
 
 
+def infer_case_url_template(sample_url: str, case_number: str) -> str:
+    """Replace a discovered case number in a URL with a template placeholder."""
+    if case_number not in sample_url:
+        raise ValueError(
+            f"Case number {case_number} not found in URL {sample_url!r}. "
+            "Open the case detail page before pressing Enter."
+        )
+    return sample_url.replace(case_number, "{case_number}", 1)
+
+
+def discover_case_url_template(page: Any, case_number: str) -> str:
+    """Discover a reusable case URL template from the current page and frames."""
+    candidate_urls = [page.url, *[frame.url for frame in page.frames]]
+    for url in candidate_urls:
+        if case_number in url:
+            return infer_case_url_template(url, case_number)
+    raise ValueError(
+        f"Could not discover case URL template for {case_number}. "
+        "Ensure the open page URL contains the case number."
+    )
+
+
 def normalize_control_text(text: str) -> str:
     """Normalize visible control text for case-insensitive comparison."""
     return " ".join(text.split()).strip().lower()
@@ -390,10 +426,20 @@ def _control_text(control: Any) -> str:
     return ""
 
 
-def iter_visible_controls(page: Any) -> list[tuple[Any, str]]:
-    """Return visible page controls and their text."""
+def iter_search_contexts(page: Any) -> list[Any]:
+    """Return the page and all child frames to search for controls."""
+    contexts: list[Any] = [page]
+    for frame in page.frames:
+        if frame is page.main_frame:
+            continue
+        contexts.append(frame)
+    return contexts
+
+
+def iter_visible_controls(context: Any) -> list[tuple[Any, str]]:
+    """Return visible controls and text within one page or frame context."""
     controls: list[tuple[Any, str]] = []
-    locator = page.locator(CONTROL_SELECTOR)
+    locator = context.locator(CONTROL_SELECTOR)
     try:
         count = locator.count()
     except Exception:
@@ -412,17 +458,25 @@ def iter_visible_controls(page: Any) -> list[tuple[Any, str]]:
 
 
 def collect_visible_control_text(page: Any) -> list[str]:
-    """Collect visible button and menu text for failure debugging."""
-    return [text for _, text in iter_visible_controls(page)]
+    """Collect visible button/link/menu text across page and frames."""
+    texts: list[str] = []
+    seen: set[str] = set()
+    for context in iter_search_contexts(page):
+        for _, text in iter_visible_controls(context):
+            normalized = normalize_control_text(text)
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                texts.append(text)
+    return texts
 
 
-def find_direct_export_control(page: Any) -> Any | None:
-    """Return a visible export control on the current page."""
-    for control, text in iter_visible_controls(page):
+def find_direct_export_control(context: Any) -> Any | None:
+    """Return a visible export control within one page or frame context."""
+    for control, text in iter_visible_controls(context):
         if matches_export_label(text):
             return control
     for selector in EXPORT_BUTTON_SELECTORS:
-        locator = page.locator(selector)
+        locator = context.locator(selector)
         try:
             if locator.count() > 0 and locator.first.is_visible():
                 return locator.first
@@ -431,13 +485,13 @@ def find_direct_export_control(page: Any) -> Any | None:
     return None
 
 
-def find_menu_trigger_control(page: Any) -> Any | None:
-    """Return a visible Actions/More menu trigger."""
-    for control, text in iter_visible_controls(page):
+def find_menu_trigger_control(context: Any) -> Any | None:
+    """Return a visible Actions/More menu trigger within one context."""
+    for control, text in iter_visible_controls(context):
         if matches_menu_trigger(text):
             return control
     for selector in MENU_TRIGGER_SELECTORS:
-        locator = page.locator(selector)
+        locator = context.locator(selector)
         try:
             if locator.count() > 0 and locator.first.is_visible():
                 return locator.first
@@ -446,32 +500,96 @@ def find_menu_trigger_control(page: Any) -> Any | None:
     return None
 
 
-def find_export_button(page: Any) -> Any | None:
-    """Return the export control, opening Actions/More when required."""
-    direct = find_direct_export_control(page)
-    if direct is not None:
-        return direct
+def find_export_button(page: Any) -> tuple[Any, Any] | None:
+    """Return export context and control, opening Actions/More when required."""
+    for context in iter_search_contexts(page):
+        direct = find_direct_export_control(context)
+        if direct is not None:
+            return context, direct
 
-    menu_trigger = find_menu_trigger_control(page)
-    if menu_trigger is None:
-        return None
+        menu_trigger = find_menu_trigger_control(context)
+        if menu_trigger is None:
+            continue
 
-    menu_trigger.click()
-    page.wait_for_timeout(500)
-    return find_direct_export_control(page)
+        menu_trigger.click()
+        page.wait_for_timeout(500)
+        direct = find_direct_export_control(context)
+        if direct is not None:
+            return context, direct
+    return None
 
 
-def build_export_failure_message(page: Any) -> str:
+def find_export_button_with_retries(
+    page: Any,
+    *,
+    retry_count: int = EXPORT_RETRY_COUNT,
+    retry_delay_ms: int = EXPORT_RETRY_DELAY_MS,
+) -> tuple[Any, Any] | None:
+    """Retry export control detection across page and iframe contexts."""
+    for attempt in range(retry_count):
+        result = find_export_button(page)
+        if result is not None:
+            return result
+        if attempt < retry_count - 1:
+            page.wait_for_timeout(retry_delay_ms)
+    return None
+
+
+def build_debug_dump(page: Any) -> dict[str, Any]:
+    """Capture page, frame, and control debug details for manifest logging."""
+    visible_text_preview = ""
+    try:
+        visible_text_preview = page.inner_text("body")[:VISIBLE_TEXT_PREVIEW_CHARS]
+    except Exception as exc:
+        visible_text_preview = f"<unavailable: {exc}>"
+
+    title = ""
+    try:
+        title = page.title()
+    except Exception as exc:
+        title = f"<unavailable: {exc}>"
+
+    frame_urls = []
+    for frame in page.frames:
+        try:
+            frame_urls.append(frame.url)
+        except Exception:
+            frame_urls.append("<unavailable>")
+
+    return {
+        "url": page.url,
+        "title": title,
+        "visible_text_preview": visible_text_preview,
+        "frame_urls": frame_urls,
+        "control_texts": collect_visible_control_text(page),
+    }
+
+
+def build_export_failure_message(debug_dump: dict[str, Any]) -> str:
     """Build a failure message including visible control text."""
-    visible_controls = collect_visible_control_text(page)
-    if visible_controls:
-        control_summary = "; ".join(visible_controls)
+    control_texts = debug_dump.get("control_texts") or []
+    if control_texts:
+        control_summary = "; ".join(control_texts)
     else:
         control_summary = "(none)"
     return (
         "Export control not found; saved HTML and screenshot. "
+        f"URL={debug_dump.get('url')} "
         f"Visible controls: {control_summary}"
     )
+
+
+def wait_for_case_page(
+    page: Any,
+    *,
+    wait_ms: int = CASE_LOAD_WAIT_MS,
+) -> None:
+    """Wait for case detail content to finish loading."""
+    try:
+        page.wait_for_load_state("networkidle", timeout=120_000)
+    except Exception:
+        pass
+    page.wait_for_timeout(wait_ms)
 
 
 def save_failure_artifacts(page: Any, output_dir: Path, case_number: str) -> tuple[Path, Path]:
@@ -482,6 +600,21 @@ def save_failure_artifacts(page: Any, output_dir: Path, case_number: str) -> tup
     return html_path, screenshot_path
 
 
+def pause_for_debug(
+    case_number: str,
+    *,
+    input_func: InputFunc = input,
+) -> None:
+    """Keep the browser open until the user confirms continuation."""
+    print(
+        f"\nExport control not found for case {case_number}.\n"
+        "The browser remains open so you can inspect the page, frames, and menus.\n"
+        "Press Enter to continue to the next case.\n",
+        flush=True,
+    )
+    input_func("Press Enter to continue...")
+
+
 def export_case_with_browser(
     page: Any,
     *,
@@ -489,36 +622,48 @@ def export_case_with_browser(
     output_dir: Path,
     case_url_template: str,
     logger: logging.Logger,
+    debug_pause_on_failure: bool = False,
+    input_func: InputFunc = input,
+    case_load_wait_ms: int = CASE_LOAD_WAIT_MS,
+    export_retry_count: int = EXPORT_RETRY_COUNT,
 ) -> ExportManifestEntry:
     """Export one case using an authenticated Playwright page."""
     case_url = build_case_url(case_number, case_url_template)
     pdf_path = pdf_path_for_case(output_dir, case_number)
-    logger.info("Opening case %s", case_number)
+    logger.info("Opening case %s at %s", case_number, case_url)
 
     try:
         page.goto(case_url, wait_until="domcontentloaded", timeout=120_000)
-        page.wait_for_timeout(1500)
-        export_button = find_export_button(page)
+        wait_for_case_page(page, wait_ms=case_load_wait_ms)
+        export_match = find_export_button_with_retries(
+            page,
+            retry_count=export_retry_count,
+        )
 
-        if export_button is None:
+        if export_match is None:
+            debug_dump = build_debug_dump(page)
             html_path, screenshot_path = save_failure_artifacts(page, output_dir, case_number)
-            message = build_export_failure_message(page)
-            visible_controls = collect_visible_control_text(page)
+            message = build_export_failure_message(debug_dump)
             logger.warning("Case %s failed: %s", case_number, message)
-            if visible_controls:
+            logger.warning("Case %s debug dump: %s", case_number, json.dumps(debug_dump))
+            if debug_dump.get("control_texts"):
                 logger.warning(
                     "Case %s visible button/menu text: %s",
                     case_number,
-                    " | ".join(visible_controls),
+                    " | ".join(debug_dump["control_texts"]),
                 )
+            if debug_pause_on_failure:
+                pause_for_debug(case_number, input_func=input_func)
             return ExportManifestEntry(
                 case_number=case_number,
                 status="failed",
                 html_path=str(html_path),
                 screenshot_path=str(screenshot_path),
                 error=message,
+                debug_dump=debug_dump,
             )
 
+        _context, export_button = export_match
         with page.expect_download(timeout=120_000) as download_info:
             export_button.click()
         download = download_info.value
@@ -530,6 +675,7 @@ def export_case_with_browser(
             pdf_path=str(pdf_path),
         )
     except Exception as exc:
+        debug_dump = build_debug_dump(page)
         html_path = html_path_for_case(output_dir, case_number)
         screenshot_path = screenshot_path_for_case(output_dir, case_number)
         try:
@@ -539,16 +685,26 @@ def export_case_with_browser(
             html_path = None
             screenshot_path = None
         logger.error("Case %s failed: %s", case_number, exc)
+        logger.error("Case %s debug dump: %s", case_number, json.dumps(debug_dump))
+        if debug_pause_on_failure:
+            pause_for_debug(case_number, input_func=input_func)
         return ExportManifestEntry(
             case_number=case_number,
             status="failed",
             html_path=str(html_path) if html_path else None,
             screenshot_path=str(screenshot_path) if screenshot_path else None,
             error=str(exc),
+            debug_dump=debug_dump,
         )
 
 
-def wait_for_manual_login(page: Any, login_url: str, logger: logging.Logger) -> None:
+def wait_for_manual_login(
+    page: Any,
+    login_url: str,
+    logger: logging.Logger,
+    *,
+    input_func: InputFunc = input,
+) -> None:
     logger.info("Opening Cisco MyCase login page: %s", login_url)
     page.goto(login_url, wait_until="domcontentloaded", timeout=120_000)
     print(
@@ -559,8 +715,34 @@ def wait_for_manual_login(page: Any, login_url: str, logger: logging.Logger) -> 
         "4. Return here and press Enter to start exports.\n",
         flush=True,
     )
-    input("Press Enter after login is complete...")
+    input_func("Press Enter after login is complete...")
     logger.info("Manual login confirmed by user")
+
+
+def wait_for_manual_first_case(
+    page: Any,
+    login_url: str,
+    first_case_number: str,
+    logger: logging.Logger,
+    *,
+    input_func: InputFunc = input,
+) -> str:
+    """Let the user open the first case manually and discover the URL template."""
+    logger.info("Opening Cisco MyCase home for manual first-case navigation: %s", login_url)
+    page.goto(login_url, wait_until="domcontentloaded", timeout=120_000)
+    print(
+        "\nManual first-case mode.\n"
+        f"1. Sign in to Cisco MyCase if needed.\n"
+        f"2. Use MyCase search/list UI to open case {first_case_number}.\n"
+        "3. Navigate to the page where Save As PDF is visible.\n"
+        "4. Return here and press Enter so the script can record the URL pattern.\n",
+        flush=True,
+    )
+    input_func("Press Enter after the first case detail page is ready...")
+    wait_for_case_page(page)
+    template = discover_case_url_template(page, first_case_number)
+    logger.info("Discovered case URL template: %s", template)
+    return template
 
 
 def run_export(
@@ -575,12 +757,19 @@ def run_export(
     profile_dir: Path,
     headless: bool,
     logger: logging.Logger,
+    manual_first_case: bool = False,
+    debug_pause_on_failure: bool = False,
+    input_func: InputFunc = input,
 ) -> ExportManifest:
     from playwright.sync_api import sync_playwright
 
     output_dir.mkdir(parents=True, exist_ok=True)
     profile_dir.mkdir(parents=True, exist_ok=True)
     case_list = list(case_numbers)
+    if not case_list:
+        return manifest
+
+    active_template = manifest.case_url_template or case_url_template
 
     with sync_playwright() as playwright:
         context = playwright.chromium.launch_persistent_context(
@@ -589,7 +778,20 @@ def run_export(
             accept_downloads=True,
         )
         page = context.pages[0] if context.pages else context.new_page()
-        wait_for_manual_login(page, login_url, logger)
+
+        if manual_first_case:
+            active_template = wait_for_manual_first_case(
+                page,
+                login_url,
+                case_list[0],
+                logger,
+                input_func=input_func,
+            )
+            manifest.case_url_template = active_template
+            save_manifest(manifest, manifest_path(output_dir))
+            logger.info("Using discovered URL template for remaining cases")
+        else:
+            wait_for_manual_login(page, login_url, logger, input_func=input_func)
 
         for index, case_number in enumerate(case_list, start=1):
             if should_skip_case(case_number, output_dir, manifest, resume=resume):
@@ -600,8 +802,10 @@ def run_export(
                 page,
                 case_number=case_number,
                 output_dir=output_dir,
-                case_url_template=case_url_template,
+                case_url_template=active_template,
                 logger=logger,
+                debug_pause_on_failure=debug_pause_on_failure,
+                input_func=input_func,
             )
             record_manifest_entry(manifest, entry)
             save_manifest(manifest, manifest_path(output_dir))
@@ -638,6 +842,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Case page URL template containing {case_number}",
     )
     parser.add_argument(
+        "--manual-first-case",
+        action="store_true",
+        help="Open first case manually and discover the working case URL template",
+    )
+    parser.add_argument(
+        "--debug-pause-on-failure",
+        action="store_true",
+        help="Pause with browser open when export control is not found",
+    )
+    parser.add_argument(
         "--headless",
         action="store_true",
         help="Run browser headless (manual login not supported)",
@@ -659,12 +873,19 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     existing = load_manifest(manifest_path(output_dir))
     manifest = build_manifest(case_list=case_list, output_dir=output_dir, existing=existing)
+    if existing and existing.case_url_template:
+        manifest.case_url_template = existing.case_url_template
     save_manifest(manifest, manifest_path(output_dir))
 
     logger.info("Loaded %d case numbers from %s", len(case_numbers), case_list)
     logger.info("Output directory: %s", output_dir.resolve())
+    logger.info("Case URL template: %s", args.case_url_template)
     if args.resume:
         logger.info("Resume enabled")
+    if args.manual_first_case:
+        logger.info("Manual first-case mode enabled")
+    if args.debug_pause_on_failure:
+        logger.info("Debug pause on failure enabled")
 
     run_export(
         case_numbers=case_numbers,
@@ -677,6 +898,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         profile_dir=profile_dir,
         headless=args.headless,
         logger=logger,
+        manual_first_case=args.manual_first_case,
+        debug_pause_on_failure=args.debug_pause_on_failure,
     )
 
     successes = sum(1 for entry in manifest.entries.values() if entry.status == "success")
