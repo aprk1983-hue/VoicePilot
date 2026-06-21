@@ -28,14 +28,46 @@ CASE_COLUMN_NAMES = (
     "case",
 )
 
+MENU_TRIGGER_TEXTS = (
+    "Actions",
+    "More",
+    "Action",
+)
+
+EXPORT_TEXT_LABELS = (
+    "Save As PDF",
+    "Save as PDF",
+    "Save PDF",
+    "Download PDF",
+    "Print",
+    "Export",
+)
+
 EXPORT_BUTTON_SELECTORS = (
+    "button:has-text('Save As PDF')",
+    "button:has-text('Save as PDF')",
+    "a:has-text('Save As PDF')",
+    "a:has-text('Save as PDF')",
+    "[role='menuitem']:has-text('Save As PDF')",
+    "[role='menuitem']:has-text('Save as PDF')",
+    "button:has-text('Save PDF')",
+    "button:has-text('Download PDF')",
+    "button:has-text('Print')",
     "button:has-text('Export')",
-    "button:has-text('PDF')",
-    "button:has-text('Download')",
     "a:has-text('Export')",
     "a:has-text('PDF')",
     "[data-testid*='export' i]",
     "[aria-label*='export' i]",
+    "[aria-label*='save as pdf' i]",
+)
+
+CONTROL_SELECTOR = "button, a, [role='menuitem'], [role='button']"
+MENU_TRIGGER_SELECTORS = (
+    "button:has-text('Actions')",
+    "button:has-text('More')",
+    "button:has-text('Action')",
+    "[aria-label*='actions' i]",
+    "[aria-label*='more' i]",
 )
 
 CASE_NUMBER_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
@@ -318,8 +350,77 @@ def build_case_url(case_number: str, template: str) -> str:
     return template.format(case_number=case_number)
 
 
-def find_export_button(page: Any) -> Any | None:
-    """Return the first visible export button locator, if any."""
+def normalize_control_text(text: str) -> str:
+    """Normalize visible control text for case-insensitive comparison."""
+    return " ".join(text.split()).strip().lower()
+
+
+def matches_export_label(text: str) -> bool:
+    """Return True when visible text matches a supported export label."""
+    normalized = normalize_control_text(text)
+    if not normalized:
+        return False
+    export_labels = {normalize_control_text(label) for label in EXPORT_TEXT_LABELS}
+    return normalized in export_labels
+
+
+def matches_menu_trigger(text: str) -> bool:
+    """Return True when visible text matches an Actions/More menu trigger."""
+    normalized = normalize_control_text(text)
+    if not normalized:
+        return False
+    for label in MENU_TRIGGER_TEXTS:
+        trigger = normalize_control_text(label)
+        if normalized == trigger or normalized.startswith(f"{trigger} "):
+            return True
+    return False
+
+
+def _control_text(control: Any) -> str:
+    for method_name in ("inner_text", "text_content"):
+        method = getattr(control, method_name, None)
+        if method is None:
+            continue
+        try:
+            text = method()
+        except TypeError:
+            text = method(timeout=0)
+        if text:
+            return str(text).strip()
+    return ""
+
+
+def iter_visible_controls(page: Any) -> list[tuple[Any, str]]:
+    """Return visible page controls and their text."""
+    controls: list[tuple[Any, str]] = []
+    locator = page.locator(CONTROL_SELECTOR)
+    try:
+        count = locator.count()
+    except Exception:
+        return controls
+    for index in range(count):
+        control = locator.nth(index)
+        try:
+            if not control.is_visible():
+                continue
+            text = _control_text(control)
+            if text:
+                controls.append((control, text))
+        except Exception:
+            continue
+    return controls
+
+
+def collect_visible_control_text(page: Any) -> list[str]:
+    """Collect visible button and menu text for failure debugging."""
+    return [text for _, text in iter_visible_controls(page)]
+
+
+def find_direct_export_control(page: Any) -> Any | None:
+    """Return a visible export control on the current page."""
+    for control, text in iter_visible_controls(page):
+        if matches_export_label(text):
+            return control
     for selector in EXPORT_BUTTON_SELECTORS:
         locator = page.locator(selector)
         try:
@@ -328,6 +429,49 @@ def find_export_button(page: Any) -> Any | None:
         except Exception:
             continue
     return None
+
+
+def find_menu_trigger_control(page: Any) -> Any | None:
+    """Return a visible Actions/More menu trigger."""
+    for control, text in iter_visible_controls(page):
+        if matches_menu_trigger(text):
+            return control
+    for selector in MENU_TRIGGER_SELECTORS:
+        locator = page.locator(selector)
+        try:
+            if locator.count() > 0 and locator.first.is_visible():
+                return locator.first
+        except Exception:
+            continue
+    return None
+
+
+def find_export_button(page: Any) -> Any | None:
+    """Return the export control, opening Actions/More when required."""
+    direct = find_direct_export_control(page)
+    if direct is not None:
+        return direct
+
+    menu_trigger = find_menu_trigger_control(page)
+    if menu_trigger is None:
+        return None
+
+    menu_trigger.click()
+    page.wait_for_timeout(500)
+    return find_direct_export_control(page)
+
+
+def build_export_failure_message(page: Any) -> str:
+    """Build a failure message including visible control text."""
+    visible_controls = collect_visible_control_text(page)
+    if visible_controls:
+        control_summary = "; ".join(visible_controls)
+    else:
+        control_summary = "(none)"
+    return (
+        "Export control not found; saved HTML and screenshot. "
+        f"Visible controls: {control_summary}"
+    )
 
 
 def save_failure_artifacts(page: Any, output_dir: Path, case_number: str) -> tuple[Path, Path]:
@@ -358,8 +502,15 @@ def export_case_with_browser(
 
         if export_button is None:
             html_path, screenshot_path = save_failure_artifacts(page, output_dir, case_number)
-            message = "Export button not found; saved HTML and screenshot"
+            message = build_export_failure_message(page)
+            visible_controls = collect_visible_control_text(page)
             logger.warning("Case %s failed: %s", case_number, message)
+            if visible_controls:
+                logger.warning(
+                    "Case %s visible button/menu text: %s",
+                    case_number,
+                    " | ".join(visible_controls),
+                )
             return ExportManifestEntry(
                 case_number=case_number,
                 status="failed",

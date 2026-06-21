@@ -29,6 +29,37 @@ def _load_export_module() -> ModuleType:
 export_cases = _load_export_module()
 
 
+def _mock_page_with_controls(controls: list[tuple[str, bool]]) -> MagicMock:
+    """Build a Playwright page mock with visible controls."""
+    page = MagicMock()
+    control_mocks: list[MagicMock] = []
+    visible_texts: list[str] = []
+
+    for text, visible in controls:
+        control = MagicMock()
+        control.is_visible.return_value = visible
+        control.inner_text.return_value = text
+        control.text_content.return_value = text
+        control_mocks.append(control)
+        if visible and text:
+            visible_texts.append(text)
+
+    controls_locator = MagicMock()
+    controls_locator.count.return_value = len(control_mocks)
+    controls_locator.nth.side_effect = lambda index: control_mocks[index]
+
+    def _locator(selector: str) -> MagicMock:
+        if selector == export_cases.CONTROL_SELECTOR:
+            return controls_locator
+        fallback = MagicMock()
+        fallback.count.return_value = 0
+        return fallback
+
+    page.locator.side_effect = _locator
+    page.content.return_value = "<html><body>Case page</body></html>"
+    return page
+
+
 @pytest.fixture
 def tmp_output(tmp_path: Path) -> Path:
     output_dir = tmp_path / "exports" / "cisco_mycase"
@@ -165,9 +196,7 @@ class TestExportManifest:
 
 class TestFailureLogging:
     def test_failure_entry_when_export_button_missing(self, tmp_output: Path) -> None:
-        page = MagicMock()
-        page.content.return_value = "<html><body>Case page</body></html>"
-        page.locator.return_value.count.return_value = 0
+        page = _mock_page_with_controls([("Close Case", True)])
 
         def _write_screenshot(*, path: str, full_page: bool) -> None:
             Path(path).write_bytes(b"png")
@@ -184,17 +213,15 @@ class TestFailureLogging:
         )
 
         assert entry.status == "failed"
-        assert entry.error == "Export button not found; saved HTML and screenshot"
+        assert entry.error is not None
+        assert "Export control not found" in entry.error
+        assert "Visible controls: Close Case" in entry.error
         assert Path(entry.html_path).exists()
         assert Path(entry.screenshot_path).exists()
         page.screenshot.assert_called_once()
 
     def test_success_entry_on_download(self, tmp_output: Path) -> None:
-        page = MagicMock()
-        export_button = MagicMock()
-        page.locator.return_value.count.return_value = 1
-        page.locator.return_value.first.is_visible.return_value = True
-        page.locator.return_value.first = export_button
+        page = _mock_page_with_controls([("Export", True)])
 
         download = MagicMock()
         download_manager = MagicMock()
@@ -215,6 +242,8 @@ class TestFailureLogging:
         assert entry.status == "success"
         assert entry.pdf_path == str(tmp_output / "6999999999.pdf")
         download.save_as.assert_called_once_with(str(tmp_output / "6999999999.pdf"))
+        page.locator(export_cases.CONTROL_SELECTOR).nth(0).click.assert_called_once()
+        page.expect_download.assert_called_once()
 
 
 class TestHelpers:
@@ -229,3 +258,47 @@ class TestHelpers:
             "https://mycase.example/case/{case_number}",
         )
         assert url == "https://mycase.example/case/6991234567"
+
+
+class TestSaveAsPdfDetection:
+    @pytest.mark.parametrize(
+        "label",
+        [
+            "Save As PDF",
+            "Save as PDF",
+            "save as pdf",
+            "Save PDF",
+            "Download PDF",
+            "Print",
+            "Export",
+        ],
+    )
+    def test_matches_export_label(self, label: str) -> None:
+        assert export_cases.matches_export_label(label)
+
+    def test_find_save_as_pdf_control_directly(self) -> None:
+        page = _mock_page_with_controls([("Save As PDF", True)])
+        control = export_cases.find_export_button(page)
+        assert control is not None
+        assert export_cases.matches_export_label(export_cases._control_text(control))
+
+    def test_find_save_as_pdf_inside_actions_menu(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        page = MagicMock()
+        menu_trigger = MagicMock()
+        save_control = MagicMock()
+        calls = {"direct": 0}
+
+        def fake_find_direct(_page: MagicMock) -> MagicMock | None:
+            calls["direct"] += 1
+            if calls["direct"] == 1:
+                return None
+            return save_control
+
+        monkeypatch.setattr(export_cases, "find_direct_export_control", fake_find_direct)
+        monkeypatch.setattr(export_cases, "find_menu_trigger_control", lambda _page: menu_trigger)
+
+        control = export_cases.find_export_button(page)
+
+        assert control is save_control
+        menu_trigger.click.assert_called_once()
+        page.wait_for_timeout.assert_called_once_with(500)

@@ -67,7 +67,17 @@ python tools/cisco_mycase_export/export_cases.py \
 2. The Cisco MyCase sign-in page loads.
 3. **You sign in manually** (MFA/SSO as required).
 4. Press **Enter** in the terminal when login is complete.
-5. The tool visits each case, attempts export, and saves output.
+5. The tool visits each case, clicks **Save As PDF** (or equivalent export control), and saves output.
+
+Closed Cisco MyCase cases commonly expose **Save As PDF** under an **Actions** or **More** menu rather than a top-level Export button. The assistant detects these labels case-insensitively:
+
+- Save As PDF / Save as PDF
+- Save PDF
+- Download PDF
+- Print
+- Export
+
+If the export control is hidden in a menu, the tool opens **Actions/More** first, then clicks **Save As PDF**.
 
 ### Output Layout
 
@@ -102,7 +112,8 @@ With `--resume`, cases that already have a successful PDF and manifest entry are
 | Issue | Action |
 |-------|--------|
 | Login page loops | Complete MFA/SSO manually, then press Enter |
-| Export button not found | Check saved `.html` and `.png` artifacts for the case page |
+| Export control not found | Check saved `.html`, `.png`, and `export.log` for listed visible button/menu text |
+| Save As PDF hidden in menu | Confirm the case page shows Actions/More; the tool opens that menu automatically |
 | Excel parse error | Install `openpyxl` or export the list as CSV |
 | Session expired mid-run | Re-run with `--resume` after logging in again |
 
