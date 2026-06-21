@@ -18,6 +18,8 @@ from services.service_models import (
     ServiceReportResult,
     ReportResult,
     ComparisonResult,
+    AssetValidationResult,
+    AssetStatisticsResult,
 )
 from services.voicepilot_service import VoicePilotService, build_default_runtime_engine
 
@@ -35,6 +37,8 @@ __all__ = [
     "ServiceRecommendationResult",
     "ServiceReportResult",
     "ReportResult",
+    "AssetStatisticsResult",
+    "AssetValidationResult",
     "ComparisonResult",
     "VoicePilotService",
     "VoicePilotServiceError",

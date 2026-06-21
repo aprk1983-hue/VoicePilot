@@ -8,7 +8,7 @@ Document the non-negotiable design principles observable in the implemented code
 
 ## Read-Only by Design
 
-VoicePilot is an investigation and advisory platform. The Engineering Change Package (ECP) generates configuration **examples** and rollback **examples** for engineer/CAB review only. The Enterprise Reporting Engine (ERE) produces audience-specific **commercial reports** (executive, customer, CAB, operations) from existing investigation data. The Investigation Comparison Engine (ICE) supports **before/after validation** and **operational trend analysis** by comparing existing investigation outputs. See `core/change_package/`, `core/reporting/`, and `core/investigation_compare/`.
+VoicePilot is an investigation and advisory platform. The Engineering Change Package (ECP) generates configuration **examples** and rollback **examples** for engineer/CAB review only. The Enterprise Reporting Engine (ERE) produces audience-specific **commercial reports** (executive, customer, CAB, operations) from existing investigation data. The Investigation Comparison Engine (ICE) supports **before/after validation** and **operational trend analysis** by comparing existing investigation outputs. The Engineering Asset Factory (EAF²) provides a **knowledge production pipeline** with **quality validation** for structured engineering content. See `core/change_package/`, `core/reporting/`, `core/investigation_compare/`, and `core/asset_factory/`.
 
 ## Repository Modules Involved
 

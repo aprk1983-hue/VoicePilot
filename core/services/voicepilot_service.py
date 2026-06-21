@@ -37,6 +37,8 @@ from services.service_models import (
     ServiceReportResult,
     ReportResult,
     ComparisonResult,
+    AssetValidationResult,
+    AssetStatisticsResult,
 )
 from shared.config import RuntimeConfig
 from shared.types import CaseId
@@ -259,6 +261,34 @@ class VoicePilotService:
             markdown=format_comparison_markdown(comparison),
             before_case_id=comparison.before_case_id,
             after_case_id=comparison.after_case_id,
+        )
+
+    def validate_assets(self) -> AssetValidationResult:
+        """Validate bundled engineering knowledge assets."""
+        runtime = self._ensure_runtime()
+        report = runtime.validate_assets()
+        invalid_count = sum(1 for item in report.asset_reports if not item.valid)
+        return AssetValidationResult(
+            valid=report.valid,
+            total_assets=len(report.asset_reports),
+            invalid_count=invalid_count,
+            duplicate_ids=report.duplicate_ids,
+            duplicate_titles=report.duplicate_titles,
+        )
+
+    def asset_statistics(self) -> AssetStatisticsResult:
+        """Return statistics for bundled engineering knowledge assets."""
+        runtime = self._ensure_runtime()
+        stats = runtime.asset_statistics()
+        return AssetStatisticsResult(
+            total_assets=stats.total_assets,
+            average_quality=stats.average_quality,
+            missing_references=stats.missing_references,
+            relationship_count=stats.relationship_count,
+            duplicate_ids=stats.duplicate_ids,
+            vendor_counts=stats.vendor_counts,
+            product_counts=stats.product_counts,
+            category_counts=stats.category_counts,
         )
 
     def get_case(self, case_id: str) -> ServiceCaseResult:

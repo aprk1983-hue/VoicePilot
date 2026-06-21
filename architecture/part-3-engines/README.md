@@ -13,8 +13,9 @@ Implemented deterministic engines that analyze voice infrastructure and produce 
 | [05 — Knowledge Framework](05-knowledge-framework.md) | Implemented | VKF packs, matching, evaluation |
 | [06 — Configuration Engines](06-configuration-engines.md) | Implemented | Snapshots, diff, baseline drift |
 | [07 — Report Engine](07-report-engine.md) | Implemented | Incident report generation |
+| [08 — Engineering Asset Factory](08-engineering-asset-factory.md) | Implemented | Knowledge production and quality validation pipeline |
 
 ## Related Documentation
 
-- Sprint docs: [`../../docs/sprint-2/`](../../docs/sprint-2/) through [`../../docs/sprint-8/`](../../docs/sprint-8/)
+- Sprint docs: [`../../docs/sprint-2/`](../../docs/sprint-2/) through [`../../docs/sprint-11/`](../../docs/sprint-11/)
 - Parser framework: [`../../docs/parser-framework.md`](../../docs/parser-framework.md)

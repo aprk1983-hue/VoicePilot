@@ -88,8 +88,8 @@ from brain.brain_store import (
     restore_brain_session_to_runtime,
 )
 from engineering_assets import EngineeringAssetNotFoundError
+from asset_factory import EngineeringAssetFactory
 from engineering_knowledge import (
-    asset_stats,
     default_engineering_knowledge_library,
     format_asset_details,
     reset_default_engineering_knowledge_engine,
@@ -669,22 +669,110 @@ def run_assets_stats(
     *,
     library=None,
 ) -> int:
-    """Show engineering knowledge library statistics."""
+    """Show engineering asset factory statistics for the bundled library."""
     active_library = library or default_engineering_knowledge_library()
-    stats = asset_stats(active_library)
-    output_writer("Engineering Knowledge Library Stats")
+    assets = active_library.asset_registry.list_assets()
+    stats = EngineeringAssetFactory().asset_statistics(assets)
+
+    output_writer("Engineering Asset Factory Statistics")
     output_writer("")
-    output_writer(f"Total Assets:            {stats['total_assets']}")
-    output_writer(f"Knowledge Entries:       {stats['total_knowledge_entries']}")
-    output_writer(f"Relationships:           {stats['total_relationships']}")
-    output_writer("")
-    output_writer("Asset Types:")
-    for asset_type, count in sorted(stats["type_counts"].items()):
-        output_writer(f"  {asset_type}: {count}")
+    output_writer(f"Total Assets:            {stats.total_assets}")
+    output_writer(f"Average Quality:         {stats.average_quality:.1f}/100")
+    output_writer(f"Missing References:      {stats.missing_references}")
+    output_writer(f"Relationships Generated: {stats.relationship_count}")
+    if stats.duplicate_ids:
+        output_writer(f"Duplicate IDs:           {', '.join(stats.duplicate_ids)}")
+    if stats.duplicate_titles:
+        output_writer(f"Duplicate Titles:        {', '.join(stats.duplicate_titles)}")
     output_writer("")
     output_writer("Vendors:")
-    for vendor, count in sorted(stats["vendor_counts"].items()):
+    for vendor, count in stats.vendor_counts:
         output_writer(f"  {vendor}: {count}")
+    output_writer("")
+    output_writer("Products:")
+    for product, count in stats.product_counts:
+        output_writer(f"  {product}: {count}")
+    output_writer("")
+    output_writer("Categories:")
+    for category, count in stats.category_counts:
+        output_writer(f"  {category}: {count}")
+    output_writer("")
+    output_writer("Asset Types:")
+    for asset_type, count in stats.type_counts:
+        output_writer(f"  {asset_type}: {count}")
+    return 0
+
+
+def run_assets_validate(
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Validate bundled engineering knowledge assets."""
+    active_library = library or default_engineering_knowledge_library()
+    assets = active_library.asset_registry.list_assets()
+    report = EngineeringAssetFactory().validate_assets(assets)
+
+    output_writer("Engineering Asset Validation")
+    output_writer("")
+    output_writer(f"Total Assets: {len(report.asset_reports)}")
+    output_writer(f"Valid:        {'YES' if report.valid else 'NO'}")
+    if report.duplicate_ids:
+        output_writer(f"Duplicate IDs: {', '.join(report.duplicate_ids)}")
+    if report.duplicate_titles:
+        output_writer(f"Duplicate Titles: {', '.join(report.duplicate_titles)}")
+
+    invalid = [item for item in report.asset_reports if not item.valid]
+    if invalid:
+        output_writer("")
+        output_writer("Invalid Assets:")
+        for item in invalid:
+            errors = [issue.message for issue in item.issues if issue.level == "error"]
+            output_writer(f"- {item.asset_id}: {'; '.join(errors)}")
+        return 1
+    return 0
+
+
+def run_assets_quality(
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Show quality scores for bundled engineering knowledge assets."""
+    active_library = library or default_engineering_knowledge_library()
+    assets = active_library.asset_registry.list_assets()
+    scores = EngineeringAssetFactory().score_quality(assets)
+
+    output_writer("Engineering Asset Quality Scores")
+    output_writer("")
+    average = sum(item.score for item in scores) / len(scores) if scores else 0.0
+    output_writer(f"Average Quality: {average:.1f}/100")
+    output_writer("")
+    for item in sorted(scores, key=lambda score: (-score.score, score.asset_id)):
+        output_writer(f"- {item.asset_id}: {item.score}/100")
+    return 0
+
+
+def run_assets_relationships(
+    output_writer: OutputWriter,
+    *,
+    library=None,
+) -> int:
+    """Show generated relationships for bundled engineering knowledge assets."""
+    active_library = library or default_engineering_knowledge_library()
+    assets = active_library.asset_registry.list_assets()
+    relationships = EngineeringAssetFactory().build_relationships(assets)
+
+    output_writer("Engineering Asset Relationships")
+    output_writer("")
+    output_writer(f"Total Relationships: {len(relationships)}")
+    output_writer("")
+    for relationship in relationships:
+        output_writer(
+            f"- {relationship.source_asset} "
+            f"--{relationship.relationship_type.value}--> "
+            f"{relationship.target_asset}"
+        )
     return 0
 
 
@@ -701,6 +789,21 @@ def cmd_assets_show(args: argparse.Namespace) -> int:
 def cmd_assets_stats(args: argparse.Namespace) -> int:
     """Handle ``voicepilot assets stats``."""
     return run_assets_stats(print)
+
+
+def cmd_assets_validate(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets validate``."""
+    return run_assets_validate(print)
+
+
+def cmd_assets_quality(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets quality``."""
+    return run_assets_quality(print)
+
+
+def cmd_assets_relationships(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot assets relationships``."""
+    return run_assets_relationships(print)
 
 
 def cmd_decisions(args: argparse.Namespace) -> int:
@@ -2023,9 +2126,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     assets_stats = assets_sub.add_parser(
         "stats",
-        help="Show engineering knowledge library statistics",
+        help="Show engineering asset factory statistics",
     )
     assets_stats.set_defaults(func=cmd_assets_stats)
+
+    assets_validate = assets_sub.add_parser(
+        "validate",
+        help="Validate bundled engineering knowledge assets",
+    )
+    assets_validate.set_defaults(func=cmd_assets_validate)
+
+    assets_quality = assets_sub.add_parser(
+        "quality",
+        help="Show quality scores for bundled engineering assets",
+    )
+    assets_quality.set_defaults(func=cmd_assets_quality)
+
+    assets_relationships = assets_sub.add_parser(
+        "relationships",
+        help="Show generated asset relationships",
+    )
+    assets_relationships.set_defaults(func=cmd_assets_relationships)
 
     return parser
 

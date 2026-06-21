@@ -110,6 +110,31 @@ class ServiceChangePackageResult:
 
 
 @dataclass(frozen=True)
+class AssetValidationResult:
+    """Result of validating engineering assets."""
+
+    valid: bool
+    total_assets: int
+    invalid_count: int
+    duplicate_ids: tuple[str, ...]
+    duplicate_titles: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class AssetStatisticsResult:
+    """Aggregate statistics for engineering assets."""
+
+    total_assets: int
+    average_quality: float
+    missing_references: int
+    relationship_count: int
+    duplicate_ids: tuple[str, ...]
+    vendor_counts: tuple[tuple[str, int], ...]
+    product_counts: tuple[tuple[str, int], ...]
+    category_counts: tuple[tuple[str, int], ...]
+
+
+@dataclass(frozen=True)
 class ServiceBrainSessionResult:
     """Summary view of a Brain orchestration session."""
 

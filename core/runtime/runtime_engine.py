@@ -47,6 +47,10 @@ from change_package.change_models import EngineeringChangePackage
 from runtime.report_engine import IncidentReport, ReportEngine
 from investigation_compare.compare_engine import InvestigationComparisonEngine, snapshot_from_configuration
 from investigation_compare.compare_models import InvestigationComparison, InvestigationSnapshot
+from asset_factory.asset_factory import EngineeringAssetFactory
+from asset_factory.asset_statistics import AssetStatisticsReport
+from asset_factory.asset_validator import BatchValidationReport
+from engineering_knowledge.knowledge_library_loader import load_engineering_knowledge_library
 from reporting.report_engine import EnterpriseReportEngine
 from reporting.report_models import ReportType
 from runtime.verification_engine import (
@@ -507,6 +511,38 @@ class RuntimeEngine:
     ) -> InvestigationComparison:
         """Compare two investigation snapshots using existing outputs."""
         return InvestigationComparisonEngine().compare_snapshots(before_snapshot, after_snapshot)
+
+    def validate_assets(self) -> BatchValidationReport:
+        """Validate bundled engineering knowledge assets."""
+        library = load_engineering_knowledge_library()
+        assets = library.asset_registry.list_assets()
+        report = EngineeringAssetFactory().validate_assets(assets)
+
+        if self._logger:
+            invalid_count = sum(1 for item in report.asset_reports if not item.valid)
+            self._logger.info(
+                "Asset validation complete",
+                total_assets=len(assets),
+                valid=report.valid,
+                invalid_count=invalid_count,
+            )
+
+        return report
+
+    def asset_statistics(self) -> AssetStatisticsReport:
+        """Generate statistics for bundled engineering knowledge assets."""
+        library = load_engineering_knowledge_library()
+        assets = library.asset_registry.list_assets()
+        stats = EngineeringAssetFactory().asset_statistics(assets)
+
+        if self._logger:
+            self._logger.info(
+                "Asset statistics generated",
+                total_assets=stats.total_assets,
+                average_quality=stats.average_quality,
+            )
+
+        return stats
 
     def generate_verification_checklist(self, case_id: CaseId) -> VerificationChecklist | None:
         """Build a verification checklist for a likely root cause recommendation."""
