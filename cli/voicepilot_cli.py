@@ -776,6 +776,119 @@ def run_assets_relationships(
     return 0
 
 
+def run_sdk_vendors(output_writer: OutputWriter) -> int:
+    """List vendors registered in the Vendor Asset SDK."""
+    from vendor_sdk import VendorAssetSdk
+
+    sdk = VendorAssetSdk()
+    output_writer("VoicePilot Vendor Asset SDK — Vendors")
+    output_writer("")
+    for vendor in sdk.list_vendors():
+        output_writer(f"- {vendor.name} ({vendor.slug}) — {vendor.description}")
+    stats = sdk.vendor_statistics()
+    output_writer("")
+    output_writer(f"Total vendors: {stats.vendor_count}")
+    return 0
+
+
+def run_sdk_products(output_writer: OutputWriter, *, vendor: str | None = None) -> int:
+    """List products registered in the Vendor Asset SDK."""
+    from vendor_sdk import VendorAssetSdk, VendorSdkError
+
+    sdk = VendorAssetSdk()
+    try:
+        products = sdk.list_products(vendor)
+    except VendorSdkError as exc:
+        output_writer(str(exc))
+        return 1
+
+    header = f"Products for {vendor}" if vendor else "All SDK products"
+    output_writer(f"VoicePilot Vendor Asset SDK — {header}")
+    output_writer("")
+    for product in products:
+        vendor_name = next(
+            item.name for item in sdk.list_vendors() if item.vendor_id == product.vendor_id
+        )
+        output_writer(
+            f"- {vendor_name} / {product.name} ({product.slug}) — {product.description}"
+        )
+    output_writer("")
+    output_writer(f"Total products: {len(products)}")
+    return 0
+
+
+def _sdk_generation_request(args: argparse.Namespace) -> "AssetGenerationRequest":
+    from vendor_sdk import AssetGenerationRequest
+
+    output_dir = Path(args.output) if getattr(args, "output", None) else None
+    return AssetGenerationRequest(
+        vendor=args.vendor,
+        product=args.product,
+        title=args.title,
+        category=getattr(args, "category", None) or "GENERAL",
+        severity=getattr(args, "severity", None) or "high",
+        output_dir=output_dir,
+    )
+
+
+def run_sdk_generate(
+    generation_type: str,
+    output_writer: OutputWriter,
+    request: "AssetGenerationRequest",
+) -> int:
+    """Generate engineering assets through the Vendor Asset SDK."""
+    from vendor_sdk import VendorAssetSdk, VendorSdkError
+
+    sdk = VendorAssetSdk()
+    generators = {
+        "incident": sdk.generate_incident,
+        "runbook": sdk.generate_runbook,
+        "verification": sdk.generate_verification,
+        "reference": sdk.generate_reference,
+        "best-practice": sdk.generate_best_practice,
+        "bug": sdk.generate_bug_reference,
+        "package": sdk.generate_package,
+    }
+    generator = generators.get(generation_type)
+    if generator is None:
+        output_writer(f"Unsupported generation type: {generation_type}")
+        return 1
+
+    try:
+        result = generator(request)
+    except VendorSdkError as exc:
+        output_writer(str(exc))
+        return 1
+
+    output_writer(f"Generated {generation_type} for {request.vendor} / {request.product}")
+    output_writer(f"Title: {request.title}")
+    output_writer(f"Validation: {'PASS' if result.validation_passed else 'FAIL'}")
+    for asset in result.assets:
+        score = result.quality_scores.get(str(asset["asset_id"]), 0)
+        output_writer(f"- {asset['asset_id']} ({asset['asset_type']}) quality={score}/100")
+    if result.readme_path is not None:
+        output_writer(f"README: {result.readme_path}")
+    for path in result.yaml_files:
+        output_writer(f"YAML: {path}")
+    return 0 if result.validation_passed else 1
+
+
+def cmd_sdk_vendors(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot sdk vendors``."""
+    return run_sdk_vendors(print)
+
+
+def cmd_sdk_products(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot sdk products``."""
+    return run_sdk_products(print, vendor=args.vendor)
+
+
+def cmd_sdk_generate(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot sdk generate <type>``."""
+    request = _sdk_generation_request(args)
+    return run_sdk_generate(args.generate_command, print, request)
+
+
 def cmd_assets_search(args: argparse.Namespace) -> int:
     """Handle ``voicepilot assets search <query>``."""
     return run_assets_search(args.query, print)
@@ -2215,6 +2328,50 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show generated asset relationships",
     )
     assets_relationships.set_defaults(func=cmd_assets_relationships)
+
+    sdk = subparsers.add_parser(
+        "sdk",
+        help="Vendor Asset SDK — scaffold engineering assets",
+    )
+    sdk_sub = sdk.add_subparsers(dest="sdk_command", required=True)
+
+    sdk_vendors = sdk_sub.add_parser("vendors", help="List registered vendors")
+    sdk_vendors.set_defaults(func=cmd_sdk_vendors)
+
+    sdk_products = sdk_sub.add_parser("products", help="List registered products")
+    sdk_products.add_argument(
+        "--vendor",
+        default=None,
+        help="Filter products by vendor name (e.g. Cisco)",
+    )
+    sdk_products.set_defaults(func=cmd_sdk_products)
+
+    sdk_generate = sdk_sub.add_parser("generate", help="Generate engineering assets")
+    sdk_generate_sub = sdk_generate.add_subparsers(dest="generate_command", required=True)
+    for command in (
+        "incident",
+        "runbook",
+        "verification",
+        "reference",
+        "best-practice",
+        "bug",
+        "package",
+    ):
+        generate_parser = sdk_generate_sub.add_parser(
+            command,
+            help=f"Generate {command} asset(s)",
+        )
+        generate_parser.add_argument("--vendor", required=True, help="Vendor name (e.g. Cisco)")
+        generate_parser.add_argument("--product", required=True, help="Product name (e.g. CUCM)")
+        generate_parser.add_argument("--title", required=True, help="Asset title / incident summary")
+        generate_parser.add_argument("--category", default="GENERAL", help="Engineering category")
+        generate_parser.add_argument("--severity", default="high", help="Severity label")
+        generate_parser.add_argument(
+            "--output",
+            default=None,
+            help="Output directory for generated YAML and README",
+        )
+        generate_parser.set_defaults(func=cmd_sdk_generate)
 
     return parser
 

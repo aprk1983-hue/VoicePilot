@@ -55,6 +55,7 @@ include = [
     "investigation_compare*",
     "asset_factory*",
     "validation*",
+    "vendor_sdk*",
 ]
 exclude = [
     "knowledge.packs*",

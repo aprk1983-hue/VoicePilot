@@ -15,6 +15,7 @@ Implemented deterministic engines that analyze voice infrastructure and produce 
 | [07 — Report Engine](07-report-engine.md) | Implemented | Incident report generation |
 | [08 — Engineering Asset Factory](08-engineering-asset-factory.md) | Implemented | Knowledge production and quality validation pipeline |
 | [09 — Enterprise Validation Engine](09-enterprise-validation-engine.md) | Implemented | Deterministic scenario validation suite |
+| [10 — Vendor Asset SDK](10-vendor-asset-sdk.md) | Implemented | Vendor-neutral engineering asset scaffolding |
 
 ## Related Documentation
 
