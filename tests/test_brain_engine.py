@@ -18,6 +18,7 @@ from brain import (
     format_brain_replay,
     format_brain_status,
 )
+from brain.brain_store import BrainSessionStore
 from cli.voicepilot_cli import run_brain_list, run_brain_replay, run_brain_start, run_brain_status
 from domain.enums import DomainEventType, InvestigationState
 from domain.events import DomainEvent
@@ -225,52 +226,99 @@ class TestBrainReplay:
 
         assert replay
         assert "Investigation Replay" in text
-        assert "Discovery Plan Generated" in text
+        assert "Discovery plan generated" in text
         assert "Investigation Closed" in text
         assert "↓" in text
 
 
 class TestBrainCli:
-    def test_brain_start_prints_status(self, runtime_engine: RuntimeEngine) -> None:
+    @pytest.fixture
+    def session_store(self, tmp_path: Path) -> BrainSessionStore:
+        return BrainSessionStore(root=tmp_path / "sessions")
+
+    def test_brain_start_prints_status(
+        self,
+        runtime_engine: RuntimeEngine,
+        session_store: BrainSessionStore,
+    ) -> None:
         output: list[str] = []
         code = run_brain_start(
             PLAYBOOK_ID,
             output.append,
             engine=runtime_engine,
+            session_store=session_store,
         )
 
         assert code == 0
         text = "\n".join(output)
         assert "Brain session started" in text
-        assert "Brain Status" in text
+        assert "Next Requested Evidence:" in text
         assert "WAITING_FOR_EVIDENCE" in text
-        assert "Session:" in text
+        assert "Session ID:" in text
 
-    def test_brain_status_and_list_with_shared_engine(self, runtime_engine: RuntimeEngine) -> None:
+    def test_brain_status_and_list_with_shared_engine(
+        self,
+        runtime_engine: RuntimeEngine,
+        session_store: BrainSessionStore,
+    ) -> None:
         session = runtime_engine.start_brain_session(PLAYBOOK_ID)
 
         status_output: list[str] = []
         assert (
-            run_brain_status(session.session_id, status_output.append, engine=runtime_engine) == 0
+            run_brain_status(
+                session.session_id,
+                status_output.append,
+                engine=runtime_engine,
+                session_store=session_store,
+            )
+            == 0
         )
         assert "Next Expected Engine" in "\n".join(status_output)
 
         list_output: list[str] = []
-        assert run_brain_list(list_output.append, engine=runtime_engine) == 0
+        assert (
+            run_brain_list(
+                list_output.append,
+                engine=runtime_engine,
+                session_store=session_store,
+            )
+            == 0
+        )
         assert session.session_id in "\n".join(list_output)
 
-    def test_brain_replay_after_pipeline(self, runtime_engine: RuntimeEngine) -> None:
+    def test_brain_replay_after_pipeline(
+        self,
+        runtime_engine: RuntimeEngine,
+        session_store: BrainSessionStore,
+    ) -> None:
         session = runtime_engine.start_brain_session(PLAYBOOK_ID)
         _submit_resolution_evidence(runtime_engine, session.case_id)
         runtime_engine.advance_brain_session(session.session_id)
 
         output: list[str] = []
-        assert run_brain_replay(session.session_id, output.append, engine=runtime_engine) == 0
+        assert (
+            run_brain_replay(
+                session.session_id,
+                output.append,
+                engine=runtime_engine,
+                session_store=session_store,
+            )
+            == 0
+        )
         assert "Investigation Replay" in "\n".join(output)
 
-    def test_brain_status_missing_session_returns_error(self, runtime_engine: RuntimeEngine) -> None:
+    def test_brain_status_missing_session_returns_error(
+        self,
+        runtime_engine: RuntimeEngine,
+        session_store: BrainSessionStore,
+    ) -> None:
         output: list[str] = []
-        code = run_brain_status("BRN-missing", output.append, engine=runtime_engine)
+        code = run_brain_status(
+            "BRN-missing",
+            output.append,
+            engine=runtime_engine,
+            session_store=session_store,
+        )
         assert code == 1
         assert "Brain session not found" in "\n".join(output)
 

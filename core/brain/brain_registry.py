@@ -19,6 +19,11 @@ class BrainRegistry:
         self._sessions[session.session_id] = session
         return session
 
+    def register_session(self, session: BrainSession) -> BrainSession:
+        """Register or replace a Brain session (used when restoring persisted sessions)."""
+        self._sessions[session.session_id] = session
+        return session
+
     def get_session(self, session_id: str) -> BrainSession:
         """Return a Brain session by ID."""
         session = self._sessions.get(session_id)

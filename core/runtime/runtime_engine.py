@@ -403,6 +403,14 @@ class RuntimeEngine:
         """Advance a Brain session through orchestrated runtime calls."""
         return self.brain_engine.advance_session(session_id)
 
+    def next_brain_session(self, session_id: str) -> BrainAdvanceResult:
+        """Run the next Brain pipeline step for a session."""
+        return self.brain_engine.next_session(session_id)
+
+    def upload_brain_evidence(self, session_id: str, command: str, raw_text: str) -> BrainSession:
+        """Upload CLI evidence for a Brain session."""
+        return self.brain_engine.upload_evidence(session_id, command, raw_text)
+
     def get_brain_session(self, session_id: str) -> BrainSession:
         """Return a registered Brain session."""
         return self.brain_engine.get_session(session_id)

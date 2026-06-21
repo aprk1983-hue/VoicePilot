@@ -10,6 +10,7 @@ from uuid import uuid4
 from domain.enums import DomainEventType, InvestigationState
 from domain.events import DomainEvent
 from brain.brain_context import BrainContext
+from brain.brain_exceptions import InvalidBrainStageError
 from brain.brain_models import (
     BrainAdvanceResult,
     BrainJourneyEntry,
@@ -18,6 +19,7 @@ from brain.brain_models import (
 )
 from brain.brain_registry import BrainRegistry
 from health.health_engine import HealthEngine
+from runtime.evidence_collection import submit_evidence
 from runtime.exceptions import InvalidInvestigationStateError, PlaybookIdNotFoundError
 from runtime.knowledge_bootstrap import default_knowledge_engine
 from runtime.verification_engine import VerificationResultSubmission
@@ -145,24 +147,64 @@ class BrainEngine:
             recommendations=tuple(case.recommendations),
         )
 
+    def upload_evidence(self, session_id: str, command: str, raw_text: str) -> BrainSession:
+        """Submit CLI evidence for a Brain session without advancing analysis."""
+        session = self.get_session(session_id)
+        if session.completed or session.failed:
+            raise InvalidBrainStageError(
+                session_id,
+                "Cannot upload evidence for a completed or failed session",
+            )
+
+        case = self._runtime.case_manager.load_case(session.case_id)
+        submit_evidence(
+            case,
+            self._runtime.case_manager,
+            command,
+            raw_text,
+            decision_log=self._runtime.decision_log_engine,
+        )
+        now = _utc_now()
+        journey = session.journey + (
+            BrainJourneyEntry(
+                sequence=len(session.journey) + 1,
+                timestamp=now,
+                stage=BrainStage.WAITING_FOR_EVIDENCE,
+                summary=f"Evidence uploaded: {command}",
+            ),
+        )
+        updated = replace(session, journey=journey, last_updated=now)
+        self._registry.save_session(updated)
+        self._sync_to_case(updated)
+        return updated
+
     def advance_session(self, session_id: str) -> BrainAdvanceResult:
         """Advance the Brain pipeline through orchestrated runtime calls."""
+        return self.next_session(session_id)
+
+    def next_session(self, session_id: str) -> BrainAdvanceResult:
+        """Run the next Brain pipeline step after evidence has been uploaded."""
         session = self.get_session(session_id)
         if session.completed or session.failed:
             return BrainAdvanceResult(session=session)
 
-        if session.current_stage == BrainStage.WAITING_FOR_EVIDENCE:
-            case = self._runtime.case_manager.load_case(session.case_id)
-            if not case.evidence:
-                return BrainAdvanceResult(
-                    session=session,
-                    messages=("Brain is waiting for evidence before continuing.",),
-                )
-            try:
-                self._prepare_case_for_analysis(session.case_id)
-            except InvalidInvestigationStateError as exc:
-                session = self._mark_failed(session, str(exc))
-                return BrainAdvanceResult(session=session, messages=(str(exc),))
+        if session.current_stage != BrainStage.WAITING_FOR_EVIDENCE:
+            return BrainAdvanceResult(
+                session=session,
+                messages=("Brain is not waiting for evidence.",),
+            )
+
+        case = self._runtime.case_manager.load_case(session.case_id)
+        if not case.evidence:
+            return BrainAdvanceResult(
+                session=session,
+                messages=("Brain is waiting for evidence before continuing.",),
+            )
+        try:
+            self._prepare_case_for_analysis(session.case_id)
+        except InvalidInvestigationStateError as exc:
+            session = self._mark_failed(session, str(exc))
+            return BrainAdvanceResult(session=session, messages=(str(exc),))
 
         messages: list[str] = []
         try:
@@ -198,6 +240,7 @@ class BrainEngine:
         session = self._update_metrics(session, case)
 
         self._runtime.generate_hypotheses(case_id)
+        session = self._transition(session, BrainStage.ANALYZING, summary="Hypothesis generated")
         session = self._transition(session, BrainStage.CORRELATING, summary="Correlating findings")
         self._runtime.correlate_case(case_id)
         session = self._transition(session, BrainStage.CORRELATING, summary="Correlation completed")
@@ -222,7 +265,7 @@ class BrainEngine:
         session = self._transition(
             session,
             BrainStage.QUALITY_EVALUATION,
-            summary="Investigation quality updated",
+            summary="Investigation quality evaluated",
         )
         quality_report = self._runtime.evaluate_investigation_quality(case_id)
         session = replace(session, current_quality_score=quality_report.overall_score)
@@ -235,6 +278,20 @@ class BrainEngine:
             metadata={"overall_score": quality_report.overall_score},
         )
         session = self._append_decision_log_id(session, entry.entry_id)
+        session = self._update_metrics(session, case)
+
+        if not quality_report.ready_for_recommendation:
+            next_command = case.discovery_plan.next_best_command if case.discovery_plan else None
+            if next_command:
+                session = self._transition(
+                    session,
+                    BrainStage.WAITING_FOR_EVIDENCE,
+                    summary=f"Waiting for evidence: {next_command}",
+                )
+                messages.append(f"Next requested evidence: {next_command}")
+                self._registry.save_session(session)
+                self._sync_to_case(session)
+                return session, messages
 
         session = self._transition(
             session,

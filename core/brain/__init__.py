@@ -18,10 +18,15 @@ from brain.brain_models import (
 from brain.brain_registry import BrainRegistry
 from brain.brain_report import (
     build_investigation_replay,
+    format_brain_next_summary,
     format_brain_replay,
     format_brain_session_list,
+    format_brain_start_summary,
     format_brain_status,
+    format_brain_upload_summary,
+    get_next_requested_evidence,
 )
+from brain.brain_store import BrainSessionStore
 
 __all__ = [
     "BrainAdvanceResult",
@@ -37,7 +42,12 @@ __all__ = [
     "InvalidBrainStageError",
     "build_investigation_replay",
     "default_brain_engine",
+    "format_brain_next_summary",
     "format_brain_replay",
     "format_brain_session_list",
+    "format_brain_start_summary",
     "format_brain_status",
+    "format_brain_upload_summary",
+    "get_next_requested_evidence",
+    "BrainSessionStore",
 ]

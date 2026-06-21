@@ -63,8 +63,22 @@ from runtime.parser_bootstrap import build_default_parser_engine
 from discovery.planner_report import format_discovery_plan_markdown
 from investigation_quality.quality_report import format_investigation_quality_markdown
 from investigation.session_models import InvestigationSessionStatus, SessionActionType
-from brain.brain_report import format_brain_replay, format_brain_session_list, format_brain_status
+from brain.brain_report import (
+    build_investigation_replay,
+    format_brain_next_summary,
+    format_brain_replay,
+    format_brain_session_list,
+    format_brain_start_summary,
+    format_brain_status,
+    format_brain_upload_summary,
+)
 from brain.brain_exceptions import BrainSessionNotFoundError
+from brain.brain_store import (
+    BrainSessionStore,
+    merge_brain_sessions,
+    persist_brain_session,
+    restore_brain_session_to_runtime,
+)
 from investigation.session_exceptions import SessionNotFoundError
 from runtime.intake_flow import build_investigation_turn, get_next_question_for_phase
 from runtime.scenario_runner import (
@@ -394,9 +408,11 @@ def run_brain_start(
     *,
     plugins_root: Path | None = None,
     engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
 ) -> int:
     """Start a VoicePilot Brain session for a playbook."""
     runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
     runtime.start()
     try:
         session = runtime.start_brain_session(playbook_id)
@@ -404,10 +420,68 @@ def run_brain_start(
         output_writer(f"Error: Playbook not found: {playbook_id}")
         return 1
 
+    persist_brain_session(runtime, store, session.session_id)
     context = runtime.brain_engine.build_context(session.session_id)
-    output_writer("Brain session started")
-    output_writer("")
-    output_writer(format_brain_status(session, context))
+    output_writer(format_brain_start_summary(session, context))
+    return 0
+
+
+def run_brain_upload(
+    session_id: str,
+    command: str,
+    file_path: Path,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
+) -> int:
+    """Upload CLI evidence for a Brain session."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
+    runtime.start()
+
+    if not file_path.is_file():
+        output_writer(f"Error: Evidence file not found: {file_path}")
+        return 1
+
+    try:
+        restore_brain_session_to_runtime(runtime, store, session_id)
+        raw_text = file_path.read_text(encoding="utf-8")
+        session = runtime.upload_brain_evidence(session_id, command, raw_text)
+    except BrainSessionNotFoundError:
+        output_writer(f"Error: Brain session not found: {session_id}")
+        return 1
+
+    persist_brain_session(runtime, store, session_id)
+    output_writer(format_brain_upload_summary(session, command=command, file_path=str(file_path)))
+    return 0
+
+
+def run_brain_next(
+    session_id: str,
+    output_writer: OutputWriter,
+    *,
+    plugins_root: Path | None = None,
+    engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
+) -> int:
+    """Advance a Brain session through the orchestrated pipeline."""
+    runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
+    runtime.start()
+
+    try:
+        restore_brain_session_to_runtime(runtime, store, session_id)
+        result = runtime.next_brain_session(session_id)
+        session = result.session
+        context = runtime.brain_engine.build_context(session_id)
+    except BrainSessionNotFoundError:
+        output_writer(f"Error: Brain session not found: {session_id}")
+        return 1
+
+    persist_brain_session(runtime, store, session_id)
+    output_writer(format_brain_next_summary(session, context, result))
     return 0
 
 
@@ -417,11 +491,14 @@ def run_brain_status(
     *,
     plugins_root: Path | None = None,
     engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
 ) -> int:
     """Print Brain session status."""
     runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
     runtime.start()
     try:
+        restore_brain_session_to_runtime(runtime, store, session_id)
         session = runtime.get_brain_session(session_id)
         context = runtime.brain_engine.build_context(session_id)
     except BrainSessionNotFoundError:
@@ -438,11 +515,14 @@ def run_brain_replay(
     *,
     plugins_root: Path | None = None,
     engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
 ) -> int:
     """Print Brain investigation replay."""
     runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
     runtime.start()
     try:
+        restore_brain_session_to_runtime(runtime, store, session_id)
         session = runtime.get_brain_session(session_id)
         context = runtime.brain_engine.build_context(session_id)
     except BrainSessionNotFoundError:
@@ -458,11 +538,14 @@ def run_brain_list(
     *,
     plugins_root: Path | None = None,
     engine: RuntimeEngine | None = None,
+    session_store: BrainSessionStore | None = None,
 ) -> int:
     """List registered Brain sessions."""
     runtime = engine or build_runtime_engine(plugins_root)
+    store = session_store or BrainSessionStore()
     runtime.start()
-    output_writer(format_brain_session_list(runtime.list_brain_sessions()))
+    sessions = merge_brain_sessions(runtime.list_brain_sessions(), store.list_sessions())
+    output_writer(format_brain_session_list(sessions))
     return 0
 
 
@@ -496,6 +579,26 @@ def cmd_brain_replay(args: argparse.Namespace) -> int:
 def cmd_brain_list(args: argparse.Namespace) -> int:
     """Handle ``voicepilot brain list``."""
     return run_brain_list(
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_brain_upload(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain upload <session_id> <command> <file>``."""
+    return run_brain_upload(
+        args.session_id,
+        args.command,
+        Path(args.file),
+        print,
+        plugins_root=Path(args.plugins_root) if args.plugins_root else None,
+    )
+
+
+def cmd_brain_next(args: argparse.Namespace) -> int:
+    """Handle ``voicepilot brain next <session_id>``."""
+    return run_brain_next(
+        args.session_id,
         print,
         plugins_root=Path(args.plugins_root) if args.plugins_root else None,
     )
@@ -1264,6 +1367,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override plugins directory (default: repo plugins/)",
     )
     brain_list.set_defaults(func=cmd_brain_list)
+
+    brain_upload = brain_sub.add_parser(
+        "upload",
+        help="Upload CLI evidence for a Brain session",
+    )
+    brain_upload.add_argument(
+        "session_id",
+        help="Brain session ID (e.g. BRN-abc123)",
+    )
+    brain_upload.add_argument(
+        "command",
+        help='CLI command the evidence belongs to (e.g. "show sip-ua status")',
+    )
+    brain_upload.add_argument(
+        "file",
+        help="Path to a text file containing command output",
+    )
+    brain_upload.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_upload.set_defaults(func=cmd_brain_upload)
+
+    brain_next = brain_sub.add_parser(
+        "next",
+        help="Advance a Brain session through the orchestrated pipeline",
+    )
+    brain_next.add_argument(
+        "session_id",
+        help="Brain session ID (e.g. BRN-abc123)",
+    )
+    brain_next.add_argument(
+        "--plugins-root",
+        default=None,
+        help="Override plugins directory (default: repo plugins/)",
+    )
+    brain_next.set_defaults(func=cmd_brain_next)
 
     return parser
 
