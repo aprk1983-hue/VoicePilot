@@ -26,6 +26,7 @@ class TestPackaging:
         assert "cli*" in config["include"]
         assert "services*" in config["include"]
         assert "engineering_assets*" in config["include"]
+        assert "engineering_knowledge*" in config["include"]
         assert "sdk*" in config["include"]
         assert "plugins*" in config["include"]
         assert "knowledge.packs*" in config["exclude"]

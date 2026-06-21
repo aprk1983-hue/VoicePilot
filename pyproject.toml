@@ -49,5 +49,6 @@ include = [
     "brain",
     "services*",
     "engineering_assets*",
+    "engineering_knowledge*",
 ]
 exclude = ["knowledge.packs*", "brain.*"]
