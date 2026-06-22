@@ -17,6 +17,7 @@ from health import (
     default_health_rule_registry,
 )
 from health.builtin_rules import BUILTIN_HEALTH_RULES, ProviderNoDependentDialPeersRule
+from health.teams_rules import TEAMS_HEALTH_RULES
 from health.health_rule import HealthRule
 from model import DialPeer, Provider, SipUA, VoiceService
 from topology.topology_builder import TopologyBuilder
@@ -229,7 +230,7 @@ class TestHealthRuleRegistry:
         registry = default_health_rule_registry()
         rule_ids = {rule.id for rule in registry.all_rules()}
 
-        assert len(registry.all_rules()) == len(BUILTIN_HEALTH_RULES) + 10
+        assert len(registry.all_rules()) == len(BUILTIN_HEALTH_RULES) + 10 + len(TEAMS_HEALTH_RULES)
         assert registry.get("sip_ua_disabled") is not None
         assert "phone_not_registered" in rule_ids
 
