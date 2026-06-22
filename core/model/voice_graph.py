@@ -38,6 +38,17 @@ OBJECT_TYPE_MEDIA_RESOURCE_GROUP_LIST = "media_resource_group_list"
 OBJECT_TYPE_MEDIA_TERMINATION_POINT = "media_termination_point"
 OBJECT_TYPE_TRANSCODER = "transcoder"
 OBJECT_TYPE_CONFERENCE_BRIDGE = "conference_bridge"
+OBJECT_TYPE_TEAMS_USER = "teams_user"
+OBJECT_TYPE_TEAMS_PHONE_NUMBER = "teams_phone_number"
+OBJECT_TYPE_TEAMS_VOICE_ROUTING_POLICY = "teams_voice_routing_policy"
+OBJECT_TYPE_TEAMS_VOICE_ROUTE = "teams_voice_route"
+OBJECT_TYPE_TEAMS_DIAL_PLAN = "teams_dial_plan"
+OBJECT_TYPE_TEAMS_PSTN_GATEWAY = "teams_pstn_gateway"
+OBJECT_TYPE_TEAMS_PSTN_USAGE = "teams_pstn_usage"
+OBJECT_TYPE_TEAMS_CALL_QUEUE = "teams_call_queue"
+OBJECT_TYPE_TEAMS_AUTO_ATTENDANT = "teams_auto_attendant"
+OBJECT_TYPE_TEAMS_RESOURCE_ACCOUNT = "teams_resource_account"
+OBJECT_TYPE_TEAMS_LIS_LOCATION = "teams_lis_location"
 
 
 def new_voice_object_id() -> str:

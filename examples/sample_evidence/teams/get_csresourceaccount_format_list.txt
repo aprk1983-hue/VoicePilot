@@ -1,0 +1,4 @@
+ObjectId        : 11111111-2222-3333-4444-555555555555
+ApplicationId   : app-aa-001
+ApplicationType : AutoAttendant
+PhoneNumber     : +15551112222

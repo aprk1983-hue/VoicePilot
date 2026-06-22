@@ -45,6 +45,17 @@ PARSER_ID_BY_COMMAND: dict[str, str] = {
     "show cert list": "cisco_show_cert_list",
     "show route plan": "cisco_show_route_plan",
     "show sip trunk": "cisco_show_sip_trunk",
+    "get-csonlineuser": "microsoft_get_csonlineuser",
+    "get-csphonenumberassignment": "microsoft_get_csphonenumberassignment",
+    "get-csonlinevoiceroutingpolicy": "microsoft_get_csonlinevoiceroutingpolicy",
+    "get-csonlinevoiceroute": "microsoft_get_csonlinevoiceroute",
+    "get-cstenantdialplan": "microsoft_get_cstenantdialplan",
+    "get-csonlinepstngateway": "microsoft_get_csonlinepstngateway",
+    "get-csonlinepstnusage": "microsoft_get_csonlinepstnusage",
+    "get-cscallqueue": "microsoft_get_cscallqueue",
+    "get-csautoattendant": "microsoft_get_csautoattendant",
+    "get-csresourceaccount": "microsoft_get_csresourceaccount",
+    "get-csonlinelislocation": "microsoft_get_csonlinelislocation",
 }
 
 

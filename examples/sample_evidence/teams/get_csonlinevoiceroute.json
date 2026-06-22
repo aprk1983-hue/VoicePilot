@@ -1,0 +1,9 @@
+[
+  {
+    "Identity": "International-Route",
+    "NumberPattern": "+1*",
+    "OnlinePstnGatewayList": ["sbc.contoso.com"],
+    "OnlinePstnUsages": ["International"],
+    "Priority": 1
+  }
+]

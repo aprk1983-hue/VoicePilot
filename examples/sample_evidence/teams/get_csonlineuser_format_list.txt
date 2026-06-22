@@ -1,0 +1,7 @@
+PS C:\> Get-CsOnlineUser -Identity user@contoso.com | Format-List
+
+UserPrincipalName          : user@contoso.com
+EnterpriseVoiceEnabled     : True
+LineUri                    : tel:+15551234567
+OnlineVoiceRoutingPolicy   : US-International
+TenantDialplan             : ContosoDialPlan

@@ -23,6 +23,19 @@ from model.provider import Provider
 from model.sip_ua import SipUA
 from model.voice_graph import VoiceObject, VoiceRelationship
 from model.voice_service import VoiceService
+from model.teams_objects import (
+    TeamsAutoAttendant,
+    TeamsCallQueue,
+    TeamsDialPlan,
+    TeamsLisLocation,
+    TeamsPhoneNumber,
+    TeamsPstnGateway,
+    TeamsPstnUsage,
+    TeamsResourceAccount,
+    TeamsUser,
+    TeamsVoiceRoute,
+    TeamsVoiceRoutingPolicy,
+)
 from topology.relationship_types import RelationshipType
 
 
@@ -44,6 +57,17 @@ class _ObjectBuckets:
     route_groups: tuple[RouteGroup, ...] = ()
     gateways: tuple[Gateway, ...] = ()
     sip_trunks: tuple[SIPTrunk, ...] = ()
+    teams_users: tuple[TeamsUser, ...] = ()
+    teams_phone_numbers: tuple[TeamsPhoneNumber, ...] = ()
+    teams_voice_routing_policies: tuple[TeamsVoiceRoutingPolicy, ...] = ()
+    teams_voice_routes: tuple[TeamsVoiceRoute, ...] = ()
+    teams_dial_plans: tuple[TeamsDialPlan, ...] = ()
+    teams_pstn_gateways: tuple[TeamsPstnGateway, ...] = ()
+    teams_pstn_usages: tuple[TeamsPstnUsage, ...] = ()
+    teams_call_queues: tuple[TeamsCallQueue, ...] = ()
+    teams_auto_attendants: tuple[TeamsAutoAttendant, ...] = ()
+    teams_resource_accounts: tuple[TeamsResourceAccount, ...] = ()
+    teams_lis_locations: tuple[TeamsLisLocation, ...] = ()
 
 
 class RelationshipBuilder:
@@ -60,6 +84,7 @@ class RelationshipBuilder:
         self._add_sip_ua_binds_to_interface(buckets, relationships, seen)
         self._add_dial_peer_routes_to_provider(buckets, relationships, seen)
         self._add_cucm_relationships(buckets, relationships, seen)
+        self._add_teams_relationships(buckets, relationships, seen)
 
         return tuple(relationships)
 
@@ -269,6 +294,79 @@ class RelationshipBuilder:
                 description="SIP trunk routes to provider",
             )
 
+    def _add_teams_relationships(
+        self,
+        buckets: _ObjectBuckets,
+        relationships: list[VoiceRelationship],
+        seen: set[tuple[str, str, str]],
+    ) -> None:
+        policy_by_name = {policy.name: policy for policy in buckets.teams_voice_routing_policies}
+        usage_by_name = {usage.name: usage for usage in buckets.teams_pstn_usages}
+        gateway_by_name = {gateway.name: gateway for gateway in buckets.teams_pstn_gateways}
+        resource_by_name = {
+            account.name: account for account in buckets.teams_resource_accounts
+        }
+
+        for user in buckets.teams_users:
+            policy_name = user.voice_routing_policy
+            if policy_name and policy_name in policy_by_name:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    user.id,
+                    policy_by_name[policy_name].id,
+                    description=f"{user.name} uses voice routing policy {policy_name}",
+                )
+
+        for route in buckets.teams_voice_routes:
+            for usage_name in route.online_pstn_usages:
+                usage = usage_by_name.get(usage_name)
+                if usage is not None:
+                    _append_relationship(
+                        relationships,
+                        seen,
+                        RelationshipType.USES,
+                        route.id,
+                        usage.id,
+                        description=f"{route.name} uses PSTN usage {usage_name}",
+                    )
+            for gateway_name in route.online_pstn_gateway_list:
+                gateway = gateway_by_name.get(gateway_name)
+                if gateway is not None:
+                    _append_relationship(
+                        relationships,
+                        seen,
+                        RelationshipType.ROUTES_TO,
+                        route.id,
+                        gateway.id,
+                        description=f"{route.name} routes to gateway {gateway_name}",
+                    )
+
+        for queue in buckets.teams_call_queues:
+            for resource_name in resource_by_name:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    queue.id,
+                    resource_by_name[resource_name].id,
+                    description=f"{queue.name} uses resource account {resource_name}",
+                )
+                break
+
+        for attendant in buckets.teams_auto_attendants:
+            for resource_name in resource_by_name:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    attendant.id,
+                    resource_by_name[resource_name].id,
+                    description=f"{attendant.name} uses resource account {resource_name}",
+                )
+                break
+
 
 def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     dial_peers: list[DialPeer] = []
@@ -287,6 +385,17 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     route_groups: list[RouteGroup] = []
     gateways: list[Gateway] = []
     sip_trunks: list[SIPTrunk] = []
+    teams_users: list[TeamsUser] = []
+    teams_phone_numbers: list[TeamsPhoneNumber] = []
+    teams_voice_routing_policies: list[TeamsVoiceRoutingPolicy] = []
+    teams_voice_routes: list[TeamsVoiceRoute] = []
+    teams_dial_plans: list[TeamsDialPlan] = []
+    teams_pstn_gateways: list[TeamsPstnGateway] = []
+    teams_pstn_usages: list[TeamsPstnUsage] = []
+    teams_call_queues: list[TeamsCallQueue] = []
+    teams_auto_attendants: list[TeamsAutoAttendant] = []
+    teams_resource_accounts: list[TeamsResourceAccount] = []
+    teams_lis_locations: list[TeamsLisLocation] = []
 
     for obj in voice_objects:
         if isinstance(obj, DialPeer):
@@ -321,6 +430,28 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
             gateways.append(obj)
         elif isinstance(obj, SIPTrunk):
             sip_trunks.append(obj)
+        elif isinstance(obj, TeamsUser):
+            teams_users.append(obj)
+        elif isinstance(obj, TeamsPhoneNumber):
+            teams_phone_numbers.append(obj)
+        elif isinstance(obj, TeamsVoiceRoutingPolicy):
+            teams_voice_routing_policies.append(obj)
+        elif isinstance(obj, TeamsVoiceRoute):
+            teams_voice_routes.append(obj)
+        elif isinstance(obj, TeamsDialPlan):
+            teams_dial_plans.append(obj)
+        elif isinstance(obj, TeamsPstnGateway):
+            teams_pstn_gateways.append(obj)
+        elif isinstance(obj, TeamsPstnUsage):
+            teams_pstn_usages.append(obj)
+        elif isinstance(obj, TeamsCallQueue):
+            teams_call_queues.append(obj)
+        elif isinstance(obj, TeamsAutoAttendant):
+            teams_auto_attendants.append(obj)
+        elif isinstance(obj, TeamsResourceAccount):
+            teams_resource_accounts.append(obj)
+        elif isinstance(obj, TeamsLisLocation):
+            teams_lis_locations.append(obj)
 
     return _ObjectBuckets(
         dial_peers=tuple(sorted(dial_peers, key=lambda item: item.id)),
@@ -339,6 +470,19 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
         route_groups=tuple(sorted(route_groups, key=lambda item: item.id)),
         gateways=tuple(sorted(gateways, key=lambda item: item.id)),
         sip_trunks=tuple(sorted(sip_trunks, key=lambda item: item.id)),
+        teams_users=tuple(sorted(teams_users, key=lambda item: item.id)),
+        teams_phone_numbers=tuple(sorted(teams_phone_numbers, key=lambda item: item.id)),
+        teams_voice_routing_policies=tuple(
+            sorted(teams_voice_routing_policies, key=lambda item: item.id)
+        ),
+        teams_voice_routes=tuple(sorted(teams_voice_routes, key=lambda item: item.id)),
+        teams_dial_plans=tuple(sorted(teams_dial_plans, key=lambda item: item.id)),
+        teams_pstn_gateways=tuple(sorted(teams_pstn_gateways, key=lambda item: item.id)),
+        teams_pstn_usages=tuple(sorted(teams_pstn_usages, key=lambda item: item.id)),
+        teams_call_queues=tuple(sorted(teams_call_queues, key=lambda item: item.id)),
+        teams_auto_attendants=tuple(sorted(teams_auto_attendants, key=lambda item: item.id)),
+        teams_resource_accounts=tuple(sorted(teams_resource_accounts, key=lambda item: item.id)),
+        teams_lis_locations=tuple(sorted(teams_lis_locations, key=lambda item: item.id)),
     )
 
 

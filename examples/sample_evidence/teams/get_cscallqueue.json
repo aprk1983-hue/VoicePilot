@@ -1,0 +1,7 @@
+[
+  {
+    "Identity": "Support-Queue",
+    "LanguageId": "en-US",
+    "Users": ["agent1@contoso.com", "agent2@contoso.com"]
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "LocationId": "HQ-Building-A",
+    "CivicAddress": "123 Main St",
+    "Location": "Floor 3",
+    "E911Enabled": true
+  }
+]

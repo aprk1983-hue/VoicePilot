@@ -1,0 +1,8 @@
+[
+  {
+    "UserPrincipalName": "user@contoso.com",
+    "EnterpriseVoiceEnabled": true,
+    "LineUri": "tel:+15551234567",
+    "OnlineVoiceRoutingPolicy": "US-International"
+  }
+]
