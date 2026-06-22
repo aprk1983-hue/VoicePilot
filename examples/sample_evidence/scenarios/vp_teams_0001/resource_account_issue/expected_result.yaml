@@ -1,0 +1,3 @@
+scenario_id: resource_account_issue
+expected_root_cause: Resource Account issue
+min_confidence: 87

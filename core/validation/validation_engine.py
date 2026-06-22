@@ -33,6 +33,7 @@ from validation.validation_rules import evaluate_expectations
 SUPPORTED_VALIDATION_PLAYBOOKS: tuple[str, ...] = (
     "VP-CUBE-0001",
     "VP-CUCM-0001",
+    "VP-TEAMS-0001",
 )
 
 

@@ -1,0 +1,4 @@
+Identity                   : US-Route
+NumberPattern              :
+OnlinePstnGatewayList      : {}
+OnlinePstnUsages           : {International}

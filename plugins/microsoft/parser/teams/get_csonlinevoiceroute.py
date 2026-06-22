@@ -28,8 +28,14 @@ class MicrosoftGetCsOnlineVoiceRouteParser(TeamsPowerShellParser):
         findings: list[ParserFinding] = []
         for record in self._records(structured_data):
             gateways = parse_list_value(record.get("online_pstn_gateway_list"))
+            usages = parse_list_value(record.get("online_pstn_usages"))
+            number_pattern = record.get("number_pattern")
+            if not number_pattern or not str(number_pattern).strip():
+                findings.append(ParserFinding(signal="voice_route_missing", confidence=90.0, detail="Voice route missing number pattern", source_field="number_pattern"))
             if not gateways:
                 findings.append(ParserFinding(signal="voice_routing_failure_pstn", confidence=88.0, detail="Voice route has no PSTN gateway", source_field="online_pstn_gateway_list"))
+            if usages and not gateways:
+                findings.append(ParserFinding(signal="voice_route_missing", confidence=86.0, detail="Voice route missing PSTN gateway assignment", source_field="online_pstn_gateway_list"))
         return findings
 
     def extract_voice_objects(self, structured_data: JsonDict, context: ParserContext, *, confidence: float) -> list[VoiceObject]:

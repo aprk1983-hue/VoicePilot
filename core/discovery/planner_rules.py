@@ -9,6 +9,8 @@ from domain.models import Case
 from discovery.planner_models import DiscoveryPriority, DiscoveryRequest
 from discovery.planner_rule import DiscoveryPlannerRule
 
+VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
+
 DIAL_PEER_SUMMARY_COMMAND = "show dial-peer voice summary"
 SIP_UA_STATUS_COMMAND = "show sip-ua status"
 VOICE_SERVICE_VOIP_COMMAND = "show run | sec voice service voip"
@@ -46,6 +48,12 @@ def _request_id(rule_id: str) -> str:
     return f"DISC-{rule_id}"
 
 
+def _cube_playbook_case(case: Case) -> bool:
+    if not case.playbook_id:
+        return True
+    return case.playbook_id == VP_CUBE_0001_PLAYBOOK_ID
+
+
 @dataclass(frozen=True)
 class DialPeerSummaryMissingRule(DiscoveryPlannerRule):
     """Recommend dial-peer summary when routing evidence is missing."""
@@ -54,7 +62,7 @@ class DialPeerSummaryMissingRule(DiscoveryPlannerRule):
     title: str = "Dial-peer summary missing"
 
     def evaluate(self, case: Case) -> DiscoveryRequest | None:
-        if DIAL_PEER_SUMMARY_COMMAND in collected_commands(case):
+        if not _cube_playbook_case(case) or DIAL_PEER_SUMMARY_COMMAND in collected_commands(case):
             return None
         return DiscoveryRequest(
             request_id=_request_id(self.id),
@@ -81,7 +89,7 @@ class SipUaStatusMissingRule(DiscoveryPlannerRule):
     title: str = "SIP-UA status missing"
 
     def evaluate(self, case: Case) -> DiscoveryRequest | None:
-        if SIP_UA_STATUS_COMMAND in collected_commands(case):
+        if not _cube_playbook_case(case) or SIP_UA_STATUS_COMMAND in collected_commands(case):
             return None
         return DiscoveryRequest(
             request_id=_request_id(self.id),
@@ -108,7 +116,7 @@ class VoiceServiceVoipMissingRule(DiscoveryPlannerRule):
     title: str = "Voice service voip config missing"
 
     def evaluate(self, case: Case) -> DiscoveryRequest | None:
-        if VOICE_SERVICE_VOIP_COMMAND in collected_commands(case):
+        if not _cube_playbook_case(case) or VOICE_SERVICE_VOIP_COMMAND in collected_commands(case):
             return None
         return DiscoveryRequest(
             request_id=_request_id(self.id),
@@ -135,7 +143,7 @@ class CcsipDebugMissingRule(DiscoveryPlannerRule):
     title: str = "SIP debug trace missing"
 
     def evaluate(self, case: Case) -> DiscoveryRequest | None:
-        if CCSIP_DEBUG_COMMAND in collected_commands(case):
+        if not _cube_playbook_case(case) or CCSIP_DEBUG_COMMAND in collected_commands(case):
             return None
         return DiscoveryRequest(
             request_id=_request_id(self.id),
@@ -162,6 +170,8 @@ class SupplementalDialPeerConfigRule(DiscoveryPlannerRule):
     title: str = "Supplemental dial-peer configuration"
 
     def evaluate(self, case: Case) -> DiscoveryRequest | None:
+        if not _cube_playbook_case(case):
+            return None
         command = "show run | sec dial-peer"
         if command in collected_commands(case):
             return None
@@ -198,3 +208,6 @@ def register_builtin_rules(registry) -> None:
     """Register built-in discovery planner rules."""
     for rule in BUILTIN_DISCOVERY_RULES:
         registry.register_rule(rule)
+    from discovery.teams_planner_rules import register_teams_discovery_rules
+
+    register_teams_discovery_rules(registry)

@@ -287,10 +287,13 @@ def _top_hypothesis(case: Case) -> Hypothesis | None:
 
 def _plan_for_hypothesis(hypothesis: Hypothesis, case: Case) -> HypothesisActionPlan:
     from runtime.cucm_investigation import VP_CUCM_0001_ACTION_PLANS, VP_CUCM_0001_PLAYBOOK_ID
+    from runtime.teams_investigation import VP_TEAMS_0001_ACTION_PLANS, VP_TEAMS_0001_PLAYBOOK_ID
 
     category = hypothesis.category or ""
     if case.playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return VP_CUCM_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
+    if case.playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return VP_TEAMS_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
     return VP_CUBE_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
 
 

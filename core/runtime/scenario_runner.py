@@ -22,6 +22,11 @@ from runtime.cucm_investigation import (
     CUCM_INTAKE_ANSWERS,
     VP_CUCM_0001_PLAYBOOK_ID,
 )
+from runtime.teams_investigation import (
+    TEAMS_EVIDENCE_FILES,
+    TEAMS_INTAKE_ANSWERS,
+    VP_TEAMS_0001_PLAYBOOK_ID,
+)
 
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
 
@@ -77,6 +82,8 @@ def evidence_files_for_playbook(playbook_id: str) -> tuple[tuple[str, str], ...]
     """Return evidence command/file pairs for a supported playbook."""
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return CUCM_EVIDENCE_FILES
+    if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return TEAMS_EVIDENCE_FILES
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return EVIDENCE_FILES
     raise UnsupportedPlaybookScenarioError(playbook_id)
@@ -86,6 +93,8 @@ def intake_answers_for_playbook(playbook_id: str) -> list[str]:
     """Return scripted intake answers for a supported playbook."""
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return list(CUCM_INTAKE_ANSWERS)
+    if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return list(TEAMS_INTAKE_ANSWERS)
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return list(INTAKE_ANSWERS)
     raise UnsupportedPlaybookScenarioError(playbook_id)
@@ -98,6 +107,8 @@ def default_scenarios_root(playbook_id: str, repo_root: Path | None = None) -> P
         return root / "examples" / "sample_evidence" / "scenarios" / "vp_cube_0001"
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return root / "examples" / "sample_evidence" / "scenarios" / "vp_cucm_0001"
+    if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return root / "examples" / "sample_evidence" / "scenarios" / "vp_teams_0001"
     raise UnsupportedPlaybookScenarioError(playbook_id)
 
 
@@ -180,7 +191,7 @@ def resolve_scenario_dirs(
     repo_root: Path | None = None,
 ) -> list[Path]:
     """Resolve scenario directories to execute for a playbook."""
-    if playbook_id not in {VP_CUBE_0001_PLAYBOOK_ID, VP_CUCM_0001_PLAYBOOK_ID}:
+    if playbook_id not in {VP_CUBE_0001_PLAYBOOK_ID, VP_CUCM_0001_PLAYBOOK_ID, VP_TEAMS_0001_PLAYBOOK_ID}:
         raise UnsupportedPlaybookScenarioError(playbook_id)
 
     root = resolve_scenarios_root(playbook_id, scenarios_root, repo_root=repo_root)

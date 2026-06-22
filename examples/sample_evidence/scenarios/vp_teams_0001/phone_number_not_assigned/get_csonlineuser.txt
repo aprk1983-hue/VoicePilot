@@ -1,0 +1,8 @@
+UserPrincipalName          : user@contoso.com
+EnterpriseVoiceEnabled     : True
+TeamsPhoneLicenseAssigned  : True
+
+OnlineVoiceRoutingPolicy   : US-International
+TenantDialplan             : ContosoDialPlan
+EmergencyCallingPolicy     : US-Emergency
+EmergencyRoutingPolicy     : US-Emergency-Route

@@ -29,6 +29,7 @@ class MicrosoftGetCsOnlineVoiceRoutingPolicyParser(TeamsPowerShellParser):
         for record in self._records(structured_data):
             usages = parse_list_value(record.get("online_pstn_usages") or record.get("pstn_usages"))
             if not usages:
+                findings.append(ParserFinding(signal="pstn_usage_missing", confidence=90.0, detail="Voice routing policy has no PSTN usages", source_field="online_pstn_usages"))
                 findings.append(ParserFinding(signal="voice_routing_policy_missing", confidence=90.0, detail="Voice routing policy has no PSTN usages", source_field="online_pstn_usages"))
         return findings
 

@@ -1,0 +1,14 @@
+name: microsoft
+display_name: Microsoft Teams Plugin
+version: 0.1.0
+vendor: VoicePilot
+plugin_type: vendor
+description: Official Microsoft Teams Phone investigation playbooks and parsers.
+capabilities:
+  - teams_playbooks
+  - teams_phone_troubleshooting
+supported_platforms:
+  - Microsoft Teams Phone
+entry_points:
+  playbooks:
+    - playbooks/teams/vp-teams-0001-microsoft-teams-investigation.vpb.yaml

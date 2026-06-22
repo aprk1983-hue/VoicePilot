@@ -315,8 +315,10 @@ class TestPlannerEngine:
         )
 
     def test_default_registry_is_preloaded(self) -> None:
+        from discovery.teams_planner_rules import TEAMS_DISCOVERY_RULES
+
         registry = default_discovery_registry()
-        assert len(registry.all_rules()) == len(BUILTIN_DISCOVERY_RULES)
+        assert len(registry.all_rules()) == len(BUILTIN_DISCOVERY_RULES) + len(TEAMS_DISCOVERY_RULES)
 
 
 class TestDiscoveryReport:

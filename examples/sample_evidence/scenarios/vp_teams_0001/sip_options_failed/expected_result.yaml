@@ -1,0 +1,3 @@
+scenario_id: sip_options_failed
+expected_root_cause: SIP OPTIONS failed
+min_confidence: 89

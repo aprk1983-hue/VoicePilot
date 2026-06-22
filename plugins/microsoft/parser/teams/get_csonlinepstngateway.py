@@ -32,6 +32,25 @@ class MicrosoftGetCsOnlinePstnGatewayParser(TeamsPowerShellParser):
                 findings.append(ParserFinding(signal="direct_routing_sbc_unreachable", confidence=92.0, detail="PSTN gateway disabled", source_field="enabled"))
             if not record.get("fqdn"):
                 findings.append(ParserFinding(signal="sbc_connectivity_lost", confidence=88.0, detail="PSTN gateway missing FQDN", source_field="fqdn"))
+            if parse_bool(record.get("tls_certificate_expired")) is True:
+                findings.append(
+                    ParserFinding(
+                        signal="tls_certificate_expired",
+                        confidence=93.0,
+                        detail="TLS certificate expired on PSTN gateway",
+                        source_field="tls_certificate_expired",
+                    )
+                )
+            sip_options = str(record.get("sip_options_status") or record.get("sip_options_health") or "").lower()
+            if sip_options in {"failed", "failure", "unhealthy", "down"}:
+                findings.append(
+                    ParserFinding(
+                        signal="sip_options_failure",
+                        confidence=91.0,
+                        detail="SIP OPTIONS health check failed",
+                        source_field="sip_options_status",
+                    )
+                )
         return findings
 
     def extract_voice_objects(self, structured_data: JsonDict, context: ParserContext, *, confidence: float) -> list[VoiceObject]:

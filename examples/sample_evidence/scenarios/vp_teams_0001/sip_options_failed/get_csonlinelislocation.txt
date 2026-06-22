@@ -1,0 +1,4 @@
+LocationId                 : HQ-Floor-1
+CivicAddress               : 123 Main St
+Location                   : Floor 1
+E911Enabled                : True

@@ -1,0 +1,3 @@
+scenario_id: voice_route_missing
+expected_root_cause: Voice Route missing
+min_confidence: 84

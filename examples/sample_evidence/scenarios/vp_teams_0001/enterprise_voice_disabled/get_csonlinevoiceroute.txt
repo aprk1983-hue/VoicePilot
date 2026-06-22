@@ -1,0 +1,4 @@
+Identity                   : US-Route
+NumberPattern              : +1*
+OnlinePstnGatewayList      : {sbc.contoso.com}
+OnlinePstnUsages           : {International}

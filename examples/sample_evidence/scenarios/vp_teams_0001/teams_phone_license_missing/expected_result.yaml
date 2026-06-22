@@ -1,0 +1,3 @@
+scenario_id: teams_phone_license_missing
+expected_root_cause: Teams Phone license missing
+min_confidence: 90

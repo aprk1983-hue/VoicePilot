@@ -1,0 +1,8 @@
+UserPrincipalName          : user@contoso.com
+EnterpriseVoiceEnabled     : False
+TeamsPhoneLicenseAssigned  : True
+LineUri                    : tel:+15551234567
+OnlineVoiceRoutingPolicy   : US-International
+TenantDialplan             : ContosoDialPlan
+EmergencyCallingPolicy     : US-Emergency
+EmergencyRoutingPolicy     : US-Emergency-Route

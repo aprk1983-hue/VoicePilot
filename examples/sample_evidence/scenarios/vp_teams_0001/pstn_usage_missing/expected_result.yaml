@@ -1,0 +1,3 @@
+scenario_id: pstn_usage_missing
+expected_root_cause: PSTN Usage missing
+min_confidence: 85

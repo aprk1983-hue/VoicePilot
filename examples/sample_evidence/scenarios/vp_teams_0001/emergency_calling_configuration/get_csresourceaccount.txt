@@ -1,0 +1,4 @@
+ObjectId                   : ra-001
+UserPrincipalName          : aa-resource@contoso.com
+PhoneNumber                : tel:+15559876543
+ApplicationType            : AutoAttendant

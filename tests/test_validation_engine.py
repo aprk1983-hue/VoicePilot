@@ -102,7 +102,7 @@ class TestValidationEngine:
 
     def test_validate_all_playbooks(self, validation_engine: ValidationEngine) -> None:
         suite = validation_engine.validate_all()
-        assert suite.summary.total_scenarios == 10
+        assert suite.summary.total_scenarios == 21
         assert suite.summary.playbook_id is None
         assert suite.summary.failed_count == 0
 

@@ -1,0 +1,254 @@
+playbook:
+  api_version: voicepilot.io/v1
+  kind: Playbook
+
+  metadata:
+    id: VP-TEAMS-0001
+    version: "1.0.0"
+    title: Microsoft Teams Phone Investigation
+    description: >
+      TAC-grade deterministic investigation for Microsoft Teams Phone using exported
+      PowerShell evidence only. Covers licensing, voice routing, Direct Routing,
+      emergency calling, and resource accounts. Read-only — never connects to
+      Microsoft Graph, executes PowerShell, or performs configuration changes.
+    category: teams
+    vendor: microsoft
+    status: active
+    author: voicepilot-curator
+    reviewed_by: tac-sme
+    effective_from: 2026-06-19
+    tags: [teams, licensing, routing, direct-routing, emergency-calling, operator-connect]
+    related_playbooks: []
+
+  platforms:
+    - vendor: microsoft
+      products: [teams_phone]
+      min_version: "1.0"
+      roles: [teams_tenant]
+
+  symptoms:
+    - id: SYM-TEAMS-CALLING
+      match:
+        summary_contains: [teams, phone, calling, pstn, outbound, inbound]
+      weight: 1.0
+    - id: SYM-TEAMS-ROUTING
+      match:
+        summary_contains: [routing, voice route, pstn, direct routing]
+      weight: 0.9
+
+  business_impact:
+    default_severity: high
+    description: Users cannot make or receive PSTN calls through Microsoft Teams Phone
+    escalation_threshold_minutes: 30
+    user_impact: voice_service_degraded
+
+  topology:
+    pattern: teams_phone_tenant
+    description: Microsoft Teams Phone tenant with users, routing policies, and PSTN connectivity
+    required_components:
+      - type: teams_user
+        role: endpoint
+        min_count: 1
+
+  intake:
+    questions:
+      - id: Q-TEAMS-001
+        text: Did Teams Phone calling ever work in this tenant?
+        category: intake
+        phase: INTAKE
+        target_field: known_facts.worked_previously
+        required: true
+      - id: Q-TEAMS-002
+        text: When did the issue start?
+        category: intake
+        phase: INTAKE
+        target_field: timeline.onset
+        required: true
+      - id: Q-TEAMS-003
+        text: Describe the symptom (licensing, routing, Direct Routing, emergency calling).
+        category: scope
+        phase: INTAKE
+        target_field: known_facts.symptom_detail
+        required: true
+      - id: Q-TEAMS-004
+        text: Which users or sites are affected?
+        category: scope
+        phase: INTAKE
+        target_field: affected_scope.sites
+        required: true
+      - id: Q-TEAMS-005
+        text: What PSTN connectivity model is in use (Direct Routing, Operator Connect, Calling Plans)?
+        category: topology
+        phase: INTAKE
+        target_field: known_facts.pstn_connectivity
+        required: true
+      - id: Q-TEAMS-006
+        text: Has any Teams voice configuration changed recently?
+        category: change
+        phase: DISCOVERY
+        target_field: known_facts.recent_changes
+        required: false
+
+  evidence:
+    requirements:
+      - id: EVD-ONLINE-USER
+        title: Teams online user export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-VRP
+        title: Voice routing policy export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-VOICE-ROUTE
+        title: Online voice route export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-PSTN-GW
+        title: PSTN gateway export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-PHONE-NUMBER
+        title: Phone number assignment export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-LIS
+        title: LIS location export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-RESOURCE
+        title: Resource account export
+        type: powershell_export
+        mandatory: true
+        phase: COLLECTION
+
+    commands:
+      - id: CMD-ONLINE-USER
+        requirement_id: EVD-ONLINE-USER
+        device_role: teams_tenant
+        command: get-csonlineuser
+        cost: low
+        privilege: read
+      - id: CMD-VRP
+        requirement_id: EVD-VRP
+        device_role: teams_tenant
+        command: get-csonlinevoiceroutingpolicy
+        cost: low
+        privilege: read
+      - id: CMD-VOICE-ROUTE
+        requirement_id: EVD-VOICE-ROUTE
+        device_role: teams_tenant
+        command: get-csonlinevoiceroute
+        cost: low
+        privilege: read
+      - id: CMD-PSTN-GW
+        requirement_id: EVD-PSTN-GW
+        device_role: teams_tenant
+        command: get-csonlinepstngateway
+        cost: low
+        privilege: read
+      - id: CMD-PHONE-NUMBER
+        requirement_id: EVD-PHONE-NUMBER
+        device_role: teams_tenant
+        command: get-csphonenumberassignment
+        cost: low
+        privilege: read
+      - id: CMD-LIS
+        requirement_id: EVD-LIS
+        device_role: teams_tenant
+        command: get-csonlinelislocation
+        cost: low
+        privilege: read
+      - id: CMD-RESOURCE
+        requirement_id: EVD-RESOURCE
+        device_role: teams_tenant
+        command: get-csresourceaccount
+        cost: low
+        privilege: read
+      - id: CMD-DIAL-PLAN
+        device_role: teams_tenant
+        command: get-cstenantdialplan
+        cost: low
+        privilege: read
+        optional: true
+      - id: CMD-PSTN-USAGE
+        device_role: teams_tenant
+        command: get-csonlinepstnusage
+        cost: low
+        privilege: read
+        optional: true
+      - id: CMD-CALL-QUEUE
+        device_role: teams_tenant
+        command: get-cscallqueue
+        cost: low
+        privilege: read
+        optional: true
+      - id: CMD-AUTO-ATTENDANT
+        device_role: teams_tenant
+        command: get-csautoattendant
+        cost: low
+        privilege: read
+        optional: true
+
+  hypotheses:
+    - id: HYP-TEAMS-LICENSE
+      title: Teams Phone license missing
+      category: licensing
+      initial_status: candidate
+    - id: HYP-TEAMS-EV-VOICE
+      title: Enterprise Voice disabled
+      category: licensing
+      initial_status: candidate
+    - id: HYP-TEAMS-NUMBER
+      title: Phone number not assigned
+      category: configuration
+      initial_status: candidate
+    - id: HYP-TEAMS-VRP
+      title: Voice Routing Policy missing
+      category: routing
+      initial_status: candidate
+    - id: HYP-TEAMS-PSTN-USAGE
+      title: PSTN Usage missing
+      category: routing
+      initial_status: candidate
+    - id: HYP-TEAMS-VOICE-ROUTE
+      title: Voice Route missing
+      category: routing
+      initial_status: candidate
+    - id: HYP-TEAMS-SBC
+      title: Direct Routing SBC unreachable
+      category: direct_routing
+      initial_status: candidate
+    - id: HYP-TEAMS-TLS
+      title: TLS certificate expired
+      category: direct_routing
+      initial_status: candidate
+    - id: HYP-TEAMS-SIP-OPTIONS
+      title: SIP OPTIONS failed
+      category: direct_routing
+      initial_status: candidate
+    - id: HYP-TEAMS-E911
+      title: Emergency Calling configuration issue
+      category: emergency_calling
+      initial_status: candidate
+    - id: HYP-TEAMS-RESOURCE
+      title: Resource Account issue
+      category: resource_accounts
+      initial_status: candidate
+
+  report:
+    sections:
+      - id: executive_summary
+        title: Executive Summary
+        required: true
+      - id: technical_summary
+        title: Technical Summary
+        required: true
+      - id: root_cause_analysis
+        title: Root Cause Analysis
+        required: true

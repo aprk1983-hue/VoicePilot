@@ -1,0 +1,3 @@
+scenario_id: phone_number_not_assigned
+expected_root_cause: Phone number not assigned
+min_confidence: 86

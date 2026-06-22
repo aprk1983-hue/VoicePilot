@@ -17,6 +17,7 @@ from change_package.change_risk import ChangeRiskLevel, assess_change_risk, form
 from domain.models import Case, Hypothesis, Recommendation
 from runtime.recommendation_engine import ACTION_LIKELY_ROOT_CAUSE, VP_CUBE_0001_ACTION_PLANS
 from runtime.cucm_investigation import VP_CUCM_0001_ACTION_PLANS, VP_CUCM_0001_PLAYBOOK_ID
+from runtime.teams_investigation import VP_TEAMS_0001_ACTION_PLANS, VP_TEAMS_0001_PLAYBOOK_ID
 from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
 
 _EXAMPLE_PREFIX = "! Example configuration for engineer review — not applied by VoicePilot"
@@ -228,6 +229,89 @@ VP_CUCM_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
     ),
 }
 
+VP_TEAMS_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
+    "HYP-TEAMS-LICENSE": _ChangeTemplate(
+        current_state="Teams Phone license is not assigned to the affected user.",
+        recommended_state="Phone System or Teams Phone license assigned and propagated.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — assign license in Microsoft 365 admin center per VP-MS-TEAMS-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Remove license assignment if applied to wrong user\n"
+        ),
+        impacted_objects=("Teams user", "License assignment"),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Microsoft Teams Phone", "User licensing"),
+        vendor_references=("VP-MS-TEAMS-RB-006", "VP-MS-TEAMS-VG-001"),
+    ),
+    "HYP-TEAMS-SBC": _ChangeTemplate(
+        current_state="Direct Routing PSTN gateway is unreachable or disabled.",
+        recommended_state="SBC online, registered, and responding to SIP OPTIONS.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore SBC connectivity per VP-MS-TEAMS-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Fail over to secondary SBC if configured\n"
+        ),
+        impacted_objects=("PSTN gateway", "SBC trunk"),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Microsoft Teams Phone", "Direct Routing SBC"),
+        vendor_references=("VP-MS-TEAMS-RB-003", "VP-MS-TEAMS-VG-003"),
+    ),
+    "HYP-TEAMS-TLS": _ChangeTemplate(
+        current_state="TLS certificate on the SBC or gateway is expired.",
+        recommended_state="Valid TLS certificate installed with complete chain.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — renew certificate per VP-MS-TEAMS-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior valid certificate if renewal fails\n"
+        ),
+        impacted_objects=("TLS certificate", "PSTN gateway"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Microsoft Teams Phone", "Direct Routing"),
+        vendor_references=("VP-MS-TEAMS-RB-005", "VP-MS-TEAMS-VG-004"),
+    ),
+    "HYP-TEAMS-E911": _ChangeTemplate(
+        current_state="Emergency calling policy or LIS location is incomplete.",
+        recommended_state="Emergency calling and routing policies assigned with valid LIS data.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — assign policies per VP-MS-TEAMS-RB-007\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior emergency calling configuration from export\n"
+        ),
+        impacted_objects=("Emergency calling policy", "LIS location"),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Microsoft Teams Phone", "Emergency calling"),
+        vendor_references=("VP-MS-TEAMS-RB-007", "VP-MS-TEAMS-VG-005"),
+    ),
+    "HYP-TEAMS-VRP": _ChangeTemplate(
+        current_state="Voice routing policy is missing or has no PSTN usages.",
+        recommended_state="Voice routing policy assigned with reachable PSTN route.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — assign voice routing policy per VP-MS-TEAMS-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore previous voice routing policy assignment\n"
+        ),
+        impacted_objects=("Voice routing policy", "PSTN usage"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Microsoft Teams Phone", "Voice routing"),
+        vendor_references=("VP-MS-TEAMS-RB-002", "VP-MS-TEAMS-VG-002"),
+    ),
+}
+
 _DEFAULT_APPROVAL_SECTIONS: tuple[ApprovalSection, ...] = (
     ApprovalSection(
         name="Technical Reviewer",
@@ -383,12 +467,16 @@ def _hypothesis_category(
 def _action_plans_for_playbook(playbook_id: str | None) -> dict:
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return VP_CUCM_0001_ACTION_PLANS
+    if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return VP_TEAMS_0001_ACTION_PLANS
     return VP_CUBE_0001_ACTION_PLANS
 
 
 def _change_templates_for_playbook(playbook_id: str | None) -> dict[str, _ChangeTemplate]:
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return VP_CUCM_0001_CHANGE_TEMPLATES
+    if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
+        return VP_TEAMS_0001_CHANGE_TEMPLATES
     return VP_CUBE_0001_CHANGE_TEMPLATES
 
 

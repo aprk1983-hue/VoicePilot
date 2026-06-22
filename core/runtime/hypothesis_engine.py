@@ -153,6 +153,10 @@ class HypothesisEngine:
             rules = VP_CUCM_0001_RULES
         elif case.playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
             rules = VP_CUBE_0001_RULES
+        elif case.playbook_id == "VP-TEAMS-0001":
+            from runtime.teams_investigation import VP_TEAMS_0001_RULES
+
+            rules = VP_TEAMS_0001_RULES
         else:
             return [_insufficient_evidence_hypothesis(case)]
 

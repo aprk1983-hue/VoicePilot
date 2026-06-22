@@ -1,0 +1,3 @@
+scenario_id: enterprise_voice_disabled
+expected_root_cause: Enterprise Voice disabled
+min_confidence: 88

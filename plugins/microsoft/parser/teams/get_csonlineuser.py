@@ -42,10 +42,41 @@ class MicrosoftGetCsOnlineUserParser(TeamsPowerShellParser):
                 findings.append(ParserFinding(signal="enterprise_voice_enabled", confidence=95.0, detail="Enterprise Voice enabled", source_field="enterprise_voice_enabled"))
             elif enabled is False:
                 findings.append(ParserFinding(signal="enterprise_voice_disabled", confidence=95.0, detail="Enterprise Voice disabled", source_field="enterprise_voice_enabled"))
+            license_assigned = parse_bool(
+                record.get("teams_phone_license_assigned")
+                or record.get("teams_phone_system_license")
+            )
+            if license_assigned is False:
+                findings.append(
+                    ParserFinding(
+                        signal="teams_phone_license_missing",
+                        confidence=92.0,
+                        detail="Teams Phone license not assigned",
+                        source_field="teams_phone_license_assigned",
+                    )
+                )
             if not record.get("online_voice_routing_policy") and not record.get("voice_routing_policy"):
                 findings.append(ParserFinding(signal="voice_routing_policy_missing", confidence=88.0, detail="No voice routing policy assigned", source_field="online_voice_routing_policy"))
             if not record.get("line_uri") and not record.get("on_prem_line_uri"):
                 findings.append(ParserFinding(signal="phone_number_assignment_failed", confidence=85.0, detail="No LineUri assigned", source_field="line_uri"))
+            if not record.get("emergency_calling_policy") and not record.get("online_emergency_calling_policy"):
+                findings.append(
+                    ParserFinding(
+                        signal="emergency_calling_policy_missing",
+                        confidence=90.0,
+                        detail="No emergency calling policy assigned",
+                        source_field="emergency_calling_policy",
+                    )
+                )
+            if not record.get("emergency_routing_policy") and not record.get("online_emergency_routing_policy"):
+                findings.append(
+                    ParserFinding(
+                        signal="emergency_routing_policy_missing",
+                        confidence=88.0,
+                        detail="No emergency routing policy assigned",
+                        source_field="emergency_routing_policy",
+                    )
+                )
         return findings
 
     def extract_voice_objects(self, structured_data: JsonDict, context: ParserContext, *, confidence: float) -> list[VoiceObject]:

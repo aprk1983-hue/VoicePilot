@@ -1,0 +1,3 @@
+scenario_id: voice_routing_policy_missing
+expected_root_cause: Voice Routing Policy missing
+min_confidence: 87

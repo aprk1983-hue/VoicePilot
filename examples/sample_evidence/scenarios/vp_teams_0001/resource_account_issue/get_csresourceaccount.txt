@@ -1,0 +1,3 @@
+ObjectId                   : ra-001
+UserPrincipalName          : aa-resource@contoso.com
+ApplicationType            : AutoAttendant

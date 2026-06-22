@@ -1,0 +1,3 @@
+scenario_id: emergency_calling_configuration
+expected_root_cause: Emergency Calling configuration issue
+min_confidence: 93

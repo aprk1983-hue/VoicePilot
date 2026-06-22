@@ -1,0 +1,3 @@
+scenario_id: direct_routing_sbc_unreachable
+expected_root_cause: Direct Routing SBC unreachable
+min_confidence: 92
