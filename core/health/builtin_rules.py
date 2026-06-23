@@ -152,9 +152,11 @@ def register_builtin_rules(registry) -> None:
         registry.register(rule)
     from health.cucm_rules import register_cucm_health_rules
     from health.teams_rules import register_teams_health_rules
+    from health.audiocodes_rules import register_audiocodes_health_rules
 
     register_cucm_health_rules(registry)
     register_teams_health_rules(registry)
+    register_audiocodes_health_rules(registry)
 
 
 def _dial_peer_routes_to_provider(topology: VoiceTopology, provider_id: str) -> tuple[str, ...]:

@@ -15,6 +15,7 @@ class HealthCategory(str, Enum):
     TLS = "tls"
     MEDIA = "media"
     PROVIDER = "provider"
+    NETWORK = "network"
     DIAL_PLAN = "dial_plan"
     PERFORMANCE = "performance"
     HIGH_AVAILABILITY = "high_availability"
