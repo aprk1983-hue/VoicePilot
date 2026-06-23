@@ -1,0 +1,53 @@
+asset_id: VP-AUDIOCODES-SBC-000007
+title: AudioCodes SBC IP Group disabled
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: ROUTING
+severity: high
+summary: AudioCodes SBC IP Group disabled affecting AudioCodes SBC operations.
+description: AudioCodes SBC IP Group disabled affecting AudioCodes SBC operations.
+symptoms:
+- Calls matching IP Group pattern fail
+- IP Group shows disabled in configuration
+- Routing stops for affected number range
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- ip_group_disabled
+- ip_group_disabled_detected
+expected_hypotheses: &id001
+- IP Group administratively disabled during change
+- Change window left IP Group disabled
+- Automated policy disabled IP Group after alarm
+known_causes: *id001
+known_resolution: &id002
+- Enable IP Group and verify Proxy Set linkage
+- Validate routing table references enabled IP Group
+- Place test call through affected route
+recommended_actions: *id002
+rollback_steps:
+- Restore previous IP Group enable state from export
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- ip_group_disabled
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-003
+- VP-AUDIOCODES-SBC-VG-003
+- VP-AUDIOCODES-SBC-REF-001
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- ip-group
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

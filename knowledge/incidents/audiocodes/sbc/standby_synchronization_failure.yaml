@@ -1,0 +1,55 @@
+asset_id: VP-AUDIOCODES-SBC-000016
+title: AudioCodes SBC Standby synchronization failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: MONITORING
+severity: critical
+summary: AudioCodes SBC Standby synchronization failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC Standby synchronization failure affecting AudioCodes SBC
+  operations.
+symptoms:
+- HA pair out of sync alarm
+- Configuration drift between active and standby
+- Failover readiness degraded
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- standby_synchronization_failure
+- standby_synchronization_failure_detected
+expected_hypotheses: &id001
+- Sync link between HA nodes interrupted
+- Configuration change not replicated to standby
+- Standby node storage or service fault
+known_causes: *id001
+known_resolution: &id002
+- Restore HA synchronization link connectivity
+- Force configuration sync from active to standby
+- Verify standby node ready for failover
+recommended_actions: *id002
+rollback_steps:
+- Restore HA pair from last synchronized backup
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- standby_synchronization_failure
+- ha_sync_failed
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-006
+- VP-AUDIOCODES-SBC-VG-006
+- VP-AUDIOCODES-SBC-REF-005
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- high-availability
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

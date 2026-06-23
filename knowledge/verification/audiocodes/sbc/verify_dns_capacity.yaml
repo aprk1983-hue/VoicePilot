@@ -1,0 +1,45 @@
+asset_id: VP-AUDIOCODES-SBC-VG-010
+title: Verify DNS and capacity
+asset_type: VERIFICATION_GUIDE
+vendor: AudioCodes
+product: SBC
+category: SIP
+severity: medium
+summary: Verify DNS and capacity for AudioCodes SBC.
+description: Verify DNS and capacity for AudioCodes SBC. Professional pack guide VG-AUDIOCODES-DNS.
+symptoms:
+- Post-remediation validation required
+expected_findings:
+- verification_passed
+expected_hypotheses:
+- Service restored to operational baseline
+known_causes:
+- Remediation not yet validated
+known_resolution:
+- Complete verification steps and attach evidence
+required_evidence:
+- AudioCodes SBC status export after remediation
+- Test call SIP ladder diagram
+- Configuration snapshot after change
+verification_steps:
+- Execute VG-AUDIOCODES-DNS validation checklist
+- Compare results against expected operational baseline
+- Attach evidence to investigation record
+recommended_actions:
+- Compare results against expected operational baseline
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-010
+- VP-AUDIOCODES-SBC-000022
+- VP-AUDIOCODES-SBC-000023
+tags:
+- audiocodes-sbc
+- verification
+- professional-pack
+- audiocodes
+references:
+- AudioCodes SBC Professional Pack v1
+- VG-AUDIOCODES-DNS
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

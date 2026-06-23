@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000001
+title: AudioCodes SBC SIP OPTIONS failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: SIP
+severity: high
+summary: AudioCodes SBC SIP OPTIONS failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC SIP OPTIONS failure affecting AudioCodes SBC operations.
+symptoms:
+- SIP trunk marked unavailable in monitoring
+- Periodic OPTIONS requests fail on AudioCodes SBC
+- Intermittent call setup failures to provider
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- sip_options_failure
+- sip_options_failure_detected
+expected_hypotheses: &id001
+- SBC not responding to SIP OPTIONS keepalive
+- Firewall drops OPTIONS in one direction
+- Proxy Set or IP Group misconfigured for OPTIONS
+known_causes: *id001
+known_resolution: &id002
+- Enable SIP OPTIONS response on affected SIP Interface
+- Verify firewall permits OPTIONS bidirectionally
+- Validate Proxy Set keepalive timer alignment with peer
+recommended_actions: *id002
+rollback_steps:
+- Restore previous SIP Interface and Proxy Set keepalive settings
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- sip_options_failure
+- sip_options_timeout
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-001
+- VP-AUDIOCODES-SBC-VG-001
+- VP-AUDIOCODES-SBC-REF-002
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- sip-options
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

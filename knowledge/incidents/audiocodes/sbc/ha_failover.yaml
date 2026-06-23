@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000015
+title: AudioCodes SBC HA failover
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: MONITORING
+severity: critical
+summary: AudioCodes SBC HA failover affecting AudioCodes SBC operations.
+description: AudioCodes SBC HA failover affecting AudioCodes SBC operations.
+symptoms:
+- Active SBC node failed over to standby
+- Brief call drop during HA switchover
+- HA state shows active on secondary node
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- ha_failover
+- ha_failover_detected
+expected_hypotheses: &id001
+- Primary node hardware or service failure
+- Network partition triggered HA switch
+- Manual failover during maintenance
+known_causes: *id001
+known_resolution: &id002
+- Verify HA pair health and synchronization state
+- Investigate root cause on former active node
+- Plan controlled failback after primary restored
+recommended_actions: *id002
+rollback_steps:
+- Fail back to preferred active node per HA runbook
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- ha_failover
+- ha_switchover
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-006
+- VP-AUDIOCODES-SBC-VG-006
+- VP-AUDIOCODES-SBC-REF-005
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- high-availability
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

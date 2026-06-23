@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000025
+title: AudioCodes SBC Registration failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: SIP
+severity: high
+summary: AudioCodes SBC Registration failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC Registration failure affecting AudioCodes SBC operations.
+symptoms:
+- SBC fails to register to upstream registrar
+- 401/407 authentication loop in SIP trace
+- Trunk status shows unregistered
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- registration_failure
+- registration_failure_detected
+expected_hypotheses: &id001
+- Incorrect registration credentials on IP Group
+- Registrar rejects contact or expires binding
+- Transport or port mismatch on registration request
+known_causes: *id001
+known_resolution: &id002
+- Verify registration username, password, and realm
+- Align Contact header and transport with registrar policy
+- Review SIP trace for final rejection reason
+recommended_actions: *id002
+rollback_steps:
+- Restore previous registration credentials from export
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- registration_failure
+- sip_registration_failed
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-001
+- VP-AUDIOCODES-SBC-VG-001
+- VP-AUDIOCODES-SBC-REF-002
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- registration
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

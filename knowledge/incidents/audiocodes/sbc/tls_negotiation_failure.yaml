@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000004
+title: AudioCodes SBC TLS negotiation failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: TLS
+severity: critical
+summary: AudioCodes SBC TLS negotiation failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC TLS negotiation failure affecting AudioCodes SBC operations.
+symptoms:
+- TLS handshake fails before SIP dialog
+- Cipher suite mismatch in SBC logs
+- Secure trunk never reaches REGISTER state
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- tls_negotiation_failure
+- tls_negotiation_failure_detected
+expected_hypotheses: &id001
+- TLS version or cipher mismatch with peer
+- Missing intermediate CA in trust store
+- SIP Interface TLS settings incompatible with provider
+known_causes: *id001
+known_resolution: &id002
+- Align TLS version and cipher suites with provider requirements
+- Import complete certificate chain and trusted CAs
+- Test TLS handshake with openssl s_client from SBC network
+recommended_actions: *id002
+rollback_steps:
+- Restore previous TLS profile on SIP Interface
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- tls_negotiation_failure
+- tls_handshake_failed
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-002
+- VP-AUDIOCODES-SBC-VG-002
+- VP-AUDIOCODES-SBC-REF-003
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- tls-negotiation
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

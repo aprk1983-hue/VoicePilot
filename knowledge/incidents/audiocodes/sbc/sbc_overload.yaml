@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000022
+title: AudioCodes SBC SBC overload
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: PERFORMANCE
+severity: critical
+summary: AudioCodes SBC SBC overload affecting AudioCodes SBC operations.
+description: AudioCodes SBC SBC overload affecting AudioCodes SBC operations.
+symptoms:
+- SBC CPU or session load at maximum
+- New call attempts rejected under overload policy
+- Management GUI sluggish or unresponsive
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- sbc_overload
+- sbc_overload_detected
+expected_hypotheses: &id001
+- Call volume exceeds SBC rated capacity
+- Resource leak or runaway signaling process
+- Insufficient hardware sizing for peak traffic
+known_causes: *id001
+known_resolution: &id002
+- Reduce load via upstream throttling if possible
+- Identify and clear abnormal session or process consumption
+- Plan capacity upgrade or HA load distribution
+recommended_actions: *id002
+rollback_steps:
+- Restore overload thresholds after stabilization
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- sbc_overload
+- cpu_overload
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-010
+- VP-AUDIOCODES-SBC-VG-010
+- VP-AUDIOCODES-SBC-REF-001
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- performance
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

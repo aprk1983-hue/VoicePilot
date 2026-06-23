@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000014
+title: AudioCodes SBC Session license exhausted
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: LICENSING
+severity: critical
+summary: AudioCodes SBC Session license exhausted affecting AudioCodes SBC operations.
+description: AudioCodes SBC Session license exhausted affecting AudioCodes SBC operations.
+symptoms:
+- New calls rejected with license limit alarm
+- SBC reports maximum session count reached
+- Existing calls continue but new sessions fail
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- session_license_exhausted
+- session_license_exhausted_detected
+expected_hypotheses: &id001
+- Session license capacity reached
+- Zombie sessions not releasing licenses
+- License file not updated after capacity upgrade order
+known_causes: *id001
+known_resolution: &id002
+- Verify active session count versus licensed capacity
+- Clear stale sessions or restart affected service if safe
+- Install updated license file from AudioCodes portal
+recommended_actions: *id002
+rollback_steps:
+- Restore previous license file if new license causes fault
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- session_license_exhausted
+- license_capacity_exceeded
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-009
+- VP-AUDIOCODES-SBC-VG-009
+- VP-AUDIOCODES-SBC-REF-001
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- licensing
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

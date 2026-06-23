@@ -1,0 +1,39 @@
+asset_id: VP-AUDIOCODES-SBC-REF-003
+title: TLS Certificate Management
+asset_type: REFERENCE
+vendor: AudioCodes
+product: SBC
+category: SIP
+severity: low
+summary: TLS Certificate Management reference for AudioCodes SBC engineering investigations.
+description: TLS Certificate Management for AudioCodes SBC deployments and troubleshooting.
+symptoms:
+- Engineering reference consultation required
+expected_findings:
+- reference_applicable
+expected_hypotheses:
+- Authoritative AudioCodes guidance applies
+known_causes:
+- Misconfiguration relative to AudioCodes best practice
+known_resolution:
+- Align design and remediation with AudioCodes guidance
+recommended_actions:
+- Consult this reference during investigation and remediation
+verification_steps:
+- Confirm document version matches deployed SBC configuration
+related_asset_ids:
+- VP-AUDIOCODES-SBC-000003
+- VP-AUDIOCODES-SBC-000004
+- VP-AUDIOCODES-SBC-000013
+tags:
+- audiocodes-sbc
+- reference
+- professional-pack
+- audiocodes
+references:
+- https://www.audiocodes.com/solutions-products/sbc
+- AudioCodes SBC Professional Pack v1
+confidence: 0.99
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

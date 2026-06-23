@@ -190,7 +190,7 @@ class TestCucmAssetsCli:
         assert run_assets_stats(stats_output.append, library=library) == 0
         stats_text = "\n".join(stats_output)
         assert "Total Assets:" in stats_text
-        assert "INCIDENT: 60" in stats_text
+        assert "INCIDENT: 85" in stats_text
 
     def test_cli_validate_and_quality(self, library) -> None:
         validate_output: list[str] = []

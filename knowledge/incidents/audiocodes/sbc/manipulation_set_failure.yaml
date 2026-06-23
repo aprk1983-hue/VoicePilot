@@ -1,0 +1,53 @@
+asset_id: VP-AUDIOCODES-SBC-000010
+title: AudioCodes SBC Manipulation Set failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: ROUTING
+severity: medium
+summary: AudioCodes SBC Manipulation Set failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC Manipulation Set failure affecting AudioCodes SBC operations.
+symptoms:
+- Dialed number transformed incorrectly
+- Outbound URI or Request-URI malformed after manipulation
+- Provider rejects call due to invalid number format
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- manipulation_set_failure
+- manipulation_set_failure_detected
+expected_hypotheses: &id001
+- Manipulation rule regex incorrect or order wrong
+- Manipulation Set not applied to expected IP Group
+- Strip/add prefix rule removes required digits
+known_causes: *id001
+known_resolution: &id002
+- Review Manipulation Set rules and execution order
+- Validate output against provider numbering requirements
+- Test manipulation with SBC message trace
+recommended_actions: *id002
+rollback_steps:
+- Restore previous Manipulation Set configuration
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- manipulation_set_failure
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-004
+- VP-AUDIOCODES-SBC-VG-004
+- VP-AUDIOCODES-SBC-REF-001
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- manipulation-set
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

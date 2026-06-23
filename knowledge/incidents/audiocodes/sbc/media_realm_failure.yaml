@@ -1,0 +1,53 @@
+asset_id: VP-AUDIOCODES-SBC-000011
+title: AudioCodes SBC Media Realm failure
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: MEDIA
+severity: high
+summary: AudioCodes SBC Media Realm failure affecting AudioCodes SBC operations.
+description: AudioCodes SBC Media Realm failure affecting AudioCodes SBC operations.
+symptoms:
+- Calls setup but no audio path established
+- Media Realm unavailable or misconfigured
+- RTP ports not allocated from expected range
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- media_realm_failure
+- media_realm_failure_detected
+expected_hypotheses: &id001
+- Media Realm disabled or IP address unreachable
+- RTP port range exhausted in Media Realm
+- SIP Interface not associated with correct Media Realm
+known_causes: *id001
+known_resolution: &id002
+- Verify Media Realm enabled with valid IP and port range
+- Expand RTP port pool if exhausted
+- Associate SIP Interface with correct Media Realm
+recommended_actions: *id002
+rollback_steps:
+- Restore previous Media Realm configuration
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- media_realm_failure
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-005
+- VP-AUDIOCODES-SBC-VG-005
+- VP-AUDIOCODES-SBC-REF-004
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- media-realm
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

@@ -134,7 +134,7 @@ class TestAssetsCli:
         stats_output: list[str] = []
         assert run_assets_stats(stats_output.append, library=library) == 0
         assert "Total Assets:" in "\n".join(stats_output)
-        assert "INCIDENT: 60" in "\n".join(stats_output)
+        assert "INCIDENT: 85" in "\n".join(stats_output)
 
     def test_main_assets_commands(self) -> None:
         assert main(["assets", "search", "sip-ua"]) == 0

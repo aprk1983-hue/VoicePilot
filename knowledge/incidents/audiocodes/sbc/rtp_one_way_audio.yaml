@@ -1,0 +1,54 @@
+asset_id: VP-AUDIOCODES-SBC-000012
+title: AudioCodes SBC RTP one-way audio
+asset_type: INCIDENT
+vendor: AudioCodes
+product: SBC
+category: MEDIA
+severity: high
+summary: AudioCodes SBC RTP one-way audio affecting AudioCodes SBC operations.
+description: AudioCodes SBC RTP one-way audio affecting AudioCodes SBC operations.
+symptoms:
+- Caller hears callee but not vice versa or opposite
+- RTP stream present in one direction only
+- Post-connect audio asymmetry on all calls
+required_evidence:
+- AudioCodes SBC configuration export
+- SIP message trace or Syslog snapshot
+- Alarm and status screen capture
+expected_findings:
+- rtp_one_way_audio
+- rtp_one_way_audio_detected
+expected_hypotheses: &id001
+- Asymmetric RTP routing or NAT pinhole failure
+- Wrong Media Realm public IP advertised in SDP
+- Firewall blocks RTP return path
+known_causes: *id001
+known_resolution: &id002
+- Verify symmetric RTP and correct public IP in Media Realm
+- Open required RTP port range bidirectionally on firewall
+- Enable RTCP and validate pinhole with packet capture
+recommended_actions: *id002
+rollback_steps:
+- Restore previous Media Realm NAT and public IP settings
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- rtp_one_way_audio
+- one_way_audio
+related_asset_ids:
+- VP-AUDIOCODES-SBC-RB-005
+- VP-AUDIOCODES-SBC-VG-005
+- VP-AUDIOCODES-SBC-REF-004
+tags:
+- audiocodes-sbc
+- professional-pack
+- audiocodes
+- rtp
+references:
+- AudioCodes SBC Professional Pack v1
+- AudioCodes Mediant SBC product documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'
