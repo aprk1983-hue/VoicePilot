@@ -11,7 +11,8 @@ VoicePilot/
 ├── plugins/        # Official and third-party plugins
 ├── tests/          # Platform test suite
 ├── cli/            # CLI (future)
-├── api/            # HTTP API (future)
+├── api/            # FastAPI enterprise backend
+├── web/            # React enterprise web UI
 ├── backend/        # Compatibility shim (deprecated)
 ├── brain/          # Architecture documentation
 └── docs/           # Specifications (DSL, data model, playbooks)
