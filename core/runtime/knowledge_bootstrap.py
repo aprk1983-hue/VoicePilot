@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from knowledge import KnowledgeEngine, KnowledgeLoader, KnowledgeRegistry
+from knowledge.knowledge_engine import KnowledgeEngine
+from knowledge.knowledge_loader import KnowledgeLoader
+from knowledge.knowledge_registry import KnowledgeRegistry
 
 PACKS_ROOT = Path(__file__).resolve().parents[2] / "knowledge" / "packs"
 

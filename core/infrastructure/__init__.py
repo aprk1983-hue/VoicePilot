@@ -1,15 +1,9 @@
-"""Infrastructure adapters for VoicePilot."""
+"""Infrastructure package.
 
-from infrastructure.filesystem import (
-    FilesystemPlaybookRepository,
-    InMemoryCaseRepository,
-)
-from infrastructure.logger import StructuredLogger
+Keep this package lightweight to avoid runtime circular imports.
+Import concrete repositories directly from infrastructure.filesystem when needed.
+"""
+
 from infrastructure.yaml_loader import YamlLoader
 
-__all__ = [
-    "FilesystemPlaybookRepository",
-    "InMemoryCaseRepository",
-    "StructuredLogger",
-    "YamlLoader",
-]
+__all__ = ["YamlLoader"]
