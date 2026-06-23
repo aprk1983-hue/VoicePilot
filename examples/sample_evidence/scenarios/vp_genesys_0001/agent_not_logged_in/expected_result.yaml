@@ -1,0 +1,3 @@
+scenario_id: agent_not_logged_in
+expected_root_cause: Agent not logged in
+min_confidence: 90

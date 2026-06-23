@@ -33,6 +33,15 @@ class GenesysByocCloudTrunksExportParser(GenesysCloudParser):
             options = (record_value(record, "sip_options_status", "options_status") or "").lower()
             if options in {"failed", "failure", "503"}:
                 findings.append(ParserFinding(signal="sip_options_failure", confidence=89.0, detail="SIP OPTIONS failed", source_field="sip_options_status"))
+            carrier = (record_value(record, "carrier_status", "carrier_reachability") or "").lower()
+            if carrier in {"unreachable", "down", "failed", "unavailable"}:
+                findings.append(ParserFinding(signal="carrier_unreachable", confidence=90.0, detail="Carrier unreachable", source_field="carrier_status"))
+            cert = (record_value(record, "certificate_status", "tls_certificate_status") or "").lower()
+            if cert in {"expired", "invalid"}:
+                findings.append(ParserFinding(signal="tls_certificate_expired", confidence=95.0, detail="TLS certificate expired", source_field="certificate_status"))
+            tls = (record_value(record, "tls_status", "tls_negotiation_status") or "").lower()
+            if tls in {"failed", "error", "negotiation_failed"}:
+                findings.append(ParserFinding(signal="tls_negotiation_failure", confidence=92.0, detail="TLS negotiation failure", source_field="tls_status"))
 
         return findings
 

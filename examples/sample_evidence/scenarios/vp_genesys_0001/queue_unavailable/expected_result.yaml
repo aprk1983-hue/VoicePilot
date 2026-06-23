@@ -1,0 +1,3 @@
+scenario_id: queue_unavailable
+expected_root_cause: Queue unavailable
+min_confidence: 92

@@ -13,6 +13,10 @@ from runtime.audiocodes_investigation import (
     AUDIOCODES_ALL_FAIL_EVIDENCE,
     VP_AUDIOCODES_0001_PLAYBOOK_ID,
 )
+from runtime.genesys_investigation import (
+    GENESYS_ALL_FAIL_EVIDENCE,
+    VP_GENESYS_0001_PLAYBOOK_ID,
+)
 from runtime.teams_investigation import TEAMS_ALL_FAIL_EVIDENCE, VP_TEAMS_0001_PLAYBOOK_ID
 
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
@@ -54,6 +58,8 @@ def build_intake_summary(case: Case, playbook: Playbook | None = None) -> Intake
         return _build_vp_teams_0001_summary(case, known_facts)
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return _build_vp_audiocodes_0001_summary(case, known_facts)
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return _build_vp_genesys_0001_summary(case, known_facts)
 
     return IntakeSummary(
         case_id=case.case_id,
@@ -212,6 +218,36 @@ def _build_vp_audiocodes_0001_summary(
         missing_evidence=list(AUDIOCODES_ALL_FAIL_EVIDENCE),
         recommended_strategy=strategy,
         next_required_commands=list(AUDIOCODES_ALL_FAIL_EVIDENCE),
+    )
+
+
+def _build_vp_genesys_0001_summary(
+    case: Case,
+    known_facts: dict[str, Any],
+) -> IntakeSummary:
+    """Apply VP-GENESYS-0001 deterministic summary rules."""
+    strategy = "Authentication-first"
+    symptom = str(known_facts.get("symptom_detail", "")).lower()
+    if "edge" in symptom or "byoc" in symptom:
+        strategy = "Edge-infrastructure-first"
+    if "queue" in symptom or "agent" in symptom or "presence" in symptom:
+        strategy = "Queue-routing-first"
+    if "architect" in symptom or "flow" in symptom or "data action" in symptom:
+        strategy = "Architect-first"
+    if "tls" in symptom or "sip" in symptom or "trunk" in symptom or "carrier" in symptom:
+        strategy = "Voice-routing-first"
+    if "webrtc" in symptom or "media" in symptom or "recording" in symptom:
+        strategy = "Media-first"
+    if "campaign" in symptom or "outbound" in symptom:
+        strategy = "Campaign-first"
+    return IntakeSummary(
+        case_id=case.case_id,
+        playbook_id=VP_GENESYS_0001_PLAYBOOK_ID,
+        current_state=case.status,
+        known_facts=known_facts,
+        missing_evidence=list(GENESYS_ALL_FAIL_EVIDENCE),
+        recommended_strategy=strategy,
+        next_required_commands=list(GENESYS_ALL_FAIL_EVIDENCE),
     )
 
 

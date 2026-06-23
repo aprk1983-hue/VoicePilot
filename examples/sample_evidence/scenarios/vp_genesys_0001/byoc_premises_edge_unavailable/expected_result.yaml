@@ -1,0 +1,3 @@
+scenario_id: byoc_premises_edge_unavailable
+expected_root_cause: BYOC Premises Edge unavailable
+min_confidence: 92

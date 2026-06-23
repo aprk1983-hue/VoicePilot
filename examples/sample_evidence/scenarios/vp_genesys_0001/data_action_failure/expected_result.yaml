@@ -1,0 +1,3 @@
+scenario_id: data_action_failure
+expected_root_cause: Data Action failure
+min_confidence: 91

@@ -27,6 +27,11 @@ from runtime.audiocodes_investigation import (
     AUDIOCODES_INTAKE_ANSWERS,
     VP_AUDIOCODES_0001_PLAYBOOK_ID,
 )
+from runtime.genesys_investigation import (
+    GENESYS_EVIDENCE_FILES,
+    GENESYS_INTAKE_ANSWERS,
+    VP_GENESYS_0001_PLAYBOOK_ID,
+)
 from runtime.teams_investigation import (
     TEAMS_EVIDENCE_FILES,
     TEAMS_INTAKE_ANSWERS,
@@ -91,6 +96,8 @@ def evidence_files_for_playbook(playbook_id: str) -> tuple[tuple[str, str], ...]
         return TEAMS_EVIDENCE_FILES
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return AUDIOCODES_EVIDENCE_FILES
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return GENESYS_EVIDENCE_FILES
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return EVIDENCE_FILES
     raise UnsupportedPlaybookScenarioError(playbook_id)
@@ -104,6 +111,8 @@ def intake_answers_for_playbook(playbook_id: str) -> list[str]:
         return list(TEAMS_INTAKE_ANSWERS)
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return list(AUDIOCODES_INTAKE_ANSWERS)
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return list(GENESYS_INTAKE_ANSWERS)
     if playbook_id == VP_CUBE_0001_PLAYBOOK_ID:
         return list(INTAKE_ANSWERS)
     raise UnsupportedPlaybookScenarioError(playbook_id)
@@ -120,6 +129,8 @@ def default_scenarios_root(playbook_id: str, repo_root: Path | None = None) -> P
         return root / "examples" / "sample_evidence" / "scenarios" / "vp_teams_0001"
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return root / "examples" / "sample_evidence" / "scenarios" / "vp_audiocodes_0001"
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return root / "examples" / "sample_evidence" / "scenarios" / "vp_genesys_0001"
     raise UnsupportedPlaybookScenarioError(playbook_id)
 
 
@@ -207,6 +218,7 @@ def resolve_scenario_dirs(
         VP_CUCM_0001_PLAYBOOK_ID,
         VP_TEAMS_0001_PLAYBOOK_ID,
         VP_AUDIOCODES_0001_PLAYBOOK_ID,
+        VP_GENESYS_0001_PLAYBOOK_ID,
     }:
         raise UnsupportedPlaybookScenarioError(playbook_id)
 

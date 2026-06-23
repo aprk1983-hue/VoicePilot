@@ -21,6 +21,10 @@ from runtime.audiocodes_investigation import (
     VP_AUDIOCODES_0001_ACTION_PLANS,
     VP_AUDIOCODES_0001_PLAYBOOK_ID,
 )
+from runtime.genesys_investigation import (
+    VP_GENESYS_0001_ACTION_PLANS,
+    VP_GENESYS_0001_PLAYBOOK_ID,
+)
 from runtime.teams_investigation import VP_TEAMS_0001_ACTION_PLANS, VP_TEAMS_0001_PLAYBOOK_ID
 from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
 
@@ -511,6 +515,441 @@ VP_AUDIOCODES_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
     ),
 }
 
+VP_GENESYS_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
+    "HYP-GENESYS-OAUTH": _ChangeTemplate(
+        current_state="OAuth failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy oauth failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-001\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-001", "VP-GENESYS-CLOUD-VG-001", "VP-GENESYS-CLOUD-REF-002"),
+    ),
+    "HYP-GENESYS-TOKEN": _ChangeTemplate(
+        current_state="Token expired detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy token expired per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-001\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-001", "VP-GENESYS-CLOUD-VG-001", "VP-GENESYS-CLOUD-REF-002"),
+    ),
+    "HYP-GENESYS-ORG": _ChangeTemplate(
+        current_state="Organization unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy organization unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-002", "VP-GENESYS-CLOUD-VG-002", "VP-GENESYS-CLOUD-REF-001"),
+    ),
+    "HYP-GENESYS-EDGE-OFFLINE": _ChangeTemplate(
+        current_state="Edge offline detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy edge offline per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-002", "VP-GENESYS-CLOUD-VG-002", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-EDGE-DEGRADED": _ChangeTemplate(
+        current_state="Edge degraded detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy edge degraded per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-002", "VP-GENESYS-CLOUD-VG-002", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-CONVERSATION": _ChangeTemplate(
+        current_state="Conversation service unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy conversation service unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-009\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-009", "VP-GENESYS-CLOUD-VG-009", "VP-GENESYS-CLOUD-REF-001"),
+    ),
+    "HYP-GENESYS-ANALYTICS": _ChangeTemplate(
+        current_state="Analytics service unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy analytics service unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-009\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-009", "VP-GENESYS-CLOUD-VG-009", "VP-GENESYS-CLOUD-REF-001"),
+    ),
+    "HYP-GENESYS-BYOC-CLOUD": _ChangeTemplate(
+        current_state="BYOC Cloud trunk unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy byoc cloud trunk unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-003", "VP-GENESYS-CLOUD-VG-003", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-BYOC-PREMISES": _ChangeTemplate(
+        current_state="BYOC Premises Edge unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy byoc premises edge unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-002", "VP-GENESYS-CLOUD-VG-002", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-SIP-OPTIONS": _ChangeTemplate(
+        current_state="SIP OPTIONS failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy sip options failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-003", "VP-GENESYS-CLOUD-VG-003", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-CARRIER": _ChangeTemplate(
+        current_state="Carrier unreachable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy carrier unreachable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-003", "VP-GENESYS-CLOUD-VG-003", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-TLS-CERT": _ChangeTemplate(
+        current_state="TLS certificate expired detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy tls certificate expired per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-004\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-004", "VP-GENESYS-CLOUD-VG-004", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-TLS-NEG": _ChangeTemplate(
+        current_state="TLS negotiation failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy tls negotiation failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-004\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-004", "VP-GENESYS-CLOUD-VG-004", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+    "HYP-GENESYS-QUEUE": _ChangeTemplate(
+        current_state="Queue unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy queue unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-005", "VP-GENESYS-CLOUD-VG-005", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-QUEUE-MEMBER": _ChangeTemplate(
+        current_state="Queue member unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy queue member unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-005", "VP-GENESYS-CLOUD-VG-005", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-QUEUE-OVERLOAD": _ChangeTemplate(
+        current_state="Queue overloaded detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy queue overloaded per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-005", "VP-GENESYS-CLOUD-VG-005", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-AGENT-LOGIN": _ChangeTemplate(
+        current_state="Agent not logged in detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy agent not logged in per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-006", "VP-GENESYS-CLOUD-VG-006", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-AGENT-STUCK": _ChangeTemplate(
+        current_state="Agent stuck interacting detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy agent stuck interacting per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-006", "VP-GENESYS-CLOUD-VG-006", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-PRESENCE-SYNC": _ChangeTemplate(
+        current_state="Presence synchronization issue detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy presence synchronization issue per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-006", "VP-GENESYS-CLOUD-VG-006", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-USER-ROUTING": _ChangeTemplate(
+        current_state="User routing disabled detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy user routing disabled per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-006", "VP-GENESYS-CLOUD-VG-006", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-FLOW": _ChangeTemplate(
+        current_state="Architect flow failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy architect flow failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-007\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-007", "VP-GENESYS-CLOUD-VG-007", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-ARCHITECT-PUBLISH": _ChangeTemplate(
+        current_state="Architect publish issue detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy architect publish issue per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-007\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-007", "VP-GENESYS-CLOUD-VG-007", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-DATA-ACTION": _ChangeTemplate(
+        current_state="Data Action failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy data action failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-007\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-007", "VP-GENESYS-CLOUD-VG-007", "VP-GENESYS-CLOUD-REF-004"),
+    ),
+    "HYP-GENESYS-WEBRTC": _ChangeTemplate(
+        current_state="WebRTC failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy webrtc failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-008\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-008", "VP-GENESYS-CLOUD-VG-008", "VP-GENESYS-CLOUD-REF-005"),
+    ),
+    "HYP-GENESYS-MEDIA": _ChangeTemplate(
+        current_state="Media service unavailable detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy media service unavailable per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-008\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-008", "VP-GENESYS-CLOUD-VG-008", "VP-GENESYS-CLOUD-REF-005"),
+    ),
+    "HYP-GENESYS-RECORDING": _ChangeTemplate(
+        current_state="Recording failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy recording failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-009\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-009", "VP-GENESYS-CLOUD-VG-009", "VP-GENESYS-CLOUD-REF-005"),
+    ),
+    "HYP-GENESYS-CAMPAIGN": _ChangeTemplate(
+        current_state="Outbound campaign failure detected from Genesys Cloud evidence.",
+        recommended_state="Restore healthy outbound campaign failure per advisory runbook.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — review configuration per VP-GENESYS-CLOUD-RB-010\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior Genesys Cloud configuration from export baseline\n"
+        ),
+        impacted_objects=("Genesys Cloud configuration",),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("Genesys Cloud CX",),
+        vendor_references=("VP-GENESYS-CLOUD-RB-010", "VP-GENESYS-CLOUD-VG-010", "VP-GENESYS-CLOUD-REF-003"),
+    ),
+}
+
 _DEFAULT_APPROVAL_SECTIONS: tuple[ApprovalSection, ...] = (
     ApprovalSection(
         name="Technical Reviewer",
@@ -670,6 +1109,8 @@ def _action_plans_for_playbook(playbook_id: str | None) -> dict:
         return VP_TEAMS_0001_ACTION_PLANS
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return VP_AUDIOCODES_0001_ACTION_PLANS
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return VP_GENESYS_0001_ACTION_PLANS
     return VP_CUBE_0001_ACTION_PLANS
 
 
@@ -680,6 +1121,8 @@ def _change_templates_for_playbook(playbook_id: str | None) -> dict[str, _Change
         return VP_TEAMS_0001_CHANGE_TEMPLATES
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return VP_AUDIOCODES_0001_CHANGE_TEMPLATES
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return VP_GENESYS_0001_CHANGE_TEMPLATES
     return VP_CUBE_0001_CHANGE_TEMPLATES
 
 

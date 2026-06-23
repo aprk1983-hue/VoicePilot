@@ -83,6 +83,7 @@ class TestValidationEngine:
         assert "VP-CUBE-0001" in SUPPORTED_VALIDATION_PLAYBOOKS
         assert "VP-CUCM-0001" in SUPPORTED_VALIDATION_PLAYBOOKS
         assert "VP-AUDIOCODES-0001" in SUPPORTED_VALIDATION_PLAYBOOKS
+        assert "VP-GENESYS-0001" in SUPPORTED_VALIDATION_PLAYBOOKS
 
     def test_discover_cube_scenarios(self, validation_engine: ValidationEngine) -> None:
         scenarios = validation_engine.discover_scenarios(VP_CUBE_0001_PLAYBOOK_ID)
@@ -103,7 +104,7 @@ class TestValidationEngine:
 
     def test_validate_all_playbooks(self, validation_engine: ValidationEngine) -> None:
         suite = validation_engine.validate_all()
-        assert suite.summary.total_scenarios == 31
+        assert suite.summary.total_scenarios == 43
         assert suite.summary.playbook_id is None
         assert suite.summary.failed_count == 0
 

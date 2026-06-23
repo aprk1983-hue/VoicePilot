@@ -209,7 +209,9 @@ def register_builtin_rules(registry) -> None:
     for rule in BUILTIN_DISCOVERY_RULES:
         registry.register_rule(rule)
     from discovery.audiocodes_planner_rules import register_audiocodes_discovery_rules
+    from discovery.genesys_planner_rules import register_genesys_discovery_rules
     from discovery.teams_planner_rules import register_teams_discovery_rules
 
     register_teams_discovery_rules(registry)
     register_audiocodes_discovery_rules(registry)
+    register_genesys_discovery_rules(registry)

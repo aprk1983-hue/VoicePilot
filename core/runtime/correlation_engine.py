@@ -241,6 +241,10 @@ def _rules_for_playbook(
         VP_AUDIOCODES_0001_CORRELATION_RULES,
         VP_AUDIOCODES_0001_PLAYBOOK_ID,
     )
+    from runtime.genesys_investigation import (
+        VP_GENESYS_0001_CORRELATION_RULES,
+        VP_GENESYS_0001_PLAYBOOK_ID,
+    )
     from runtime.teams_investigation import VP_TEAMS_0001_CORRELATION_RULES, VP_TEAMS_0001_PLAYBOOK_ID
 
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
@@ -249,6 +253,8 @@ def _rules_for_playbook(
         return VP_TEAMS_0001_CORRELATION_RULES
     if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return VP_AUDIOCODES_0001_CORRELATION_RULES
+    if playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return VP_GENESYS_0001_CORRELATION_RULES
     return default_rules
 
 

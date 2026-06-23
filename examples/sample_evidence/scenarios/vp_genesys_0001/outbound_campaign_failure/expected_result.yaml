@@ -1,0 +1,3 @@
+scenario_id: outbound_campaign_failure
+expected_root_cause: Outbound campaign failure
+min_confidence: 91

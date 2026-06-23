@@ -35,6 +35,7 @@ SUPPORTED_VALIDATION_PLAYBOOKS: tuple[str, ...] = (
     "VP-CUCM-0001",
     "VP-TEAMS-0001",
     "VP-AUDIOCODES-0001",
+    "VP-GENESYS-0001",
 )
 
 

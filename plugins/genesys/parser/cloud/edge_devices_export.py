@@ -30,6 +30,8 @@ class GenesysEdgeDevicesExportParser(GenesysCloudParser):
             state = (record_value(record, "state", "status") or "").lower()
             if state in {"offline", "down", "inactive"}:
                 findings.append(ParserFinding(signal="edge_offline", confidence=93.0, detail="Edge offline", source_field="state"))
+            if state in {"degraded", "warning", "impaired"}:
+                findings.append(ParserFinding(signal="edge_degraded", confidence=88.0, detail="Edge degraded", source_field="state"))
 
         return findings
 

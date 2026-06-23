@@ -1,0 +1,4 @@
+Trunk ID: trunk-cloud-01
+Trunk Name: BYOC Cloud Primary
+State: Active
+SIP Options Status: Success

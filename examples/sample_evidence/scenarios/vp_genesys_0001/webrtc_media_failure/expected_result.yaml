@@ -1,0 +1,3 @@
+scenario_id: webrtc_media_failure
+expected_root_cause: Media service unavailable
+min_confidence: 91

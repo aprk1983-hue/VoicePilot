@@ -23,6 +23,7 @@ Delivery surfaces, packaging, plugins, and operational entry points.
 | [16 — Genesys Cloud CX Knowledge Library](16-genesys-cloud-knowledge-library.md) | Implemented | Genesys Cloud CX professional knowledge pack |
 | [17 — Genesys Cloud Object Model](17-genesys-object-model.md) | Implemented | GVOM types and deterministic export parser framework |
 | [18 — Genesys Cloud Health Engine](18-genesys-health-engine.md) | Implemented | GVOM health rules and scoring |
+| [19 — Genesys Cloud Investigation Engine](19-genesys-investigation-engine.md) | Implemented | VP-GENESYS-0001 deterministic investigation pipeline |
 
 ## Related Documentation
 

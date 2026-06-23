@@ -316,6 +316,7 @@ class TestPlannerEngine:
 
     def test_default_registry_is_preloaded(self) -> None:
         from discovery.audiocodes_planner_rules import AUDIOCODES_DISCOVERY_RULES
+        from discovery.genesys_planner_rules import GENESYS_DISCOVERY_RULES
         from discovery.teams_planner_rules import TEAMS_DISCOVERY_RULES
 
         registry = default_discovery_registry()
@@ -323,6 +324,7 @@ class TestPlannerEngine:
             len(BUILTIN_DISCOVERY_RULES)
             + len(TEAMS_DISCOVERY_RULES)
             + len(AUDIOCODES_DISCOVERY_RULES)
+            + len(GENESYS_DISCOVERY_RULES)
         )
 
 

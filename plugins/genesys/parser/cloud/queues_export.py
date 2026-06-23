@@ -30,6 +30,9 @@ class GenesysQueuesExportParser(GenesysCloudParser):
             state = (record_value(record, "state", "status") or "").lower()
             if state in {"unavailable", "disabled", "inactive"}:
                 findings.append(ParserFinding(signal="queue_unavailable", confidence=92.0, detail="Queue unavailable", source_field="state"))
+            waiting = record_value(record, "waiting_calls", "queue_depth", "offered_calls")
+            if waiting and waiting.isdigit() and int(waiting) >= 50:
+                findings.append(ParserFinding(signal="queue_overloaded", confidence=88.0, detail="Queue overloaded", source_field="waiting_calls"))
 
         return findings
 

@@ -1,0 +1,344 @@
+playbook:
+  api_version: voicepilot.io/v1
+  kind: Playbook
+
+  metadata:
+    id: VP-GENESYS-0001
+    version: "1.0.0"
+    title: Genesys Cloud Investigation
+    description: >
+      TAC-grade deterministic investigation for Genesys Cloud CX using uploaded export
+      evidence only. Read-only — never connects via OAuth, REST, GraphQL, or performs
+      configuration changes.
+    category: cloud
+    vendor: genesys
+    status: active
+    author: voicepilot-curator
+    reviewed_by: tac-sme
+    effective_from: 2026-06-19
+    tags: [genesys, cloud, oauth, edge, byoc, queue, architect, media]
+
+  platforms:
+    - vendor: genesys
+      products: [cloud]
+      min_version: "1.0"
+      roles: [contact_center]
+
+  intake:
+    questions:
+      - id: Q-GC-001
+        text: Did Genesys Cloud contact center ever work?
+        category: intake
+        phase: INTAKE
+        target_field: known_facts.worked_previously
+        required: true
+      - id: Q-GC-002
+        text: When did the issue start?
+        category: intake
+        phase: INTAKE
+        target_field: timeline.onset
+        required: true
+      - id: Q-GC-003
+        text: Describe the symptom.
+        category: scope
+        phase: INTAKE
+        target_field: known_facts.symptom_detail
+        required: true
+      - id: Q-GC-004
+        text: Which queues, agents, or trunks are affected?
+        category: scope
+        phase: INTAKE
+        target_field: affected_scope.destination_classes
+        required: true
+      - id: Q-GC-005
+        text: What PSTN/BYOC connectivity model is in use?
+        category: topology
+        phase: INTAKE
+        target_field: known_facts.pstn_connectivity
+        required: true
+      - id: Q-GC-006
+        text: Has any Genesys Cloud configuration changed recently?
+        category: change
+        phase: DISCOVERY
+        target_field: known_facts.recent_changes
+        required: false
+
+  evidence:
+    requirements:
+      - id: EVD-GC-001
+        title: organization-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-002
+        title: users-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-003
+        title: queues-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-004
+        title: queue-members-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-005
+        title: agents-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-006
+        title: presence-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-007
+        title: flows-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-008
+        title: architect-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-009
+        title: data-actions-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-010
+        title: byoc-cloud-trunks-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-011
+        title: byoc-premises-trunks-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-012
+        title: edge-devices-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-013
+        title: recording-policies-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-014
+        title: campaigns-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-GC-015
+        title: skills-export
+        type: export
+        mandatory: true
+        phase: COLLECTION
+    commands:
+      - id: CMD-GC-001
+        command: organization-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-002
+        command: users-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-003
+        command: queues-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-004
+        command: queue-members-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-005
+        command: agents-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-006
+        command: presence-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-007
+        command: flows-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-008
+        command: architect-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-009
+        command: data-actions-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-010
+        command: byoc-cloud-trunks-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-011
+        command: byoc-premises-trunks-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-012
+        command: edge-devices-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-013
+        command: recording-policies-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-014
+        command: campaigns-export
+        cost: low
+        privilege: read
+      - id: CMD-GC-015
+        command: skills-export
+        cost: low
+        privilege: read
+    supported_parser_outputs:
+      - agent_not_logged_in
+      - agent_stuck_interacting
+      - analytics_service_unavailable
+      - architect_publish_failure
+      - byoc_cloud_trunk_failure
+      - byoc_premises_edge_unavailable
+      - call_flow_failure
+      - carrier_unreachable
+      - conversation_service_unavailable
+      - data_action_failure
+      - edge_degraded
+      - edge_offline
+      - media_service_unavailable
+      - oauth_failure
+      - organization_unavailable
+      - outbound_campaign_failure
+      - presence_synchronization_failure
+      - queue_member_unavailable
+      - queue_overloaded
+      - queue_unavailable
+      - recording_failure
+      - sip_options_failure
+      - tls_certificate_expired
+      - tls_negotiation_failure
+      - token_expired
+      - user_routing_disabled
+      - webrtc_failure
+
+  hypotheses:
+    - id: HYP-GENESYS-OAUTH
+      title: OAuth failure
+      confidence: 94
+      signals: [oauth_failure]
+    - id: HYP-GENESYS-TOKEN
+      title: Token expired
+      confidence: 92
+      signals: [token_expired]
+    - id: HYP-GENESYS-ORG
+      title: Organization unavailable
+      confidence: 95
+      signals: [organization_unavailable]
+    - id: HYP-GENESYS-EDGE-OFFLINE
+      title: Edge offline
+      confidence: 93
+      signals: [edge_offline]
+    - id: HYP-GENESYS-EDGE-DEGRADED
+      title: Edge degraded
+      confidence: 88
+      signals: [edge_degraded]
+    - id: HYP-GENESYS-CONVERSATION
+      title: Conversation service unavailable
+      confidence: 91
+      signals: [conversation_service_unavailable]
+    - id: HYP-GENESYS-ANALYTICS
+      title: Analytics service unavailable
+      confidence: 86
+      signals: [analytics_service_unavailable]
+    - id: HYP-GENESYS-BYOC-CLOUD
+      title: BYOC Cloud trunk unavailable
+      confidence: 93
+      signals: [byoc_cloud_trunk_failure]
+    - id: HYP-GENESYS-BYOC-PREMISES
+      title: BYOC Premises Edge unavailable
+      confidence: 92
+      signals: [byoc_premises_edge_unavailable]
+    - id: HYP-GENESYS-SIP-OPTIONS
+      title: SIP OPTIONS failure
+      confidence: 89
+      signals: [sip_options_failure]
+    - id: HYP-GENESYS-CARRIER
+      title: Carrier unreachable
+      confidence: 90
+      signals: [carrier_unreachable]
+    - id: HYP-GENESYS-TLS-CERT
+      title: TLS certificate expired
+      confidence: 95
+      signals: [tls_certificate_expired]
+    - id: HYP-GENESYS-TLS-NEG
+      title: TLS negotiation failure
+      confidence: 92
+      signals: [tls_negotiation_failure]
+    - id: HYP-GENESYS-QUEUE
+      title: Queue unavailable
+      confidence: 92
+      signals: [queue_unavailable]
+    - id: HYP-GENESYS-QUEUE-MEMBER
+      title: Queue member unavailable
+      confidence: 91
+      signals: [queue_member_unavailable]
+    - id: HYP-GENESYS-QUEUE-OVERLOAD
+      title: Queue overloaded
+      confidence: 88
+      signals: [queue_overloaded]
+    - id: HYP-GENESYS-AGENT-LOGIN
+      title: Agent not logged in
+      confidence: 90
+      signals: [agent_not_logged_in]
+    - id: HYP-GENESYS-AGENT-STUCK
+      title: Agent stuck interacting
+      confidence: 91
+      signals: [agent_stuck_interacting]
+    - id: HYP-GENESYS-PRESENCE-SYNC
+      title: Presence synchronization issue
+      confidence: 89
+      signals: [presence_synchronization_failure]
+    - id: HYP-GENESYS-USER-ROUTING
+      title: User routing disabled
+      confidence: 88
+      signals: [user_routing_disabled]
+    - id: HYP-GENESYS-FLOW
+      title: Architect flow failure
+      confidence: 91
+      signals: [call_flow_failure]
+    - id: HYP-GENESYS-ARCHITECT-PUBLISH
+      title: Architect publish issue
+      confidence: 92
+      signals: [architect_publish_failure]
+    - id: HYP-GENESYS-DATA-ACTION
+      title: Data Action failure
+      confidence: 91
+      signals: [data_action_failure]
+    - id: HYP-GENESYS-WEBRTC
+      title: WebRTC failure
+      confidence: 90
+      signals: [webrtc_failure]
+    - id: HYP-GENESYS-MEDIA
+      title: Media service unavailable
+      confidence: 91
+      signals: [media_service_unavailable]
+    - id: HYP-GENESYS-RECORDING
+      title: Recording failure
+      confidence: 90
+      signals: [recording_failure]
+    - id: HYP-GENESYS-CAMPAIGN
+      title: Outbound campaign failure
+      confidence: 91
+      signals: [outbound_campaign_failure]
+
+  report:
+    sections: [executive, technical, rca]

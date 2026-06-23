@@ -3,12 +3,15 @@ display_name: Genesys Cloud Plugin
 version: 0.1.0
 vendor: VoicePilot
 plugin_type: vendor
-description: Genesys Cloud CX evidence parsers and knowledge pack integration.
+description: Genesys Cloud CX evidence parsers, playbooks, and knowledge pack integration.
 capabilities:
   - genesys_cloud_parsers
+  - genesys_cloud_playbooks
   - genesys_cloud_knowledge
 supported_platforms:
   - Genesys Cloud
 entry_points:
   parsers:
     - parser/cloud/
+  playbooks:
+    - playbooks/cloud/vp-genesys-0001-genesys-cloud-investigation.vpb.yaml

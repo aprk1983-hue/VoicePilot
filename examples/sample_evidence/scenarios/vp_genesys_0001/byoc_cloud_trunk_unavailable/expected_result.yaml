@@ -1,0 +1,3 @@
+scenario_id: byoc_cloud_trunk_unavailable
+expected_root_cause: BYOC Cloud trunk unavailable
+min_confidence: 93

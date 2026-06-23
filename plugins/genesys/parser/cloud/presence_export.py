@@ -30,6 +30,9 @@ class GenesysPresenceExportParser(GenesysCloudParser):
             sync = (record_value(record, "sync_state", "synchronization") or "").lower()
             if sync in {"out_of_sync", "failed", "desynchronized"}:
                 findings.append(ParserFinding(signal="presence_synchronization_failure", confidence=89.0, detail="Presence synchronization failure", source_field="sync_state"))
+            routing = (record_value(record, "routing_status") or "").lower()
+            if routing in {"disabled", "off_queue", "not_routing", "inactive"}:
+                findings.append(ParserFinding(signal="user_routing_disabled", confidence=88.0, detail="User routing disabled", source_field="routing_status"))
 
         return findings
 

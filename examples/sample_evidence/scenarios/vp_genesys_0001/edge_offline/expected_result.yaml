@@ -1,0 +1,3 @@
+scenario_id: edge_offline
+expected_root_cause: Edge offline
+min_confidence: 93

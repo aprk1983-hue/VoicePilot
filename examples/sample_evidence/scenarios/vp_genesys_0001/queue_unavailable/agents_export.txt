@@ -1,0 +1,5 @@
+# Genesys Cloud Export
+Agent ID: agent-001
+Display Name: Alex Agent
+State: On Queue
+Queue ID: queue-100

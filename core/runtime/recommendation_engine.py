@@ -291,6 +291,10 @@ def _plan_for_hypothesis(hypothesis: Hypothesis, case: Case) -> HypothesisAction
         VP_AUDIOCODES_0001_ACTION_PLANS,
         VP_AUDIOCODES_0001_PLAYBOOK_ID,
     )
+    from runtime.genesys_investigation import (
+        VP_GENESYS_0001_ACTION_PLANS,
+        VP_GENESYS_0001_PLAYBOOK_ID,
+    )
     from runtime.teams_investigation import VP_TEAMS_0001_ACTION_PLANS, VP_TEAMS_0001_PLAYBOOK_ID
 
     category = hypothesis.category or ""
@@ -300,6 +304,8 @@ def _plan_for_hypothesis(hypothesis: Hypothesis, case: Case) -> HypothesisAction
         return VP_TEAMS_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
     if case.playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
         return VP_AUDIOCODES_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
+    if case.playbook_id == VP_GENESYS_0001_PLAYBOOK_ID:
+        return VP_GENESYS_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
     return VP_CUBE_0001_ACTION_PLANS.get(category, DEFAULT_ACTION_PLAN)
 
 

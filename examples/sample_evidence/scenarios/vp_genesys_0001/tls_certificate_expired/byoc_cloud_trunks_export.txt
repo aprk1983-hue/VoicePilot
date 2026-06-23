@@ -1,0 +1,5 @@
+Trunk ID: trunk-cloud-03
+Trunk Name: BYOC Cloud TLS
+State: Active
+Certificate Status: expired
+TLS Status: failed
