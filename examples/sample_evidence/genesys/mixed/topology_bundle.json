@@ -1,0 +1,14 @@
+{
+  "records": [
+    {"organization_id": "org-100", "organization_name": "Acme CC", "state": "Active"},
+    {"queue_id": "queue-100", "queue_name": "Sales ACD", "state": "Active"},
+    {"agent_id": "agent-001", "display_name": "Alex Agent", "queue_id": "queue-100", "state": "On Queue"},
+    {"member_id": "member-01", "queue_id": "queue-100", "user_id": "user-001", "state": "Active"},
+    {"flow_id": "flow-200", "flow_name": "Inbound Sales", "target_queue": "queue-100", "state": "Published"},
+    {"flow_id": "arch-300", "flow_name": "Sales IVR", "data_action_id": "da-500", "publish_state": "Published"},
+    {"action_id": "da-500", "action_name": "CRM Lookup", "state": "Active"},
+    {"campaign_id": "camp-700", "campaign_name": "Outbound Sales", "queue_id": "queue-100", "state": "Running"},
+    {"trunk_id": "trunk-prem-01", "trunk_name": "BYOC Premises", "edge_id": "edge-900", "state": "Active"},
+    {"edge_id": "edge-900", "edge_name": "Edge-West-01", "organization_id": "org-100", "state": "Online"}
+  ]
+}

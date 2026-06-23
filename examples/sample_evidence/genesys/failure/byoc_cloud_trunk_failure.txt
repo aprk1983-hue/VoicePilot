@@ -1,0 +1,4 @@
+Trunk ID: trunk-cloud-02
+Trunk Name: BYOC Cloud Backup
+State: Down
+SIP Options Status: Failed

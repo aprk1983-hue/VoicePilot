@@ -44,6 +44,28 @@ from model.audiocodes_objects import (
     SRD,
     TLSContext,
 )
+from model.genesys_objects import (
+    Agent,
+    ArchitectFlow,
+    ByocCloudTrunk,
+    ByocPremisesTrunk,
+    Campaign,
+    DataAction,
+    Division,
+    EdgeDevice,
+    Flow,
+    GenesysOrganization,
+    GenesysRegion,
+    PresenceDefinition,
+    Queue,
+    QueueMember,
+    Recording,
+    RecordingPolicy,
+    SipEndpoint,
+    Skill,
+    UserRoutingStatus,
+    WrapUpCode,
+)
 
 
 @dataclass(frozen=True)
@@ -88,6 +110,22 @@ class VoiceTopology:
     audiocodes_licenses: tuple[License, ...] = field(default_factory=tuple)
     audiocodes_sip_message_policies: tuple[SIPMessagePolicy, ...] = field(default_factory=tuple)
     audiocodes_media_security_profiles: tuple[MediaSecurityProfile, ...] = field(default_factory=tuple)
+    genesys_organizations: tuple[GenesysOrganization | GenesysRegion, ...] = field(default_factory=tuple)
+    genesys_agents: tuple[Agent | PresenceDefinition | UserRoutingStatus, ...] = field(
+        default_factory=tuple
+    )
+    genesys_queues: tuple[Queue | QueueMember, ...] = field(default_factory=tuple)
+    genesys_flows: tuple[Flow | ArchitectFlow | DataAction | WrapUpCode, ...] = field(
+        default_factory=tuple
+    )
+    genesys_trunks: tuple[ByocCloudTrunk | ByocPremisesTrunk | SipEndpoint, ...] = field(
+        default_factory=tuple
+    )
+    genesys_edges: tuple[EdgeDevice, ...] = field(default_factory=tuple)
+    genesys_campaigns: tuple[Campaign, ...] = field(default_factory=tuple)
+    genesys_recordings: tuple[Recording | RecordingPolicy, ...] = field(default_factory=tuple)
+    genesys_skills: tuple[Skill, ...] = field(default_factory=tuple)
+    genesys_divisions: tuple[Division, ...] = field(default_factory=tuple)
     relationships: tuple[VoiceRelationship, ...] = field(default_factory=tuple)
 
     @property
@@ -128,6 +166,16 @@ class VoiceTopology:
             + len(self.audiocodes_licenses)
             + len(self.audiocodes_sip_message_policies)
             + len(self.audiocodes_media_security_profiles)
+            + len(self.genesys_organizations)
+            + len(self.genesys_agents)
+            + len(self.genesys_queues)
+            + len(self.genesys_flows)
+            + len(self.genesys_trunks)
+            + len(self.genesys_edges)
+            + len(self.genesys_campaigns)
+            + len(self.genesys_recordings)
+            + len(self.genesys_skills)
+            + len(self.genesys_divisions)
         )
 
     def all_objects(
@@ -170,4 +218,14 @@ class VoiceTopology:
             *self.audiocodes_licenses,
             *self.audiocodes_sip_message_policies,
             *self.audiocodes_media_security_profiles,
+            *self.genesys_organizations,
+            *self.genesys_agents,
+            *self.genesys_queues,
+            *self.genesys_flows,
+            *self.genesys_trunks,
+            *self.genesys_edges,
+            *self.genesys_campaigns,
+            *self.genesys_recordings,
+            *self.genesys_skills,
+            *self.genesys_divisions,
         )

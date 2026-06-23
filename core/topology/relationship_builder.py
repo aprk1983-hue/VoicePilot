@@ -30,18 +30,17 @@ from model.audiocodes_objects import (
     SIPInterface,
     TLSContext,
 )
-from model.audiocodes_objects import (
-    Certificate,
-    IPGroup,
-    IPProfile,
-    ManipulationSet,
-    MediaRealm,
-    MessageManipulation,
-    ProxyAddress,
-    ProxySet,
-    RoutingRule,
-    SIPInterface,
-    TLSContext,
+from model.genesys_objects import (
+    Agent,
+    ArchitectFlow,
+    ByocPremisesTrunk,
+    Campaign,
+    DataAction,
+    EdgeDevice,
+    Flow,
+    GenesysOrganization,
+    Queue,
+    QueueMember,
 )
 from model.dial_peer import DialPeer
 from model.interface import Interface
@@ -105,6 +104,16 @@ class _ObjectBuckets:
     audiocodes_message_manipulations: tuple[MessageManipulation, ...] = ()
     audiocodes_tls_contexts: tuple[TLSContext, ...] = ()
     audiocodes_certificates: tuple[Certificate, ...] = ()
+    genesys_agents: tuple[Agent, ...] = ()
+    genesys_queues: tuple[Queue, ...] = ()
+    genesys_queue_members: tuple[QueueMember, ...] = ()
+    genesys_flows: tuple[Flow, ...] = ()
+    genesys_architect_flows: tuple[ArchitectFlow, ...] = ()
+    genesys_data_actions: tuple[DataAction, ...] = ()
+    genesys_campaigns: tuple[Campaign, ...] = ()
+    genesys_trunks: tuple[ByocPremisesTrunk, ...] = ()
+    genesys_edges: tuple[EdgeDevice, ...] = ()
+    genesys_organizations: tuple[GenesysOrganization, ...] = ()
 
 
 class RelationshipBuilder:
@@ -123,6 +132,7 @@ class RelationshipBuilder:
         self._add_cucm_relationships(buckets, relationships, seen)
         self._add_teams_relationships(buckets, relationships, seen)
         self._add_audiocodes_relationships(buckets, relationships, seen)
+        self._add_genesys_relationships(buckets, relationships, seen)
 
         return tuple(relationships)
 
@@ -522,6 +532,124 @@ class RelationshipBuilder:
                 )
 
 
+    def _add_genesys_relationships(
+        self,
+        buckets: _ObjectBuckets,
+        relationships: list[VoiceRelationship],
+        seen: set[tuple[str, str, str]],
+    ) -> None:
+        queue_by_id = {
+            queue.queue_id: queue
+            for queue in buckets.genesys_queues
+            if queue.queue_id
+        }
+        queue_by_name = {
+            queue.queue_name or queue.name: queue
+            for queue in buckets.genesys_queues
+            if queue.queue_name or queue.name
+        }
+        data_action_by_id = {
+            action.action_id: action
+            for action in buckets.genesys_data_actions
+            if action.action_id
+        }
+        edge_by_id = {edge.edge_id: edge for edge in buckets.genesys_edges if edge.edge_id}
+        organization_by_id = {
+            organization.organization_id: organization
+            for organization in buckets.genesys_organizations
+            if organization.organization_id
+        }
+
+        def resolve_queue(reference: str | None) -> Queue | None:
+            if not reference:
+                return None
+            return queue_by_id.get(reference) or queue_by_name.get(reference)
+
+        for agent in buckets.genesys_agents:
+            queue = resolve_queue(agent.queue_id)
+            if queue is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.ROUTES_TO,
+                    agent.id,
+                    queue.id,
+                    description=f"{agent.name} routes to queue {queue.name}",
+                )
+
+        for member in buckets.genesys_queue_members:
+            queue = resolve_queue(member.queue_id)
+            if queue is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.PROVIDES,
+                    queue.id,
+                    member.id,
+                    description=f"{queue.name} provides member {member.name}",
+                )
+
+        for flow in buckets.genesys_flows:
+            queue = resolve_queue(flow.target_queue)
+            if queue is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.ROUTES_TO,
+                    flow.id,
+                    queue.id,
+                    description=f"{flow.name} routes to queue {queue.name}",
+                )
+
+        for architect_flow in buckets.genesys_architect_flows:
+            data_action = data_action_by_id.get(architect_flow.data_action_id or "")
+            if data_action is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    architect_flow.id,
+                    data_action.id,
+                    description=f"{architect_flow.name} uses data action {data_action.name}",
+                )
+
+        for campaign in buckets.genesys_campaigns:
+            queue = resolve_queue(campaign.queue_id)
+            if queue is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.ROUTES_TO,
+                    campaign.id,
+                    queue.id,
+                    description=f"{campaign.name} routes to queue {queue.name}",
+                )
+
+        for trunk in buckets.genesys_trunks:
+            edge = edge_by_id.get(trunk.edge_id or "")
+            if edge is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.CONNECTS_TO,
+                    trunk.id,
+                    edge.id,
+                    description=f"{trunk.name} connects to edge {edge.name}",
+                )
+
+        for edge in buckets.genesys_edges:
+            organization = organization_by_id.get(edge.organization_id or "")
+            if organization is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.HOSTED_ON,
+                    edge.id,
+                    organization.id,
+                    description=f"{edge.name} hosted on organization {organization.name}",
+                )
+
+
 def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     dial_peers: list[DialPeer] = []
     voice_services: list[VoiceService] = []
@@ -561,6 +689,16 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     audiocodes_message_manipulations: list[MessageManipulation] = []
     audiocodes_tls_contexts: list[TLSContext] = []
     audiocodes_certificates: list[Certificate] = []
+    genesys_agents: list[Agent] = []
+    genesys_queues: list[Queue] = []
+    genesys_queue_members: list[QueueMember] = []
+    genesys_flows: list[Flow] = []
+    genesys_architect_flows: list[ArchitectFlow] = []
+    genesys_data_actions: list[DataAction] = []
+    genesys_campaigns: list[Campaign] = []
+    genesys_trunks: list[ByocPremisesTrunk] = []
+    genesys_edges: list[EdgeDevice] = []
+    genesys_organizations: list[GenesysOrganization] = []
 
     for obj in voice_objects:
         if isinstance(obj, DialPeer):
@@ -639,6 +777,26 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
             audiocodes_tls_contexts.append(obj)
         elif isinstance(obj, Certificate):
             audiocodes_certificates.append(obj)
+        elif isinstance(obj, Agent):
+            genesys_agents.append(obj)
+        elif isinstance(obj, Queue):
+            genesys_queues.append(obj)
+        elif isinstance(obj, QueueMember):
+            genesys_queue_members.append(obj)
+        elif isinstance(obj, Flow):
+            genesys_flows.append(obj)
+        elif isinstance(obj, ArchitectFlow):
+            genesys_architect_flows.append(obj)
+        elif isinstance(obj, DataAction):
+            genesys_data_actions.append(obj)
+        elif isinstance(obj, Campaign):
+            genesys_campaigns.append(obj)
+        elif isinstance(obj, ByocPremisesTrunk):
+            genesys_trunks.append(obj)
+        elif isinstance(obj, EdgeDevice):
+            genesys_edges.append(obj)
+        elif isinstance(obj, GenesysOrganization):
+            genesys_organizations.append(obj)
 
     return _ObjectBuckets(
         dial_peers=tuple(sorted(dial_peers, key=lambda item: item.id)),
@@ -685,6 +843,16 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
         ),
         audiocodes_tls_contexts=tuple(sorted(audiocodes_tls_contexts, key=lambda item: item.id)),
         audiocodes_certificates=tuple(sorted(audiocodes_certificates, key=lambda item: item.id)),
+        genesys_agents=tuple(sorted(genesys_agents, key=lambda item: item.id)),
+        genesys_queues=tuple(sorted(genesys_queues, key=lambda item: item.id)),
+        genesys_queue_members=tuple(sorted(genesys_queue_members, key=lambda item: item.id)),
+        genesys_flows=tuple(sorted(genesys_flows, key=lambda item: item.id)),
+        genesys_architect_flows=tuple(sorted(genesys_architect_flows, key=lambda item: item.id)),
+        genesys_data_actions=tuple(sorted(genesys_data_actions, key=lambda item: item.id)),
+        genesys_campaigns=tuple(sorted(genesys_campaigns, key=lambda item: item.id)),
+        genesys_trunks=tuple(sorted(genesys_trunks, key=lambda item: item.id)),
+        genesys_edges=tuple(sorted(genesys_edges, key=lambda item: item.id)),
+        genesys_organizations=tuple(sorted(genesys_organizations, key=lambda item: item.id)),
     )
 
 

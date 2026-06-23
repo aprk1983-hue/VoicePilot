@@ -1,0 +1,3 @@
+Agent ID: agent-002
+Display Name: Sam Agent
+State: Logged Out

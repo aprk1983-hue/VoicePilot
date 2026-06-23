@@ -27,6 +27,28 @@ from model.audiocodes_objects import (
     SRD,
     TLSContext,
 )
+from model.genesys_objects import (
+    Agent,
+    ArchitectFlow,
+    ByocCloudTrunk,
+    ByocPremisesTrunk,
+    Campaign,
+    DataAction,
+    Division,
+    EdgeDevice,
+    Flow,
+    GenesysOrganization,
+    GenesysRegion,
+    PresenceDefinition,
+    Queue,
+    QueueMember,
+    Recording,
+    RecordingPolicy,
+    SipEndpoint,
+    Skill,
+    UserRoutingStatus,
+    WrapUpCode,
+)
 from model.teams_objects import (
     TeamsAutoAttendant,
     TeamsCallQueue,
@@ -92,6 +114,16 @@ class TopologyBuilder:
             audiocodes_licenses=buckets.audiocodes_licenses,
             audiocodes_sip_message_policies=buckets.audiocodes_sip_message_policies,
             audiocodes_media_security_profiles=buckets.audiocodes_media_security_profiles,
+            genesys_organizations=buckets.genesys_organizations,
+            genesys_agents=buckets.genesys_agents,
+            genesys_queues=buckets.genesys_queues,
+            genesys_flows=buckets.genesys_flows,
+            genesys_trunks=buckets.genesys_trunks,
+            genesys_edges=buckets.genesys_edges,
+            genesys_campaigns=buckets.genesys_campaigns,
+            genesys_recordings=buckets.genesys_recordings,
+            genesys_skills=buckets.genesys_skills,
+            genesys_divisions=buckets.genesys_divisions,
             relationships=relationships,
         )
 
@@ -133,6 +165,16 @@ class _TopologyBuckets:
         "audiocodes_licenses",
         "audiocodes_sip_message_policies",
         "audiocodes_media_security_profiles",
+        "genesys_organizations",
+        "genesys_agents",
+        "genesys_queues",
+        "genesys_flows",
+        "genesys_trunks",
+        "genesys_edges",
+        "genesys_campaigns",
+        "genesys_recordings",
+        "genesys_skills",
+        "genesys_divisions",
     )
 
     def __init__(
@@ -173,6 +215,16 @@ class _TopologyBuckets:
         audiocodes_licenses: tuple[License, ...],
         audiocodes_sip_message_policies: tuple[SIPMessagePolicy, ...],
         audiocodes_media_security_profiles: tuple[MediaSecurityProfile, ...],
+        genesys_organizations: tuple[GenesysOrganization | GenesysRegion, ...],
+        genesys_agents: tuple[Agent | PresenceDefinition | UserRoutingStatus, ...],
+        genesys_queues: tuple[Queue | QueueMember, ...],
+        genesys_flows: tuple[Flow | ArchitectFlow | DataAction | WrapUpCode, ...],
+        genesys_trunks: tuple[ByocCloudTrunk | ByocPremisesTrunk | SipEndpoint, ...],
+        genesys_edges: tuple[EdgeDevice, ...],
+        genesys_campaigns: tuple[Campaign, ...],
+        genesys_recordings: tuple[Recording | RecordingPolicy, ...],
+        genesys_skills: tuple[Skill, ...],
+        genesys_divisions: tuple[Division, ...],
     ) -> None:
         self.devices = devices
         self.interfaces = interfaces
@@ -209,6 +261,16 @@ class _TopologyBuckets:
         self.audiocodes_licenses = audiocodes_licenses
         self.audiocodes_sip_message_policies = audiocodes_sip_message_policies
         self.audiocodes_media_security_profiles = audiocodes_media_security_profiles
+        self.genesys_organizations = genesys_organizations
+        self.genesys_agents = genesys_agents
+        self.genesys_queues = genesys_queues
+        self.genesys_flows = genesys_flows
+        self.genesys_trunks = genesys_trunks
+        self.genesys_edges = genesys_edges
+        self.genesys_campaigns = genesys_campaigns
+        self.genesys_recordings = genesys_recordings
+        self.genesys_skills = genesys_skills
+        self.genesys_divisions = genesys_divisions
 
 
 def _partition_all_objects(voice_objects: list[VoiceObject]) -> _TopologyBuckets:
@@ -247,6 +309,16 @@ def _partition_all_objects(voice_objects: list[VoiceObject]) -> _TopologyBuckets
     audiocodes_licenses: list[License] = []
     audiocodes_sip_message_policies: list[SIPMessagePolicy] = []
     audiocodes_media_security_profiles: list[MediaSecurityProfile] = []
+    genesys_organizations: list[GenesysOrganization | GenesysRegion] = []
+    genesys_agents: list[Agent | PresenceDefinition | UserRoutingStatus] = []
+    genesys_queues: list[Queue | QueueMember] = []
+    genesys_flows: list[Flow | ArchitectFlow | DataAction | WrapUpCode] = []
+    genesys_trunks: list[ByocCloudTrunk | ByocPremisesTrunk | SipEndpoint] = []
+    genesys_edges: list[EdgeDevice] = []
+    genesys_campaigns: list[Campaign] = []
+    genesys_recordings: list[Recording | RecordingPolicy] = []
+    genesys_skills: list[Skill] = []
+    genesys_divisions: list[Division] = []
 
     for obj in voice_objects:
         if isinstance(obj, Device):
@@ -319,6 +391,26 @@ def _partition_all_objects(voice_objects: list[VoiceObject]) -> _TopologyBuckets
             audiocodes_sip_message_policies.append(obj)
         elif isinstance(obj, MediaSecurityProfile):
             audiocodes_media_security_profiles.append(obj)
+        elif isinstance(obj, (GenesysOrganization, GenesysRegion)):
+            genesys_organizations.append(obj)
+        elif isinstance(obj, (Agent, PresenceDefinition, UserRoutingStatus)):
+            genesys_agents.append(obj)
+        elif isinstance(obj, (Queue, QueueMember)):
+            genesys_queues.append(obj)
+        elif isinstance(obj, (Flow, ArchitectFlow, DataAction, WrapUpCode)):
+            genesys_flows.append(obj)
+        elif isinstance(obj, (ByocCloudTrunk, ByocPremisesTrunk, SipEndpoint)):
+            genesys_trunks.append(obj)
+        elif isinstance(obj, EdgeDevice):
+            genesys_edges.append(obj)
+        elif isinstance(obj, Campaign):
+            genesys_campaigns.append(obj)
+        elif isinstance(obj, (Recording, RecordingPolicy)):
+            genesys_recordings.append(obj)
+        elif isinstance(obj, Skill):
+            genesys_skills.append(obj)
+        elif isinstance(obj, Division):
+            genesys_divisions.append(obj)
 
     return _TopologyBuckets(
         devices=tuple(sorted(devices, key=lambda item: item.id)),
@@ -366,4 +458,14 @@ def _partition_all_objects(voice_objects: list[VoiceObject]) -> _TopologyBuckets
         audiocodes_media_security_profiles=tuple(
             sorted(audiocodes_media_security_profiles, key=lambda item: item.id)
         ),
+        genesys_organizations=tuple(sorted(genesys_organizations, key=lambda item: item.id)),
+        genesys_agents=tuple(sorted(genesys_agents, key=lambda item: item.id)),
+        genesys_queues=tuple(sorted(genesys_queues, key=lambda item: item.id)),
+        genesys_flows=tuple(sorted(genesys_flows, key=lambda item: item.id)),
+        genesys_trunks=tuple(sorted(genesys_trunks, key=lambda item: item.id)),
+        genesys_edges=tuple(sorted(genesys_edges, key=lambda item: item.id)),
+        genesys_campaigns=tuple(sorted(genesys_campaigns, key=lambda item: item.id)),
+        genesys_recordings=tuple(sorted(genesys_recordings, key=lambda item: item.id)),
+        genesys_skills=tuple(sorted(genesys_skills, key=lambda item: item.id)),
+        genesys_divisions=tuple(sorted(genesys_divisions, key=lambda item: item.id)),
     )
