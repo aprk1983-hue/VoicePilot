@@ -137,3 +137,13 @@ class CaseManager:
     def list_cases(self) -> list[CaseId]:
         """Return identifiers of cases held in memory."""
         return list(self._cases.keys())
+
+    def delete_case(self, case_id: CaseId) -> None:
+        """Remove a case from memory and the repository."""
+        self.load_case(case_id)
+        self._cases.pop(case_id, None)
+        delete = getattr(self._repository, "delete", None)
+        if callable(delete):
+            delete(case_id)
+        if self._logger:
+            self._logger.info("Case deleted", case_id=case_id)

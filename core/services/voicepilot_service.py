@@ -32,9 +32,12 @@ from services.service_models import (
     ServiceChangePackageResult,
     ServiceDiscoveryResult,
     ServiceEvidenceResult,
+    ServiceInvestigationResult,
+    ServiceInvestigationStatusResult,
     ServiceQualityResult,
     ServiceRecommendationResult,
     ServiceReportResult,
+    ServiceValidationResult,
     ReportResult,
     ComparisonResult,
     AssetValidationResult,
@@ -202,6 +205,7 @@ class VoicePilotService:
     ) -> ReportResult:
         """Generate an audience-specific enterprise report for a case."""
         runtime = self._ensure_runtime()
+        self._load_case(case_id)
         report = runtime.generate_report(case_id, report_type)
         return ReportResult(
             case_id=case_id,
@@ -213,6 +217,7 @@ class VoicePilotService:
     def generate_legacy_report(self, case_id: str) -> ServiceReportResult:
         """Generate a legacy closed-case incident report."""
         runtime = self._ensure_runtime()
+        self._load_case(case_id)
         incident = runtime.generate_report(case_id)
         from runtime.report_engine import format_incident_report
 
@@ -224,6 +229,7 @@ class VoicePilotService:
     def generate_change_package(self, case_id: str) -> ServiceChangePackageResult:
         """Generate a read-only engineering change package for a case."""
         runtime = self._ensure_runtime()
+        self._load_case(case_id)
         package = runtime.generate_change_package(case_id)
         return ServiceChangePackageResult(
             case_id=case_id,
@@ -324,6 +330,67 @@ class VoicePilotService:
         session = self._load_brain_session(session_id)
         context = self._brain(runtime).build_context(session_id)
         return format_brain_replay(session, context)
+
+    def delete_case(self, case_id: str) -> None:
+        """Delete an in-memory investigation case."""
+        runtime = self._ensure_runtime()
+        self._load_case(case_id)
+        runtime.case_manager.delete_case(case_id)
+
+    def get_investigation_status(self, case_id: str) -> ServiceInvestigationStatusResult:
+        """Return current investigation status for a case."""
+        case = self._load_case(case_id)
+        top_hypothesis = _top_hypothesis(case)
+        return ServiceInvestigationStatusResult(
+            case_id=case.case_id,
+            playbook_id=case.playbook_id or "",
+            state=case.status.value,
+            finding_count=len(case.analysis_findings),
+            hypothesis_count=len(case.hypotheses),
+            recommendation_count=len(case.recommendations),
+            top_hypothesis=top_hypothesis.title if top_hypothesis else None,
+            confidence=top_hypothesis.confidence if top_hypothesis else None,
+        )
+
+    def investigate_case(self, case_id: str) -> ServiceInvestigationResult:
+        """Run the full investigation pipeline for a case."""
+        analysis = self.analyze_case(case_id)
+        discovery = self.plan_discovery(case_id)
+        quality = self.evaluate_quality(case_id)
+        recommendation = self.generate_recommendation(case_id)
+        change_package = self.generate_change_package(case_id)
+        return ServiceInvestigationResult(
+            case_id=case_id,
+            analysis=analysis,
+            discovery=discovery,
+            quality=quality,
+            recommendation=recommendation,
+            change_package=change_package,
+        )
+
+    def validate_playbook(self, playbook_id: str | None = None) -> ServiceValidationResult:
+        """Validate scenario packs for one playbook or all supported playbooks."""
+        from runtime.exceptions import UnsupportedPlaybookScenarioError
+        from validation.validation_engine import ValidationEngine, UnsupportedValidationPlaybookError
+
+        engine = ValidationEngine(plugins_root=self._plugins_root)
+        try:
+            if playbook_id:
+                suite = engine.validate_playbook(playbook_id)
+            else:
+                suite = engine.validate_all()
+        except (UnsupportedValidationPlaybookError, UnsupportedPlaybookScenarioError) as exc:
+            raise ServicePlaybookNotFoundError(playbook_id or "") from exc
+
+        summary = suite.summary
+        return ServiceValidationResult(
+            playbook_id=summary.playbook_id,
+            total_scenarios=summary.total_scenarios,
+            passed_count=summary.passed_count,
+            failed_count=summary.failed_count,
+            accuracy_percent=summary.accuracy_percent,
+            average_confidence=summary.average_confidence,
+        )
 
     def _ensure_runtime(self) -> RuntimeEngine:
         if self._runtime is None:

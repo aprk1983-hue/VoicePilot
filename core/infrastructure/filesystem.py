@@ -46,6 +46,11 @@ class InMemoryCaseRepository(CaseRepository):
             raise CaseNotFoundError(case_id)
         return self._store[case_id]
 
+    def delete(self, case_id: CaseId) -> None:
+        if case_id not in self._store:
+            raise CaseNotFoundError(case_id)
+        del self._store[case_id]
+
 
 class FilesystemCaseRepository(CaseRepository):
     """Persists cases as JSON files under a root directory.

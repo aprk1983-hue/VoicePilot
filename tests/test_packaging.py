@@ -24,6 +24,7 @@ class TestPackaging:
 
         assert config["where"] == [".", "core"]
         assert "cli*" in config["include"]
+        assert "api*" in config["include"]
         assert "services*" in config["include"]
         assert "engineering_assets*" in config["include"]
         assert "engineering_knowledge*" in config["include"]
@@ -43,6 +44,13 @@ class TestPackaging:
         module = importlib.import_module("services")
 
         assert module.VoicePilotService is not None
+
+    def test_api_import_succeeds(self) -> None:
+        module = importlib.import_module("api.main")
+
+        assert module.create_app is not None
+        app = module.create_app()
+        assert app.title == "VoicePilot Enterprise API"
 
     def test_console_entry_point_target_exists(self) -> None:
         scripts = entry_points(group="console_scripts")

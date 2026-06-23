@@ -146,3 +146,41 @@ class ServiceBrainSessionResult:
     current_quality_score: int | None
     completed: bool
     failed: bool
+
+
+@dataclass(frozen=True)
+class ServiceInvestigationStatusResult:
+    """Current investigation pipeline status for a case."""
+
+    case_id: str
+    playbook_id: str
+    state: str
+    finding_count: int
+    hypothesis_count: int
+    recommendation_count: int
+    top_hypothesis: str | None
+    confidence: float | None
+
+
+@dataclass(frozen=True)
+class ServiceInvestigationResult:
+    """Result of running the full investigation pipeline for a case."""
+
+    case_id: str
+    analysis: ServiceAnalysisResult
+    discovery: ServiceDiscoveryResult
+    quality: ServiceQualityResult
+    recommendation: ServiceRecommendationResult
+    change_package: ServiceChangePackageResult
+
+
+@dataclass(frozen=True)
+class ServiceValidationResult:
+    """Result of validating one or more playbook scenario packs."""
+
+    playbook_id: str | None
+    total_scenarios: int
+    passed_count: int
+    failed_count: int
+    accuracy_percent: float
+    average_confidence: float
