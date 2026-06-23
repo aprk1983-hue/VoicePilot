@@ -185,3 +185,22 @@ class MarkdownReportResponse(BaseModel):
     case_id: str
     report_type: str
     markdown: str = Field(..., description="Report body in Markdown")
+
+
+class DashboardSummaryResponse(BaseModel):
+    """Enterprise dashboard aggregate metrics."""
+
+    api_status: str
+    platform_name: str
+    platform_version: str
+    api_version: str
+    total_cases: int
+    cases_by_state: dict[str, int]
+    cases_by_playbook: dict[str, int]
+    total_findings: int
+    total_hypotheses: int
+    total_recommendations: int
+    knowledge_asset_count: int
+    supported_playbook_count: int
+    supported_playbooks: list[str]
+    read_only_notice: str

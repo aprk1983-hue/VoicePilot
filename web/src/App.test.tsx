@@ -1,15 +1,26 @@
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { ThemeProvider } from "./context/ThemeProvider";
 import { App } from "./App";
 
 vi.mock("./api/client", () => ({
   api: {
-    getHealth: vi.fn().mockResolvedValue({ status: "ok", service: "voicepilot-api" }),
-    getVersion: vi.fn().mockResolvedValue({
-      name: "voicepilot",
-      version: "0.1.0",
+    getDashboardSummary: vi.fn().mockResolvedValue({
+      api_status: "ok",
+      platform_name: "voicepilot",
+      platform_version: "0.1.0",
       api_version: "v1",
+      total_cases: 2,
+      cases_by_state: { INTAKE: 2 },
+      cases_by_playbook: { "VP-CUBE-0001": 2 },
+      total_findings: 0,
+      total_hypotheses: 0,
+      total_recommendations: 0,
+      knowledge_asset_count: 100,
+      supported_playbook_count: 5,
+      supported_playbooks: ["VP-CUBE-0001"],
+      read_only_notice: "Advisory only.",
     }),
     listCases: vi.fn().mockResolvedValue([]),
   },
@@ -20,33 +31,35 @@ vi.mock("./api/client", () => ({
 describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.setItem("voicepilot-theme", "dark");
   });
 
-  it("renders dashboard with read-only notice", async () => {
+  it("renders enterprise dashboard with metrics", async () => {
     render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
+      </ThemeProvider>,
     );
 
-    expect(screen.getByText("VoicePilot Enterprise")).toBeInTheDocument();
-    expect(
-      screen.getByText(/VoicePilot never performs configuration changes/i),
-    ).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(await screen.findByText("ok")).toBeInTheDocument();
+    expect(await screen.findByText("Active Cases")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText(/Evidence-only · Deterministic/i)).toBeInTheDocument();
   });
 
-  it("renders navigation links", () => {
+  it("renders sidebar navigation", () => {
     render(
-      <MemoryRouter initialEntries={["/cases"]}>
-        <App />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/cases"]}>
+          <App />
+        </MemoryRouter>
+      </ThemeProvider>,
     );
 
     const nav = screen.getByRole("navigation");
     expect(within(nav).getByRole("link", { name: "Cases" })).toBeInTheDocument();
-    expect(within(nav).getByRole("link", { name: "New Case" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Validation" })).toBeInTheDocument();
   });
 });

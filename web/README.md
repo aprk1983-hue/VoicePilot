@@ -1,6 +1,6 @@
 # VoicePilot Web UI
 
-React + Vite + TypeScript frontend for VoicePilot Enterprise.
+React + Vite + TypeScript enterprise dashboard and investigation workspace for VoicePilot.
 
 ## Prerequisites
 
@@ -40,18 +40,28 @@ VITE_API_BASE=http://localhost:8000
 | `npm run preview` | Preview production build |
 | `npm test` | Run Vitest unit tests |
 
-## Pages
+## Routes
 
-- Dashboard
-- Cases / New Case / Case Detail
-- Evidence Upload
-- Investigation Status
-- Report Viewer (Executive, Engineering, CAB)
-- Change Package Viewer
-- Validation
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard — platform metrics and health |
+| `/cases` | Case management grid |
+| `/cases/new` | Create investigation case |
+| `/cases/:caseId` | Case workspace overview |
+| `/cases/:caseId/evidence` | Drag-and-drop evidence upload |
+| `/cases/:caseId/investigation` | Investigation timeline and run |
+| `/cases/:caseId/reports/:type` | Report viewer (executive, engineering, cab) |
+| `/cases/:caseId/change-package` | Change package viewer |
+| `/validation` | Validation suite |
+
+## Features
+
+- Dark/light theme toggle (persisted in localStorage)
+- Responsive sidebar layout with mobile menu
+- Reusable UI components (cards, metrics, badges, timeline)
+- Read-only advisory mode — no configuration changes or live device connectivity
 
 ## Constraints
 
 - UI calls REST API only — no business logic
-- Read-only investigation principle shown in header/footer
 - No authentication (future sprint)

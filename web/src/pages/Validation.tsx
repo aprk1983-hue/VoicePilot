@@ -2,10 +2,13 @@ import { FormEvent, useState } from "react";
 import { api } from "../api/client";
 import { SUPPORTED_PLAYBOOKS } from "../api/types";
 import type { ValidationData } from "../api/types";
-import { ErrorBanner } from "../components/ErrorBanner";
+import { Card } from "../components/ui/Card";
+import { ErrorBanner } from "../components/ui/ErrorBanner";
+import { MetricCard } from "../components/ui/MetricCard";
+import { Badge } from "../components/ui/Badge";
 
 export function ValidationPage() {
-  const [playbookId, setPlaybookId] = useState<string>("");
+  const [playbookId, setPlaybookId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ValidationData | null>(null);
@@ -27,68 +30,57 @@ export function ValidationPage() {
 
   return (
     <div>
-      <h1 className="page-title">Validation</h1>
+      <header className="page-header">
+        <h1 className="page-title">Validation Suite</h1>
+        <p className="page-subtitle">Run deterministic scenario validation via the API</p>
+      </header>
       <ErrorBanner message={error} />
-
-      <form className="card" onSubmit={handleSubmit}>
-        <p className="stat-label">
-          Run the deterministic validation suite against scenario packs. This may take a
-          minute for all playbooks.
-        </p>
-        <div className="form-group">
-          <label htmlFor="playbook">Playbook (optional)</label>
-          <select
-            id="playbook"
-            value={playbookId}
-            onChange={(event) => setPlaybookId(event.target.value)}
-          >
-            <option value="">All supported playbooks</option>
-            {SUPPORTED_PLAYBOOKS.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="actions">
+      <Card>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="playbook">
+              Playbook (optional)
+            </label>
+            <select
+              id="playbook"
+              className="form-select"
+              value={playbookId}
+              onChange={(event) => setPlaybookId(event.target.value)}
+            >
+              <option value="">All supported playbooks</option>
+              {SUPPORTED_PLAYBOOKS.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          </div>
           <button className="btn" type="submit" disabled={loading}>
             {loading ? "Validating…" : "Run Validation"}
           </button>
-        </div>
-      </form>
-
+        </form>
+      </Card>
       {result && (
-        <div className="card">
-          <h2>Validation Summary</h2>
-          <p>
-            <strong>Playbook:</strong> {result.playbook_id ?? "All playbooks"}
-          </p>
-          <div className="grid-2">
-            <div>
-              <div className="stat-value">{result.total_scenarios}</div>
-              <div className="stat-label">Total scenarios</div>
-            </div>
-            <div>
-              <div className="stat-value">{result.passed_count}</div>
-              <div className="stat-label">Passed</div>
-            </div>
-            <div>
-              <div className="stat-value">{result.failed_count}</div>
-              <div className="stat-label">Failed</div>
-            </div>
-            <div>
-              <div className="stat-value">{result.accuracy_percent}%</div>
-              <div className="stat-label">Accuracy</div>
-            </div>
+        <div style={{ marginTop: "1.5rem" }}>
+          <div className="metrics-grid">
+            <MetricCard label="Scenarios" value={result.total_scenarios} />
+            <MetricCard label="Passed" value={result.passed_count} />
+            <MetricCard label="Failed" value={result.failed_count} />
+            <MetricCard label="Accuracy" value={`${result.accuracy_percent}%`} />
           </div>
-          <p>
-            <strong>Average confidence:</strong> {result.average_confidence.toFixed(1)}%
-          </p>
-          {result.failed_count === 0 ? (
-            <span className="badge badge-success">All scenarios passed</span>
-          ) : (
-            <span className="badge badge-danger">Failures detected</span>
-          )}
+          <Card>
+            <p>
+              <strong>Playbook:</strong> {result.playbook_id ?? "All playbooks"}
+            </p>
+            <p>
+              <strong>Average confidence:</strong> {result.average_confidence.toFixed(1)}%
+            </p>
+            {result.failed_count === 0 ? (
+              <Badge variant="success">All scenarios passed</Badge>
+            ) : (
+              <Badge variant="warning">Failures detected</Badge>
+            )}
+          </Card>
         </div>
       )}
     </div>

@@ -1,20 +1,32 @@
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import { ErrorBanner } from "../components/ErrorBanner";
-import { LoadingState } from "../components/LoadingState";
+import { CaseGrid } from "../components/case/CaseGrid";
+import { ErrorBanner } from "../components/ui/ErrorBanner";
+import { LoadingState } from "../components/ui/LoadingState";
 import { useAsync } from "../hooks/useAsync";
 
 export function CasesPage() {
   const { data, loading, error, reload } = useAsync(() => api.listCases(), []);
 
+  async function handleDelete(caseId: string) {
+    if (!window.confirm(`Delete case ${caseId}?`)) return;
+    await api.deleteCase(caseId);
+    reload();
+  }
+
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="page-title">Cases</h1>
-        <Link className="btn" to="/cases/new">
-          New Case
-        </Link>
-      </div>
+      <header className="page-header">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 className="page-title">Case Management</h1>
+            <p className="page-subtitle">Search, sort, and open investigation cases</p>
+          </div>
+          <Link className="btn" to="/cases/new">
+            New Case
+          </Link>
+        </div>
+      </header>
 
       <ErrorBanner message={error} />
 
@@ -22,42 +34,10 @@ export function CasesPage() {
         <LoadingState message="Loading cases…" />
       ) : !data?.length ? (
         <div className="empty-state">
-          No cases yet. <Link to="/cases/new">Create your first case</Link>.
+          No cases yet. <Link to="/cases/new">Create your first investigation</Link>.
         </div>
       ) : (
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Case ID</th>
-                <th>Playbook</th>
-                <th>State</th>
-                <th>Findings</th>
-                <th>Hypotheses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.case_id}>
-                  <td>
-                    <Link to={`/cases/${item.case_id}`}>{item.case_id}</Link>
-                  </td>
-                  <td>{item.playbook_id}</td>
-                  <td>
-                    <span className="badge">{item.state}</span>
-                  </td>
-                  <td>{item.finding_count}</td>
-                  <td>{item.hypothesis_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="actions">
-            <button type="button" className="btn btn-secondary" onClick={reload}>
-              Refresh
-            </button>
-          </div>
-        </div>
+        <CaseGrid cases={data} onDelete={handleDelete} />
       )}
     </div>
   );

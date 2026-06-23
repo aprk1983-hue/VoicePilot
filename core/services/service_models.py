@@ -184,3 +184,23 @@ class ServiceValidationResult:
     failed_count: int
     accuracy_percent: float
     average_confidence: float
+
+
+@dataclass(frozen=True)
+class ServiceDashboardSummaryResult:
+    """Aggregated platform metrics for the enterprise dashboard."""
+
+    api_status: str
+    platform_name: str
+    platform_version: str
+    api_version: str
+    total_cases: int
+    cases_by_state: tuple[tuple[str, int], ...]
+    cases_by_playbook: tuple[tuple[str, int], ...]
+    total_findings: int
+    total_hypotheses: int
+    total_recommendations: int
+    knowledge_asset_count: int
+    supported_playbook_count: int
+    supported_playbooks: tuple[str, ...]
+    read_only_notice: str

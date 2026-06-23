@@ -122,6 +122,23 @@ export interface ValidationData {
   average_confidence: number;
 }
 
+export interface DashboardSummaryData {
+  api_status: string;
+  platform_name: string;
+  platform_version: string;
+  api_version: string;
+  total_cases: number;
+  cases_by_state: Record<string, number>;
+  cases_by_playbook: Record<string, number>;
+  total_findings: number;
+  total_hypotheses: number;
+  total_recommendations: number;
+  knowledge_asset_count: number;
+  supported_playbook_count: number;
+  supported_playbooks: string[];
+  read_only_notice: string;
+}
+
 export type ReportType = "executive" | "engineering" | "cab";
 
 export const SUPPORTED_PLAYBOOKS = [

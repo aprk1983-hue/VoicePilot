@@ -37,6 +37,7 @@ SAMPLE_EVIDENCE = (
 OPENAPI_PATHS = [
     "/health",
     "/version",
+    "/dashboard/summary",
     "/cases",
     "/cases/{case_id}",
     "/cases/{case_id}/evidence",
@@ -164,6 +165,38 @@ class TestVersionEndpoint:
         assert data["name"] == "voicepilot"
         assert data["version"]
         assert data["api_version"] == "v1"
+
+
+class TestDashboardEndpoints:
+    def test_dashboard_summary_returns_metrics(self, client: TestClient) -> None:
+        data = _assert_envelope(client.get("/dashboard/summary"))
+        assert data["api_status"] == "ok"
+        assert data["platform_name"] == "voicepilot"
+        assert data["total_cases"] == 0
+        assert data["supported_playbook_count"] >= 5
+        assert "read_only_notice" in data
+        assert isinstance(data["supported_playbooks"], list)
+
+    def test_dashboard_reflects_created_cases(self, client: TestClient) -> None:
+        client.post("/cases", json={"playbook_id": PLAYBOOK_ID})
+        client.post("/cases", json={"playbook_id": PLAYBOOK_ID})
+        data = _assert_envelope(client.get("/dashboard/summary"))
+        assert data["total_cases"] == 2
+        assert data["cases_by_playbook"].get(PLAYBOOK_ID) == 2
+
+    def test_dashboard_summary_schema_fields(self, client: TestClient) -> None:
+        data = _assert_envelope(client.get("/dashboard/summary"))
+        for field in (
+            "api_status",
+            "platform_version",
+            "total_findings",
+            "total_hypotheses",
+            "total_recommendations",
+            "knowledge_asset_count",
+            "cases_by_state",
+            "cases_by_playbook",
+        ):
+            assert field in data
 
 
 class TestCaseEndpoints:

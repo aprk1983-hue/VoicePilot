@@ -11,6 +11,7 @@ import type {
   ReportType,
   ValidationData,
   VersionData,
+  DashboardSummaryData,
 } from "./types";
 import { ApiError } from "./types";
 
@@ -44,6 +45,7 @@ async function request<T>(
 export const api = {
   getHealth: () => request<HealthData>("/health"),
   getVersion: () => request<VersionData>("/version"),
+  getDashboardSummary: () => request<DashboardSummaryData>("/dashboard/summary"),
 
   createCase: (playbookId: string) =>
     request<CaseData>("/cases", {

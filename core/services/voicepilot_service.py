@@ -16,6 +16,7 @@ from runtime.evidence_collection import submit_evidence
 from runtime.exceptions import CaseNotFoundError, PlaybookIdNotFoundError
 from brain.brain_exceptions import BrainSessionNotFoundError
 from change_package.change_report import format_change_package_markdown
+from change_package.change_models import READ_ONLY_NOTICE as CHANGE_READ_ONLY_NOTICE
 from investigation_compare.compare_models import InvestigationSnapshot
 from investigation_compare.compare_report import format_comparison_markdown
 from reporting.report_models import ReportType
@@ -30,6 +31,8 @@ from services.service_models import (
     ServiceBrainSessionResult,
     ServiceCaseResult,
     ServiceChangePackageResult,
+    ServiceDashboardSummaryResult,
+    ServiceDashboardSummaryResult,
     ServiceDiscoveryResult,
     ServiceEvidenceResult,
     ServiceInvestigationResult,
@@ -309,6 +312,51 @@ class VoicePilotService:
             _map_case_result(runtime.case_manager.load_case(case_id))
             for case_id in runtime.case_manager.list_cases()
         ]
+
+    def get_dashboard_summary(self) -> ServiceDashboardSummaryResult:
+        """Return aggregated dashboard metrics for the enterprise UI."""
+        import importlib.metadata
+
+        from validation.validation_engine import SUPPORTED_VALIDATION_PLAYBOOKS
+
+        cases = self.list_cases()
+        stats = self.asset_statistics()
+
+        state_counts: dict[str, int] = {}
+        playbook_counts: dict[str, int] = {}
+        total_findings = 0
+        total_hypotheses = 0
+        total_recommendations = 0
+
+        for case in cases:
+            state_counts[case.state] = state_counts.get(case.state, 0) + 1
+            playbook_counts[case.playbook_id] = playbook_counts.get(case.playbook_id, 0) + 1
+            total_findings += case.finding_count
+            total_hypotheses += case.hypothesis_count
+            total_recommendations += case.recommendation_count
+
+        try:
+            platform_version = importlib.metadata.version("voicepilot")
+        except importlib.metadata.PackageNotFoundError:
+            platform_version = "0.1.0"
+
+        supported = tuple(SUPPORTED_VALIDATION_PLAYBOOKS)
+        return ServiceDashboardSummaryResult(
+            api_status="ok",
+            platform_name="voicepilot",
+            platform_version=platform_version,
+            api_version="v1",
+            total_cases=len(cases),
+            cases_by_state=tuple(sorted(state_counts.items())),
+            cases_by_playbook=tuple(sorted(playbook_counts.items())),
+            total_findings=total_findings,
+            total_hypotheses=total_hypotheses,
+            total_recommendations=total_recommendations,
+            knowledge_asset_count=stats.total_assets,
+            supported_playbook_count=len(supported),
+            supported_playbooks=supported,
+            read_only_notice=CHANGE_READ_ONLY_NOTICE,
+        )
 
     def start_brain_session(self, playbook_id: str) -> ServiceBrainSessionResult:
         """Start a Brain orchestration session for a playbook."""

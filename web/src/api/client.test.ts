@@ -85,4 +85,41 @@ describe("api client", () => {
       }),
     );
   });
+
+  it("loads dashboard summary", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          request_id: "req-4",
+          timestamp: "2026-06-19T00:00:00Z",
+          data: {
+            api_status: "ok",
+            platform_name: "voicepilot",
+            platform_version: "0.1.0",
+            api_version: "v1",
+            total_cases: 1,
+            cases_by_state: { INTAKE: 1 },
+            cases_by_playbook: { "VP-CUBE-0001": 1 },
+            total_findings: 0,
+            total_hypotheses: 0,
+            total_recommendations: 0,
+            knowledge_asset_count: 50,
+            supported_playbook_count: 5,
+            supported_playbooks: ["VP-CUBE-0001"],
+            read_only_notice: "Advisory only.",
+          },
+        }),
+      }),
+    );
+
+    const summary = await api.getDashboardSummary();
+    expect(summary.total_cases).toBe(1);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/dashboard/summary",
+      expect.any(Object),
+    );
+  });
 });

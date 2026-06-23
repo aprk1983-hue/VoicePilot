@@ -16,6 +16,7 @@ from api.routers import (
     brain,
     cases,
     change_package,
+    dashboard,
     evidence,
     health,
     investigation,
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router)
+    app.include_router(dashboard.router)
     app.include_router(cases.router)
     app.include_router(evidence.router)
     app.include_router(investigation.router)
