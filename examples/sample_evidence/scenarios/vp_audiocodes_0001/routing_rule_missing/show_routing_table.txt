@@ -1,0 +1,3 @@
+show routing-table
+Rule Name: PSTN_OUT
+Priority: 1

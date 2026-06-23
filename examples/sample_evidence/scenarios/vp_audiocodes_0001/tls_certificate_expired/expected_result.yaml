@@ -1,0 +1,3 @@
+scenario_id: tls_certificate_expired
+expected_root_cause: TLS certificate expired
+min_confidence: 95

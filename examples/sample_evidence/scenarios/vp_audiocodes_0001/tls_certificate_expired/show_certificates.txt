@@ -1,0 +1,4 @@
+show certificates
+Certificate Name: EXPIRED_CERT
+Not After: 2024-01-01
+Status: Expired

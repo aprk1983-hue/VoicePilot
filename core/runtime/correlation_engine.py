@@ -237,12 +237,18 @@ def _rules_for_playbook(
     default_rules: tuple[CorrelationRule, ...],
 ) -> tuple[CorrelationRule, ...]:
     from runtime.cucm_investigation import VP_CUCM_0001_CORRELATION_RULES, VP_CUCM_0001_PLAYBOOK_ID
+    from runtime.audiocodes_investigation import (
+        VP_AUDIOCODES_0001_CORRELATION_RULES,
+        VP_AUDIOCODES_0001_PLAYBOOK_ID,
+    )
     from runtime.teams_investigation import VP_TEAMS_0001_CORRELATION_RULES, VP_TEAMS_0001_PLAYBOOK_ID
 
     if playbook_id == VP_CUCM_0001_PLAYBOOK_ID:
         return VP_CUCM_0001_CORRELATION_RULES
     if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
         return VP_TEAMS_0001_CORRELATION_RULES
+    if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
+        return VP_AUDIOCODES_0001_CORRELATION_RULES
     return default_rules
 
 

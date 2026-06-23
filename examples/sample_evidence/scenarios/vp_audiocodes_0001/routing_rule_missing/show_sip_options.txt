@@ -1,0 +1,4 @@
+show sip-options
+Policy Name: OPTIONS_KEEPALIVE
+Options Enabled: True
+Options Status: Success

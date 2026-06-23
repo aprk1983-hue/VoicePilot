@@ -1,0 +1,3 @@
+scenario_id: routing_rule_missing
+expected_root_cause: Routing configuration issue
+min_confidence: 91

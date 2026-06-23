@@ -1,0 +1,4 @@
+show media-realm
+Realm Name: MR_INTERNAL
+State: Active
+Port Range: 6000-6499

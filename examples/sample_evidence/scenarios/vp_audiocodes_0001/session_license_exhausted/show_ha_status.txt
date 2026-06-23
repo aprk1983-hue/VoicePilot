@@ -1,0 +1,5 @@
+show ha-status
+Active Node: SBC-LAB-01
+Standby Node: SBC-LAB-02
+Cluster State: Active
+Sync State: Synchronized

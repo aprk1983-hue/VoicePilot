@@ -1,0 +1,3 @@
+scenario_id: proxy_set_unavailable
+expected_root_cause: Proxy Set unavailable
+min_confidence: 92

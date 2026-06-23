@@ -1,0 +1,7 @@
+show ip-group
+IP Group Name: TO_PROVIDER
+State: Disabled
+Proxy Set: PROVIDER_PS
+Media Realm: MR_INTERNAL
+IP Profile: DEFAULT_PROFILE
+Enable SRTP: True

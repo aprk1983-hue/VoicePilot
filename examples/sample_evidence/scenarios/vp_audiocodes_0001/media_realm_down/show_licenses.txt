@@ -1,0 +1,4 @@
+show licenses
+License Type: Session
+Sessions Total: 500
+Sessions Used: 120

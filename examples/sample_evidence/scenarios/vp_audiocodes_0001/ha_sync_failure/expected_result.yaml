@@ -1,0 +1,3 @@
+scenario_id: ha_sync_failure
+expected_root_cause: HA synchronization issue
+min_confidence: 91

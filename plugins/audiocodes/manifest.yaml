@@ -1,0 +1,14 @@
+name: audiocodes
+display_name: AudioCodes SBC Plugin
+version: 0.1.0
+vendor: VoicePilot
+plugin_type: vendor
+description: Official AudioCodes SBC investigation playbooks and parsers.
+capabilities:
+  - audiocodes_playbooks
+  - audiocodes_sbc_troubleshooting
+supported_platforms:
+  - AudioCodes SBC
+entry_points:
+  playbooks:
+    - playbooks/sbc/vp-audiocodes-0001-audiocodes-sbc-investigation.vpb.yaml

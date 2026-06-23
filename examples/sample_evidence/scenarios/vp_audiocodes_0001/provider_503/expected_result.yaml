@@ -1,0 +1,3 @@
+scenario_id: provider_503
+expected_root_cause: Provider SIP service unavailable
+min_confidence: 90

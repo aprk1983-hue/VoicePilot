@@ -1,0 +1,3 @@
+scenario_id: media_realm_down
+expected_root_cause: Media Realm failure
+min_confidence: 92

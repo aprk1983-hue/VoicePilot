@@ -1,0 +1,7 @@
+show tls-context
+Context Name: TLS_CTX_1
+TLS Version: TLS1.2
+Certificate Name: SBC_CERT
+Status: Active
+Media Security Profile: SRTP_PROFILE
+SRTP Mode: Enabled

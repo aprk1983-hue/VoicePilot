@@ -1,0 +1,3 @@
+scenario_id: session_license_exhausted
+expected_root_cause: License exhaustion
+min_confidence: 94

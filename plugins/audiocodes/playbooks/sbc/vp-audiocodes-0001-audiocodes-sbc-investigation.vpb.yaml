@@ -1,0 +1,390 @@
+playbook:
+  api_version: voicepilot.io/v1
+  kind: Playbook
+
+  metadata:
+    id: VP-AUDIOCODES-0001
+    version: "1.0.0"
+    title: AudioCodes SBC Investigation
+    description: >
+      TAC-grade deterministic investigation for AudioCodes Session Border Controller
+      using uploaded CLI evidence only. Covers SIP trunk health, proxy sets, IP groups,
+      routing, TLS, media realms, licensing, and high availability. Read-only — never
+      connects to the SBC via SSH, REST, SNMP, or performs configuration changes.
+    category: sbc
+    vendor: audiocodes
+    status: active
+    author: voicepilot-curator
+    reviewed_by: tac-sme
+    effective_from: 2026-06-19
+    tags: [audiocodes, sbc, sip, routing, tls, media, licensing, ha]
+    related_playbooks: []
+
+  platforms:
+    - vendor: audiocodes
+      products: [sbc]
+      min_version: "7.40"
+      roles: [sbc]
+
+  symptoms:
+    - id: SYM-SBC-SIP
+      match:
+        summary_contains: [sip, trunk, options, provider, outbound, inbound]
+      weight: 1.0
+    - id: SYM-SBC-MEDIA
+      match:
+        summary_contains: [rtp, media, one-way, audio, codec]
+      weight: 0.9
+    - id: SYM-SBC-ROUTING
+      match:
+        summary_contains: [routing, ip group, proxy set, destination]
+      weight: 0.85
+
+  business_impact:
+    default_severity: high
+    description: PSTN or SIP trunk connectivity through AudioCodes SBC is degraded
+    escalation_threshold_minutes: 30
+    user_impact: voice_service_degraded
+
+  topology:
+    pattern: audiocodes_sbc_gateway
+    description: AudioCodes SBC with proxy sets, IP groups, routing, and media realms
+    required_components:
+      - type: audiocodes_sbc
+        role: sbc
+        min_count: 1
+
+  intake:
+    questions:
+      - id: Q-AC-001
+        text: Did SIP trunk calling ever work through this SBC?
+        category: intake
+        phase: INTAKE
+        target_field: known_facts.worked_previously
+        required: true
+      - id: Q-AC-002
+        text: When did the issue start?
+        category: intake
+        phase: INTAKE
+        target_field: timeline.onset
+        required: true
+      - id: Q-AC-003
+        text: Describe the symptom (SIP, routing, TLS, media, licensing, HA).
+        category: scope
+        phase: INTAKE
+        target_field: known_facts.symptom_detail
+        required: true
+      - id: Q-AC-004
+        text: Which destinations or trunks are affected?
+        category: scope
+        phase: INTAKE
+        target_field: affected_scope.destination_classes
+        required: true
+      - id: Q-AC-005
+        text: What provider connectivity model is in use?
+        category: topology
+        phase: INTAKE
+        target_field: known_facts.pstn_connectivity
+        required: true
+      - id: Q-AC-006
+        text: Has any SBC configuration changed recently?
+        category: change
+        phase: DISCOVERY
+        target_field: known_facts.recent_changes
+        required: false
+
+  evidence:
+    requirements:
+      - id: EVD-VOIP-STATUS
+        title: VoIP device status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-SIP-OPTIONS
+        title: SIP OPTIONS policy status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-PROXY-SET
+        title: Proxy Set configuration
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-IP-GROUP
+        title: IP Group configuration
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-ROUTING
+        title: Routing table
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-MEDIA-REALM
+        title: Media Realm status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-TLS-CONTEXT
+        title: TLS context
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-CERTIFICATES
+        title: TLS certificates
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-HA-STATUS
+        title: HA cluster status
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+      - id: EVD-LICENSES
+        title: Session licenses
+        type: cli_output
+        mandatory: true
+        phase: COLLECTION
+
+    commands:
+      - id: CMD-VOIP-STATUS
+        requirement_id: EVD-VOIP-STATUS
+        device_role: sbc
+        command: show voip status
+        cost: low
+        privilege: read
+      - id: CMD-SIP-OPTIONS
+        requirement_id: EVD-SIP-OPTIONS
+        device_role: sbc
+        command: show sip-options
+        cost: low
+        privilege: read
+      - id: CMD-PROXY-SET
+        requirement_id: EVD-PROXY-SET
+        device_role: sbc
+        command: show proxy-set
+        cost: low
+        privilege: read
+      - id: CMD-IP-GROUP
+        requirement_id: EVD-IP-GROUP
+        device_role: sbc
+        command: show ip-group
+        cost: low
+        privilege: read
+      - id: CMD-ROUTING
+        requirement_id: EVD-ROUTING
+        device_role: sbc
+        command: show routing-table
+        cost: low
+        privilege: read
+      - id: CMD-MEDIA-REALM
+        requirement_id: EVD-MEDIA-REALM
+        device_role: sbc
+        command: show media-realm
+        cost: low
+        privilege: read
+      - id: CMD-TLS-CONTEXT
+        requirement_id: EVD-TLS-CONTEXT
+        device_role: sbc
+        command: show tls-context
+        cost: low
+        privilege: read
+      - id: CMD-CERTIFICATES
+        requirement_id: EVD-CERTIFICATES
+        device_role: sbc
+        command: show certificates
+        cost: low
+        privilege: read
+      - id: CMD-HA-STATUS
+        requirement_id: EVD-HA-STATUS
+        device_role: sbc
+        command: show ha-status
+        cost: low
+        privilege: read
+      - id: CMD-LICENSES
+        requirement_id: EVD-LICENSES
+        device_role: sbc
+        command: show licenses
+        cost: low
+        privilege: read
+
+    supported_parser_outputs:
+      - sip_options_failure
+      - provider_503
+      - proxy_set_unavailable
+      - ip_group_disabled
+      - routing_table_issue
+      - tls_certificate_expired
+      - tls_negotiation_failure
+      - media_realm_failure
+      - rtp_one_way_audio
+      - session_license_exhausted
+      - standby_synchronization_failure
+      - ha_failover
+      - gateway_unreachable
+      - dns_resolution_failure
+      - srtp_mismatch
+      - call_failure_spike
+
+  hypotheses:
+    - id: HYP-AUDIOCODES-PROVIDER
+      title: Provider SIP service unavailable
+      category: provider
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-SIP-OPTIONS
+      title: SIP OPTIONS failure
+      category: sip_trunk
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-PROXY
+      title: Proxy Set unavailable
+      category: proxy
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-IP-GROUP
+      title: IP Group disabled
+      category: routing
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-ROUTING
+      title: Routing configuration issue
+      category: routing
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-TLS-CERT
+      title: TLS certificate expired
+      category: security
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-TLS-NEG
+      title: TLS negotiation failure
+      category: security
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-MEDIA-REALM
+      title: Media Realm failure
+      category: media
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-RTP
+      title: RTP path issue
+      category: media
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-ONEWAY
+      title: One-way audio
+      category: media
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-CODEC
+      title: Codec negotiation issue
+      category: media
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-LICENSE
+      title: License exhaustion
+      category: capacity
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-HA-SYNC
+      title: HA synchronization issue
+      category: ha
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-GATEWAY
+      title: Gateway unreachable
+      category: provider
+      initial_status: candidate
+    - id: HYP-AUDIOCODES-DNS
+      title: DNS resolution failure
+      category: network
+      initial_status: candidate
+
+  knowledge_mappings:
+    - signal: sip_options_failure
+      incidents: [VP-AUDIOCODES-SBC-000001]
+      runbooks: [VP-AUDIOCODES-SBC-RB-001]
+      verification: [VP-AUDIOCODES-SBC-VG-001]
+      references: [VP-AUDIOCODES-SBC-REF-002]
+    - signal: provider_503
+      incidents: [VP-AUDIOCODES-SBC-000002]
+      runbooks: [VP-AUDIOCODES-SBC-RB-008]
+      verification: [VP-AUDIOCODES-SBC-VG-008]
+      references: [VP-AUDIOCODES-SBC-REF-002]
+    - signal: proxy_set_unavailable
+      incidents: [VP-AUDIOCODES-SBC-000006]
+      runbooks: [VP-AUDIOCODES-SBC-RB-003]
+      verification: [VP-AUDIOCODES-SBC-VG-003]
+      references: [VP-AUDIOCODES-SBC-REF-002]
+    - signal: ip_group_disabled
+      incidents: [VP-AUDIOCODES-SBC-000007]
+      runbooks: [VP-AUDIOCODES-SBC-RB-003]
+      verification: [VP-AUDIOCODES-SBC-VG-003]
+      references: [VP-AUDIOCODES-SBC-REF-001]
+    - signal: routing_table_issue
+      incidents: [VP-AUDIOCODES-SBC-000009]
+      runbooks: [VP-AUDIOCODES-SBC-RB-004]
+      verification: [VP-AUDIOCODES-SBC-VG-004]
+      references: [VP-AUDIOCODES-SBC-REF-001]
+    - signal: tls_certificate_expired
+      incidents: [VP-AUDIOCODES-SBC-000003]
+      runbooks: [VP-AUDIOCODES-SBC-RB-002]
+      verification: [VP-AUDIOCODES-SBC-VG-002]
+      references: [VP-AUDIOCODES-SBC-REF-003]
+    - signal: media_realm_failure
+      incidents: [VP-AUDIOCODES-SBC-000011]
+      runbooks: [VP-AUDIOCODES-SBC-RB-005]
+      verification: [VP-AUDIOCODES-SBC-VG-005]
+      references: [VP-AUDIOCODES-SBC-REF-004]
+    - signal: rtp_one_way_audio
+      incidents: [VP-AUDIOCODES-SBC-000012]
+      runbooks: [VP-AUDIOCODES-SBC-RB-005]
+      verification: [VP-AUDIOCODES-SBC-VG-005]
+      references: [VP-AUDIOCODES-SBC-REF-004]
+    - signal: session_license_exhausted
+      incidents: [VP-AUDIOCODES-SBC-000014]
+      runbooks: [VP-AUDIOCODES-SBC-RB-009]
+      verification: [VP-AUDIOCODES-SBC-VG-009]
+      references: [VP-AUDIOCODES-SBC-REF-001]
+    - signal: standby_synchronization_failure
+      incidents: [VP-AUDIOCODES-SBC-000016]
+      runbooks: [VP-AUDIOCODES-SBC-RB-006]
+      verification: [VP-AUDIOCODES-SBC-VG-006]
+      references: [VP-AUDIOCODES-SBC-REF-005]
+
+  change_package_templates:
+    advisory_notice: READ_ONLY
+    maintenance_window_suggestion: Schedule during approved maintenance window for CRITICAL and HIGH risk items
+    templates:
+      - hypothesis_id: HYP-AUDIOCODES-SIP-OPTIONS
+        risk_level: medium
+        runbook: VP-AUDIOCODES-SBC-RB-001
+      - hypothesis_id: HYP-AUDIOCODES-TLS-CERT
+        risk_level: high
+        runbook: VP-AUDIOCODES-SBC-RB-002
+      - hypothesis_id: HYP-AUDIOCODES-ROUTING
+        risk_level: high
+        runbook: VP-AUDIOCODES-SBC-RB-004
+      - hypothesis_id: HYP-AUDIOCODES-LICENSE
+        risk_level: critical
+        runbook: VP-AUDIOCODES-SBC-RB-009
+      - hypothesis_id: HYP-AUDIOCODES-HA-SYNC
+        risk_level: critical
+        runbook: VP-AUDIOCODES-SBC-RB-006
+
+  verification_templates:
+    - id: VG-SBC-SIP
+      guide: VP-AUDIOCODES-SBC-VG-001
+      commands: [show sip-options, show proxy-set]
+    - id: VG-SBC-TLS
+      guide: VP-AUDIOCODES-SBC-VG-002
+      commands: [show tls-context, show certificates]
+    - id: VG-SBC-ROUTING
+      guide: VP-AUDIOCODES-SBC-VG-004
+      commands: [show routing-table, show ip-group]
+    - id: VG-SBC-MEDIA
+      guide: VP-AUDIOCODES-SBC-VG-005
+      commands: [show media-realm]
+    - id: VG-SBC-HA
+      guide: VP-AUDIOCODES-SBC-VG-006
+      commands: [show ha-status]
+
+  report:
+    sections:
+      - id: executive_summary
+        title: Executive Summary
+        required: true
+      - id: technical_summary
+        title: Technical Summary
+        required: true
+      - id: root_cause_analysis
+        title: Root Cause Analysis
+        required: true

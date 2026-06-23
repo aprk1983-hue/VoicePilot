@@ -17,6 +17,10 @@ from change_package.change_risk import ChangeRiskLevel, assess_change_risk, form
 from domain.models import Case, Hypothesis, Recommendation
 from runtime.recommendation_engine import ACTION_LIKELY_ROOT_CAUSE, VP_CUBE_0001_ACTION_PLANS
 from runtime.cucm_investigation import VP_CUCM_0001_ACTION_PLANS, VP_CUCM_0001_PLAYBOOK_ID
+from runtime.audiocodes_investigation import (
+    VP_AUDIOCODES_0001_ACTION_PLANS,
+    VP_AUDIOCODES_0001_PLAYBOOK_ID,
+)
 from runtime.teams_investigation import VP_TEAMS_0001_ACTION_PLANS, VP_TEAMS_0001_PLAYBOOK_ID
 from shared.constants import DEFAULT_CONFIDENCE_THRESHOLD
 
@@ -312,6 +316,201 @@ VP_TEAMS_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
     ),
 }
 
+VP_AUDIOCODES_0001_CHANGE_TEMPLATES: dict[str, _ChangeTemplate] = {
+    "HYP-AUDIOCODES-PROVIDER": _ChangeTemplate(
+        current_state="Provider SIP service returned 503 Service Unavailable.",
+        recommended_state="Provider SIP trunk online and responding to OPTIONS.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — engage provider NOC per VP-AUDIOCODES-SBC-RB-008\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Fail over to secondary provider trunk if configured\n"
+        ),
+        impacted_objects=("Proxy Set", "SIP trunk"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "Provider SIP trunk"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-008", "VP-AUDIOCODES-SBC-VG-008", "VP-AUDIOCODES-SBC-REF-002"),
+    ),
+    "HYP-AUDIOCODES-SIP-OPTIONS": _ChangeTemplate(
+        current_state="SIP OPTIONS keepalive to provider is failing.",
+        recommended_state="SIP OPTIONS enabled and provider responds successfully.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore OPTIONS policy per VP-AUDIOCODES-SBC-RB-001\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior SIP OPTIONS policy from change record\n"
+        ),
+        impacted_objects=("SIP message policy", "Proxy Set"),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("AudioCodes SBC", "SIP trunk"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-001", "VP-AUDIOCODES-SBC-VG-001", "VP-AUDIOCODES-SBC-REF-002"),
+    ),
+    "HYP-AUDIOCODES-PROXY": _ChangeTemplate(
+        current_state="Proxy Set is unavailable or inactive.",
+        recommended_state="Proxy Set active with valid gateway address.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore proxy set per VP-AUDIOCODES-SBC-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior proxy set configuration from export\n"
+        ),
+        impacted_objects=("Proxy Set", "Proxy Address"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "Provider gateway"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-003", "VP-AUDIOCODES-SBC-VG-003", "VP-AUDIOCODES-SBC-REF-002"),
+    ),
+    "HYP-AUDIOCODES-IP-GROUP": _ChangeTemplate(
+        current_state="IP Group is administratively disabled.",
+        recommended_state="IP Group enabled with correct proxy set and media realm.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — enable IP Group per VP-AUDIOCODES-SBC-RB-003\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior IP Group state from configuration export\n"
+        ),
+        impacted_objects=("IP Group", "Routing rule"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "Call routing"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-003", "VP-AUDIOCODES-SBC-VG-003", "VP-AUDIOCODES-SBC-REF-001"),
+    ),
+    "HYP-AUDIOCODES-ROUTING": _ChangeTemplate(
+        current_state="Routing table missing destination or IP Group mapping.",
+        recommended_state="Routing table complete with valid IP Group for each destination.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — repair routing table per VP-AUDIOCODES-SBC-RB-004\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior routing table from configuration export\n"
+        ),
+        impacted_objects=("Routing rule", "IP Group"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "Outbound routing"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-004", "VP-AUDIOCODES-SBC-VG-004", "VP-AUDIOCODES-SBC-REF-001"),
+    ),
+    "HYP-AUDIOCODES-TLS-CERT": _ChangeTemplate(
+        current_state="TLS certificate on the SBC is expired.",
+        recommended_state="Valid TLS certificate installed with complete chain.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — renew certificate per VP-AUDIOCODES-SBC-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior valid certificate if renewal fails\n"
+        ),
+        impacted_objects=("TLS certificate", "TLS context"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "SIP TLS"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-002", "VP-AUDIOCODES-SBC-VG-002", "VP-AUDIOCODES-SBC-REF-003"),
+    ),
+    "HYP-AUDIOCODES-TLS-NEG": _ChangeTemplate(
+        current_state="TLS handshake negotiation is failing.",
+        recommended_state="TLS context aligned with provider cipher and certificate requirements.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — align TLS context per VP-AUDIOCODES-SBC-RB-002\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior TLS context configuration\n"
+        ),
+        impacted_objects=("TLS context", "Media security profile"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "SIP TLS"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-002", "VP-AUDIOCODES-SBC-VG-002", "VP-AUDIOCODES-SBC-REF-003"),
+    ),
+    "HYP-AUDIOCODES-MEDIA-REALM": _ChangeTemplate(
+        current_state="Media Realm is down or inactive.",
+        recommended_state="Media Realm active with valid RTP IP and port range.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore media realm per VP-AUDIOCODES-SBC-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior media realm configuration\n"
+        ),
+        impacted_objects=("Media Realm", "IP Group"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "RTP media"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-005", "VP-AUDIOCODES-SBC-VG-005", "VP-AUDIOCODES-SBC-REF-004"),
+    ),
+    "HYP-AUDIOCODES-ONEWAY": _ChangeTemplate(
+        current_state="One-way audio due to missing or invalid media IP.",
+        recommended_state="Symmetric RTP path with correct media IP addressing.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — correct media IP per VP-AUDIOCODES-SBC-RB-005\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior media realm IP configuration\n"
+        ),
+        impacted_objects=("Media Realm", "RTP path"),
+        risk_level=ChangeRiskLevel.MEDIUM,
+        affected_components=("AudioCodes SBC", "RTP media"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-005", "VP-AUDIOCODES-SBC-VG-005", "VP-AUDIOCODES-SBC-REF-004"),
+    ),
+    "HYP-AUDIOCODES-LICENSE": _ChangeTemplate(
+        current_state="Session license capacity is exhausted.",
+        recommended_state="Available session licenses or reduced concurrent call load.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — increase licenses per VP-AUDIOCODES-SBC-RB-009\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Revert license allocation if incorrectly applied\n"
+        ),
+        impacted_objects=("Session license", "SBC capacity"),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("AudioCodes SBC", "Call capacity"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-009", "VP-AUDIOCODES-SBC-VG-009", "VP-AUDIOCODES-SBC-REF-001"),
+    ),
+    "HYP-AUDIOCODES-HA-SYNC": _ChangeTemplate(
+        current_state="HA standby node is out of synchronization.",
+        recommended_state="HA cluster synchronized with healthy active and standby nodes.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore HA sync per VP-AUDIOCODES-SBC-RB-006\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Fail back to prior active node after engineer validation\n"
+        ),
+        impacted_objects=("HA cluster", "Standby node"),
+        risk_level=ChangeRiskLevel.CRITICAL,
+        affected_components=("AudioCodes SBC", "High availability"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-006", "VP-AUDIOCODES-SBC-VG-006", "VP-AUDIOCODES-SBC-REF-005"),
+    ),
+    "HYP-AUDIOCODES-GATEWAY": _ChangeTemplate(
+        current_state="Provider gateway address is missing or unreachable.",
+        recommended_state="Proxy Set configured with reachable provider gateway.",
+        config_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Advisory only — restore gateway address per VP-AUDIOCODES-SBC-RB-008\n"
+        ),
+        rollback_example=(
+            f"{_EXAMPLE_PREFIX}\n"
+            "! Restore prior proxy address from configuration export\n"
+        ),
+        impacted_objects=("Proxy Address", "Proxy Set"),
+        risk_level=ChangeRiskLevel.HIGH,
+        affected_components=("AudioCodes SBC", "Provider gateway"),
+        vendor_references=("VP-AUDIOCODES-SBC-RB-008", "VP-AUDIOCODES-SBC-VG-008", "VP-AUDIOCODES-SBC-REF-002"),
+    ),
+}
+
 _DEFAULT_APPROVAL_SECTIONS: tuple[ApprovalSection, ...] = (
     ApprovalSection(
         name="Technical Reviewer",
@@ -469,6 +668,8 @@ def _action_plans_for_playbook(playbook_id: str | None) -> dict:
         return VP_CUCM_0001_ACTION_PLANS
     if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
         return VP_TEAMS_0001_ACTION_PLANS
+    if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
+        return VP_AUDIOCODES_0001_ACTION_PLANS
     return VP_CUBE_0001_ACTION_PLANS
 
 
@@ -477,6 +678,8 @@ def _change_templates_for_playbook(playbook_id: str | None) -> dict[str, _Change
         return VP_CUCM_0001_CHANGE_TEMPLATES
     if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
         return VP_TEAMS_0001_CHANGE_TEMPLATES
+    if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
+        return VP_AUDIOCODES_0001_CHANGE_TEMPLATES
     return VP_CUBE_0001_CHANGE_TEMPLATES
 
 

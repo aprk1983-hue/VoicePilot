@@ -1,0 +1,3 @@
+scenario_id: rtp_one_way_audio
+expected_root_cause: One-way audio
+min_confidence: 88

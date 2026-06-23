@@ -1,0 +1,3 @@
+scenario_id: ip_group_disabled
+expected_root_cause: IP Group disabled
+min_confidence: 93

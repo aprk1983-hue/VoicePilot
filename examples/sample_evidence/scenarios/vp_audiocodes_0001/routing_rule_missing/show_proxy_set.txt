@@ -1,0 +1,7 @@
+show proxy-set
+Proxy Set Name: PROVIDER_PS
+State: Active
+Enable Heartbeat: Enabled
+Address: 203.0.113.10
+Transport: UDP
+Port: 5060

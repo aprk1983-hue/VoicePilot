@@ -9,6 +9,10 @@ from domain.enums import InvestigationState
 from domain.models import Case, Playbook
 
 from runtime.cucm_investigation import CUCM_ALL_FAIL_EVIDENCE, VP_CUCM_0001_PLAYBOOK_ID
+from runtime.audiocodes_investigation import (
+    AUDIOCODES_ALL_FAIL_EVIDENCE,
+    VP_AUDIOCODES_0001_PLAYBOOK_ID,
+)
 from runtime.teams_investigation import TEAMS_ALL_FAIL_EVIDENCE, VP_TEAMS_0001_PLAYBOOK_ID
 
 VP_CUBE_0001_PLAYBOOK_ID = "VP-CUBE-0001"
@@ -48,6 +52,8 @@ def build_intake_summary(case: Case, playbook: Playbook | None = None) -> Intake
         return _build_vp_cucm_0001_summary(case, known_facts)
     if playbook_id == VP_TEAMS_0001_PLAYBOOK_ID:
         return _build_vp_teams_0001_summary(case, known_facts)
+    if playbook_id == VP_AUDIOCODES_0001_PLAYBOOK_ID:
+        return _build_vp_audiocodes_0001_summary(case, known_facts)
 
     return IntakeSummary(
         case_id=case.case_id,
@@ -178,6 +184,34 @@ def _build_vp_cucm_0001_summary(
         missing_evidence=list(CUCM_ALL_FAIL_EVIDENCE),
         recommended_strategy="Registration-first",
         next_required_commands=list(CUCM_ALL_FAIL_EVIDENCE),
+    )
+
+
+def _build_vp_audiocodes_0001_summary(
+    case: Case,
+    known_facts: dict[str, Any],
+) -> IntakeSummary:
+    """Apply VP-AUDIOCODES-0001 deterministic summary rules."""
+    strategy = "SIP-trunk-first"
+    symptom = str(known_facts.get("symptom_detail", "")).lower()
+    if "routing" in symptom or "ip group" in symptom:
+        strategy = "Routing-first"
+    if "tls" in symptom or "certificate" in symptom:
+        strategy = "Security-first"
+    if "media" in symptom or "rtp" in symptom or "one-way" in symptom:
+        strategy = "Media-first"
+    if "license" in symptom or "capacity" in symptom:
+        strategy = "Capacity-first"
+    if "ha" in symptom or "failover" in symptom:
+        strategy = "HA-first"
+    return IntakeSummary(
+        case_id=case.case_id,
+        playbook_id=VP_AUDIOCODES_0001_PLAYBOOK_ID,
+        current_state=case.status,
+        known_facts=known_facts,
+        missing_evidence=list(AUDIOCODES_ALL_FAIL_EVIDENCE),
+        recommended_strategy=strategy,
+        next_required_commands=list(AUDIOCODES_ALL_FAIL_EVIDENCE),
     )
 
 

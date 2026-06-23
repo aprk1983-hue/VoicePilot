@@ -1,0 +1,5 @@
+show routing-table
+Rule Name: PSTN_OUT
+Destination: 9*
+IP Group: TO_PROVIDER
+Priority: 1

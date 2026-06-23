@@ -1,0 +1,5 @@
+show ha-status
+Active Node: SBC-LAB-02
+Standby Node: SBC-LAB-01
+Cluster State: Failover
+Sync State: Out_of_sync

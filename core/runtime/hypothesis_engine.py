@@ -157,6 +157,10 @@ class HypothesisEngine:
             from runtime.teams_investigation import VP_TEAMS_0001_RULES
 
             rules = VP_TEAMS_0001_RULES
+        elif case.playbook_id == "VP-AUDIOCODES-0001":
+            from runtime.audiocodes_investigation import VP_AUDIOCODES_0001_RULES
+
+            rules = VP_AUDIOCODES_0001_RULES
         else:
             return [_insufficient_evidence_hypothesis(case)]
 

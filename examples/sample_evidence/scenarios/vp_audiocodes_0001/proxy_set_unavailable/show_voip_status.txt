@@ -1,0 +1,4 @@
+show voip status
+Device Name: SBC-LAB-01
+Device Status: Active
+Active Sessions: 42

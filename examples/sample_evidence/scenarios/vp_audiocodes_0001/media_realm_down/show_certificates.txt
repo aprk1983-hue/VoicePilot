@@ -1,0 +1,4 @@
+show certificates
+Certificate Name: SBC_CERT
+Not After: 2027-01-01
+Status: Valid
