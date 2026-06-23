@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000007
+title: Genesys Cloud Carrier unavailable
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: CALL_ROUTING
+severity: high
+summary: Genesys Cloud Carrier unavailable affecting Genesys Cloud CX operations.
+description: Genesys Cloud Carrier unavailable affecting Genesys Cloud CX operations.
+symptoms:
+- All calls through carrier route fail with fast busy or reorder
+- Carrier trunk group shows outage in monitoring
+- Multiple destinations fail across same carrier path
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- carrier_unavailable
+- carrier_unavailable_detected
+expected_hypotheses: &id001
+- Carrier network outage or maintenance window
+- Carrier rate center or LATA routing failure
+- Incorrect carrier trunk group assignment in Genesys Cloud
+known_causes: *id001
+known_resolution: &id002
+- Engage carrier NOC and confirm outage scope
+- Fail over to alternate carrier trunk if configured
+- Validate outbound route and carrier trunk group mapping
+recommended_actions: *id002
+rollback_steps:
+- Restore previous carrier trunk group routing assignment
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- carrier_unavailable
+- pstn_carrier_outage
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-003
+- VP-GENESYS-CLOUD-VG-003
+- VP-GENESYS-CLOUD-REF-003
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- carrier
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

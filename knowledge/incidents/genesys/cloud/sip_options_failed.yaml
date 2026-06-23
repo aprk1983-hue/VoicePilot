@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000008
+title: Genesys Cloud SIP OPTIONS failed
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: high
+summary: Genesys Cloud SIP OPTIONS failed affecting Genesys Cloud CX operations.
+description: Genesys Cloud SIP OPTIONS failed affecting Genesys Cloud CX operations.
+symptoms:
+- SIP OPTIONS keepalive fails on Genesys Cloud trunk
+- Trunk marked unavailable due to OPTIONS timeout
+- Intermittent call setup failures on BYOC or Edge trunk
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- sip_options_failure
+- sip_options_failed_detected
+expected_hypotheses: &id001
+- Peer does not respond to SIP OPTIONS
+- Firewall drops OPTIONS in one direction
+- OPTIONS timer mismatch between Genesys Cloud and peer SBC
+known_causes: *id001
+known_resolution: &id002
+- Enable SIP OPTIONS response on peer SBC or gateway
+- Verify firewall permits OPTIONS bidirectionally
+- Align OPTIONS interval with carrier or SBC requirements
+recommended_actions: *id002
+rollback_steps:
+- Restore previous trunk OPTIONS and keepalive settings
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- sip_options_failure
+- sip_options_timeout
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-003
+- VP-GENESYS-CLOUD-VG-003
+- VP-GENESYS-CLOUD-REF-003
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- sip-options
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

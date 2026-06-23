@@ -1,0 +1,56 @@
+asset_id: VP-GENESYS-CLOUD-000018
+title: Genesys Cloud Conversation service unavailable
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: VOICE
+severity: critical
+summary: Genesys Cloud Conversation service unavailable affecting Genesys Cloud CX
+  operations.
+description: Genesys Cloud Conversation service unavailable affecting Genesys Cloud
+  CX operations.
+symptoms:
+- Active interactions cannot be controlled or transferred
+- Agent and supervisor clients lose interaction state
+- API conversation endpoints return service unavailable
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- conversation_service_unavailable
+- conversation_service_unavailable_detected
+expected_hypotheses: &id001
+- Genesys Cloud conversation service regional degradation
+- High API rate limiting or throttling on conversation endpoints
+- Network path to conversation API blocked or unstable
+known_causes: *id001
+known_resolution: &id002
+- Check Genesys Cloud status for conversation service incidents
+- Reduce concurrent API load if rate limiting detected
+- Engage Genesys support with conversation IDs and timestamps
+recommended_actions: *id002
+rollback_steps:
+- No configuration rollback during platform service outage
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- conversation_service_unavailable
+- conversation_api_error
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-009
+- VP-GENESYS-CLOUD-VG-009
+- VP-GENESYS-CLOUD-REF-001
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- conversation
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

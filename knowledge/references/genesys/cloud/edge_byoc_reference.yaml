@@ -1,0 +1,44 @@
+asset_id: VP-GENESYS-CLOUD-REF-003
+title: Edge and BYOC Reference
+asset_type: REFERENCE
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: low
+summary: Edge and BYOC Reference reference for Genesys Cloud CX engineering investigations.
+description: Edge and BYOC Reference for Genesys Cloud CX deployments and troubleshooting.
+symptoms:
+- Engineering reference consultation required
+expected_findings:
+- reference_applicable
+expected_hypotheses:
+- Authoritative Genesys guidance applies
+known_causes:
+- Misconfiguration relative to Genesys Cloud best practice
+known_resolution:
+- Align design and remediation with Genesys guidance
+recommended_actions:
+- Consult this reference during investigation and remediation
+verification_steps:
+- Confirm document version matches deployed Genesys Cloud configuration
+related_asset_ids:
+- VP-GENESYS-CLOUD-000005
+- VP-GENESYS-CLOUD-000006
+- VP-GENESYS-CLOUD-000007
+- VP-GENESYS-CLOUD-000008
+- VP-GENESYS-CLOUD-000009
+- VP-GENESYS-CLOUD-000022
+- VP-GENESYS-CLOUD-000024
+- VP-GENESYS-CLOUD-000025
+tags:
+- genesys-cloud
+- reference
+- professional-pack
+- genesys
+references:
+- https://help.mypurecloud.com/
+- Genesys Cloud CX Professional Pack v1
+confidence: 0.99
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

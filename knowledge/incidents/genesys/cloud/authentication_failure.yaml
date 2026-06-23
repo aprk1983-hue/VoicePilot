@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000001
+title: Genesys Cloud Authentication failure
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: SECURITY
+severity: critical
+summary: Genesys Cloud Authentication failure affecting Genesys Cloud CX operations.
+description: Genesys Cloud Authentication failure affecting Genesys Cloud CX operations.
+symptoms:
+- Users cannot sign in to Genesys Cloud
+- Admin console returns authentication errors
+- API requests fail with 401 Unauthorized
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- authentication_failure
+- authentication_failure_detected
+expected_hypotheses: &id001
+- Identity provider misconfiguration or outage
+- Genesys Cloud authentication service degradation
+- Incorrect SSO SAML or OIDC federation settings
+known_causes: *id001
+known_resolution: &id002
+- Verify identity provider availability and certificate validity
+- Review Genesys Cloud status and authentication logs
+- Validate SSO configuration against Genesys documentation
+recommended_actions: *id002
+rollback_steps:
+- Restore previous SSO and authentication configuration
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- authentication_failure
+- sso_authentication_failed
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-001
+- VP-GENESYS-CLOUD-VG-001
+- VP-GENESYS-CLOUD-REF-002
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- authentication
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

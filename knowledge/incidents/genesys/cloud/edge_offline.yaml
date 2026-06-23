@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000005
+title: Genesys Cloud Edge offline
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: critical
+summary: Genesys Cloud Edge offline affecting Genesys Cloud CX operations.
+description: Genesys Cloud Edge offline affecting Genesys Cloud CX operations.
+symptoms:
+- Telephony Edge shows offline in Genesys Cloud admin
+- PSTN calls fail for sites using affected Edge
+- Edge heartbeat and registration alarms active
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- edge_offline
+- edge_offline_detected
+expected_hypotheses: &id001
+- Edge appliance powered off or network unreachable
+- Edge software crash or failed upgrade
+- Firewall blocks Edge signaling to Genesys Cloud
+known_causes: *id001
+known_resolution: &id002
+- Verify Edge power, network connectivity, and DNS resolution
+- Restart Edge services and review Edge diagnostic logs
+- Confirm firewall permits required Edge cloud connectivity
+recommended_actions: *id002
+rollback_steps:
+- Restore previous Edge configuration from backup export
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- edge_offline
+- telephony_edge_unreachable
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-002
+- VP-GENESYS-CLOUD-VG-002
+- VP-GENESYS-CLOUD-REF-003
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- edge
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

@@ -1,0 +1,39 @@
+asset_id: VP-GENESYS-CLOUD-REF-005
+title: Media and WebRTC Reference
+asset_type: REFERENCE
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: low
+summary: Media and WebRTC Reference reference for Genesys Cloud CX engineering investigations.
+description: Media and WebRTC Reference for Genesys Cloud CX deployments and troubleshooting.
+symptoms:
+- Engineering reference consultation required
+expected_findings:
+- reference_applicable
+expected_hypotheses:
+- Authoritative Genesys guidance applies
+known_causes:
+- Misconfiguration relative to Genesys Cloud best practice
+known_resolution:
+- Align design and remediation with Genesys guidance
+recommended_actions:
+- Consult this reference during investigation and remediation
+verification_steps:
+- Confirm document version matches deployed Genesys Cloud configuration
+related_asset_ids:
+- VP-GENESYS-CLOUD-000017
+- VP-GENESYS-CLOUD-000020
+- VP-GENESYS-CLOUD-000021
+tags:
+- genesys-cloud
+- reference
+- professional-pack
+- genesys
+references:
+- https://help.mypurecloud.com/
+- Genesys Cloud CX Professional Pack v1
+confidence: 0.99
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

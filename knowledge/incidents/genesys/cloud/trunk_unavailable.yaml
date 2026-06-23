@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000006
+title: Genesys Cloud Trunk unavailable
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: high
+summary: Genesys Cloud Trunk unavailable affecting Genesys Cloud CX operations.
+description: Genesys Cloud Trunk unavailable affecting Genesys Cloud CX operations.
+symptoms:
+- Phone trunk shows unavailable in Genesys Cloud telephony admin
+- Inbound and outbound PSTN calls fail on affected trunk
+- Trunk health monitoring reports connection loss
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- trunk_unavailable
+- trunk_unavailable_detected
+expected_hypotheses: &id001
+- SIP trunk registration or connectivity lost
+- Carrier-side trunk maintenance or outage
+- Incorrect trunk URI or authentication credentials
+known_causes: *id001
+known_resolution: &id002
+- Verify trunk registration status and SIP credentials
+- Confirm carrier trunk health with provider NOC
+- Review trunk base settings and failover configuration
+recommended_actions: *id002
+rollback_steps:
+- Restore previous trunk configuration from export
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- trunk_unavailable
+- sip_trunk_down
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-003
+- VP-GENESYS-CLOUD-VG-003
+- VP-GENESYS-CLOUD-REF-003
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- trunk
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

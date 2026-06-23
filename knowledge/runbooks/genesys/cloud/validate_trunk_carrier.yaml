@@ -1,0 +1,46 @@
+asset_id: VP-GENESYS-CLOUD-RB-003
+title: Validate SIP Trunk and Carrier
+asset_type: RUNBOOK
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: high
+summary: Validate SIP Trunk and Carrier for Genesys Cloud CX.
+description: Validate SIP Trunk and Carrier for Genesys Cloud CX. Professional pack
+  runbook RB-GENESYS-TRUNK.
+symptoms:
+- Service degradation requiring runbook remediation
+expected_findings:
+- runbook_remediation_required
+expected_hypotheses:
+- Known Genesys Cloud failure pattern matched
+known_causes:
+- Configuration or connectivity fault on Genesys Cloud
+known_resolution:
+- Execute runbook steps and validate with verification guide
+recommended_actions:
+- Follow RB-GENESYS-TRUNK remediation steps in order
+- Document changes in change record
+- Validate outcome with linked verification guide
+rollback_steps:
+- Restore exported Genesys Cloud configuration
+- Revert policy assignment to previous baseline
+verification_steps:
+- Execute linked verification guide after remediation
+related_asset_ids:
+- VP-GENESYS-CLOUD-VG-003
+- VP-GENESYS-CLOUD-000006
+- VP-GENESYS-CLOUD-000007
+- VP-GENESYS-CLOUD-000008
+tags:
+- genesys-cloud
+- runbook
+- professional-pack
+- genesys
+references:
+- Genesys Cloud CX Professional Pack v1
+- RB-GENESYS-TRUNK
+confidence: 0.93
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

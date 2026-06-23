@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000013
+title: Genesys Cloud Agent stuck interacting
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: COLLABORATION
+severity: high
+summary: Genesys Cloud Agent stuck interacting affecting Genesys Cloud CX operations.
+description: Genesys Cloud Agent stuck interacting affecting Genesys Cloud CX operations.
+symptoms:
+- Agent remains in On Queue or Interacting state after call ends
+- Agent cannot receive new interactions
+- Supervisor cannot clear agent state from dashboard
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- agent_stuck_interacting
+- agent_stuck_interacting_detected
+expected_hypotheses: &id001
+- Client disconnect without proper wrap-up completion
+- Stuck interaction record in conversation service
+- Routing or presence state machine desynchronization
+known_causes: *id001
+known_resolution: &id002
+- Supervisor clears stuck interaction from agent state
+- Agent logs out and back in to reset client session
+- Review client logs and conversation service for orphaned interaction
+recommended_actions: *id002
+rollback_steps:
+- Document manual state clear; no configuration change required
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- agent_stuck_interacting
+- stuck_interaction_state
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-006
+- VP-GENESYS-CLOUD-VG-006
+- VP-GENESYS-CLOUD-REF-001
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- agent
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

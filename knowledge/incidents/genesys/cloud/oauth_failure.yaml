@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000002
+title: Genesys Cloud OAuth failure
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: SECURITY
+severity: critical
+summary: Genesys Cloud OAuth failure affecting Genesys Cloud CX operations.
+description: Genesys Cloud OAuth failure affecting Genesys Cloud CX operations.
+symptoms:
+- OAuth client authorization fails during API integration
+- Token exchange returns invalid_grant or unauthorized_client
+- Third-party integrations cannot authenticate to Genesys Cloud
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- oauth_failure
+- oauth_failure_detected
+expected_hypotheses: &id001
+- OAuth client credentials rotated without application update
+- Redirect URI mismatch on OAuth client registration
+- Client lacks required OAuth scopes for API operations
+known_causes: *id001
+known_resolution: &id002
+- Verify OAuth client ID, secret, and redirect URI configuration
+- Re-authorize application with required Genesys Cloud scopes
+- Review OAuth client grant type and role assignments
+recommended_actions: *id002
+rollback_steps:
+- Restore previous OAuth client credentials and redirect URIs
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- oauth_failure
+- oauth_client_invalid
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-001
+- VP-GENESYS-CLOUD-VG-001
+- VP-GENESYS-CLOUD-REF-002
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- oauth
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

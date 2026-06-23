@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000014
+title: Genesys Cloud Call flow failure
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: ROUTING
+severity: high
+summary: Genesys Cloud Call flow failure affecting Genesys Cloud CX operations.
+description: Genesys Cloud Call flow failure affecting Genesys Cloud CX operations.
+symptoms:
+- Inbound calls fail at IVR or routing decision point
+- Call disconnects unexpectedly during Architect flow
+- Error treatment plays instead of expected routing
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- call_flow_failure
+- call_flow_failure_detected
+expected_hypotheses: &id001
+- Architect flow published with invalid or missing task
+- Schedule or holiday group misconfiguration blocks routing
+- Data table or participant data lookup failure in flow
+known_causes: *id001
+known_resolution: &id002
+- Review Architect flow execution trace for failure point
+- Validate schedules, queues, and transfer targets in flow
+- Republish flow after correcting invalid task configuration
+recommended_actions: *id002
+rollback_steps:
+- Republish previous Architect flow version from archive
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- call_flow_failure
+- architect_flow_error
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-007
+- VP-GENESYS-CLOUD-VG-007
+- VP-GENESYS-CLOUD-REF-004
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- call-flow
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

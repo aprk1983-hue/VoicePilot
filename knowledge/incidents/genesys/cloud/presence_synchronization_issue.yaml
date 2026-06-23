@@ -1,0 +1,55 @@
+asset_id: VP-GENESYS-CLOUD-000023
+title: Genesys Cloud Presence synchronization issue
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: COLLABORATION
+severity: medium
+summary: Genesys Cloud Presence synchronization issue affecting Genesys Cloud CX operations.
+description: Genesys Cloud Presence synchronization issue affecting Genesys Cloud
+  CX operations.
+symptoms:
+- Agent presence out of sync between client and supervisor views
+- Routing delivers calls to agents marked unavailable
+- Presence API shows stale state after status change
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- presence_synchronization_failure
+- presence_synchronization_issue_detected
+expected_hypotheses: &id001
+- Client disconnect without presence state cleanup
+- Multiple clients logged in with conflicting presence
+- Presence subscription or notification delivery failure
+known_causes: *id001
+known_resolution: &id002
+- Agent logs out of all clients and re-establishes single session
+- Supervisor clears stale presence from agent record
+- Review presence integration and subscription configuration
+recommended_actions: *id002
+rollback_steps:
+- Restore previous presence routing and integration settings
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- presence_synchronization_failure
+- stale_presence_state
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-006
+- VP-GENESYS-CLOUD-VG-006
+- VP-GENESYS-CLOUD-REF-001
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- presence
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

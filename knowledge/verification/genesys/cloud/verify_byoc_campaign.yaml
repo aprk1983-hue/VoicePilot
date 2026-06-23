@@ -1,0 +1,47 @@
+asset_id: VP-GENESYS-CLOUD-VG-010
+title: Verify BYOC and outbound campaign
+asset_type: VERIFICATION_GUIDE
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: medium
+summary: Verify BYOC and outbound campaign for Genesys Cloud CX.
+description: Verify BYOC and outbound campaign for Genesys Cloud CX. Professional
+  pack guide VG-GENESYS-BYOC.
+symptoms:
+- Post-remediation validation required
+expected_findings:
+- verification_passed
+expected_hypotheses:
+- Service restored to operational baseline
+known_causes:
+- Remediation not yet validated
+known_resolution:
+- Complete verification steps and attach evidence
+required_evidence:
+- Genesys Cloud status export after remediation
+- Test interaction trace or SIP ladder diagram
+- Configuration snapshot after change
+verification_steps:
+- Execute VG-GENESYS-BYOC validation checklist
+- Compare results against expected operational baseline
+- Attach evidence to investigation record
+recommended_actions:
+- Compare results against expected operational baseline
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-010
+- VP-GENESYS-CLOUD-000022
+- VP-GENESYS-CLOUD-000024
+- VP-GENESYS-CLOUD-000025
+tags:
+- genesys-cloud
+- verification
+- professional-pack
+- genesys
+references:
+- Genesys Cloud CX Professional Pack v1
+- VG-GENESYS-BYOC
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

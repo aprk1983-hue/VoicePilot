@@ -1,0 +1,47 @@
+asset_id: VP-GENESYS-CLOUD-VG-007
+title: Verify Architect and call flow
+asset_type: VERIFICATION_GUIDE
+vendor: Genesys
+product: Cloud
+category: SIP
+severity: medium
+summary: Verify Architect and call flow for Genesys Cloud CX.
+description: Verify Architect and call flow for Genesys Cloud CX. Professional pack
+  guide VG-GENESYS-ARCHITECT.
+symptoms:
+- Post-remediation validation required
+expected_findings:
+- verification_passed
+expected_hypotheses:
+- Service restored to operational baseline
+known_causes:
+- Remediation not yet validated
+known_resolution:
+- Complete verification steps and attach evidence
+required_evidence:
+- Genesys Cloud status export after remediation
+- Test interaction trace or SIP ladder diagram
+- Configuration snapshot after change
+verification_steps:
+- Execute VG-GENESYS-ARCHITECT validation checklist
+- Compare results against expected operational baseline
+- Attach evidence to investigation record
+recommended_actions:
+- Compare results against expected operational baseline
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-007
+- VP-GENESYS-CLOUD-000014
+- VP-GENESYS-CLOUD-000015
+- VP-GENESYS-CLOUD-000016
+tags:
+- genesys-cloud
+- verification
+- professional-pack
+- genesys
+references:
+- Genesys Cloud CX Professional Pack v1
+- VG-GENESYS-ARCHITECT
+confidence: 0.92
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'

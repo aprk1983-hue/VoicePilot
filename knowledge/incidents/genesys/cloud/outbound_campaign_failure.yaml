@@ -1,0 +1,54 @@
+asset_id: VP-GENESYS-CLOUD-000022
+title: Genesys Cloud Outbound campaign failure
+asset_type: INCIDENT
+vendor: Genesys
+product: Cloud
+category: CALL_ROUTING
+severity: high
+summary: Genesys Cloud Outbound campaign failure affecting Genesys Cloud CX operations.
+description: Genesys Cloud Outbound campaign failure affecting Genesys Cloud CX operations.
+symptoms:
+- Outbound campaign stops dialing or shows zero contacts processed
+- Campaign contacts stuck in pending or error state
+- Abandon or compliance metrics exceed thresholds
+required_evidence:
+- Genesys Cloud admin configuration export
+- Architect flow execution trace or interaction details
+- Telephony trunk and Edge status screenshot
+expected_findings:
+- outbound_campaign_failure
+- outbound_campaign_failure_detected
+expected_hypotheses: &id001
+- Campaign contact list exhausted or import failed
+- Dialing mode or callable time window misconfiguration
+- DNC or compliance rule blocks all outbound attempts
+known_causes: *id001
+known_resolution: &id002
+- Verify campaign contact list import and remaining records
+- Review campaign schedule, dialing mode, and callable hours
+- Validate DNC lists and compliance settings for campaign
+recommended_actions: *id002
+rollback_steps:
+- Pause campaign and restore previous contact list and rules
+verification_steps:
+- Confirm expected findings in collected evidence
+- Execute linked verification guide after remediation
+related_health_rules:
+- outbound_campaign_failure
+- campaign_dialing_stopped
+related_asset_ids:
+- VP-GENESYS-CLOUD-RB-010
+- VP-GENESYS-CLOUD-VG-010
+- VP-GENESYS-CLOUD-REF-003
+tags:
+- genesys-cloud
+- professional-pack
+- genesys
+- campaign
+references:
+- Genesys Cloud CX Professional Pack v1
+- Genesys Cloud Resource Center documentation
+confidence: 0.95
+status: ACTIVE
+version: '1.0'
+created_at: '2026-06-22T12:00:00+00:00'
