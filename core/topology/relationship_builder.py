@@ -17,6 +17,32 @@ from model.cucm_objects import (
     RoutePattern,
     SIPTrunk,
 )
+from model.audiocodes_objects import (
+    Certificate,
+    IPGroup,
+    IPProfile,
+    ManipulationSet,
+    MediaRealm,
+    MessageManipulation,
+    ProxyAddress,
+    ProxySet,
+    RoutingRule,
+    SIPInterface,
+    TLSContext,
+)
+from model.audiocodes_objects import (
+    Certificate,
+    IPGroup,
+    IPProfile,
+    ManipulationSet,
+    MediaRealm,
+    MessageManipulation,
+    ProxyAddress,
+    ProxySet,
+    RoutingRule,
+    SIPInterface,
+    TLSContext,
+)
 from model.dial_peer import DialPeer
 from model.interface import Interface
 from model.provider import Provider
@@ -68,6 +94,17 @@ class _ObjectBuckets:
     teams_auto_attendants: tuple[TeamsAutoAttendant, ...] = ()
     teams_resource_accounts: tuple[TeamsResourceAccount, ...] = ()
     teams_lis_locations: tuple[TeamsLisLocation, ...] = ()
+    audiocodes_sip_interfaces: tuple[SIPInterface, ...] = ()
+    audiocodes_media_realms: tuple[MediaRealm, ...] = ()
+    audiocodes_proxy_sets: tuple[ProxySet, ...] = ()
+    audiocodes_proxy_addresses: tuple[ProxyAddress, ...] = ()
+    audiocodes_ip_groups: tuple[IPGroup, ...] = ()
+    audiocodes_ip_profiles: tuple[IPProfile, ...] = ()
+    audiocodes_routing_rules: tuple[RoutingRule, ...] = ()
+    audiocodes_manipulation_sets: tuple[ManipulationSet, ...] = ()
+    audiocodes_message_manipulations: tuple[MessageManipulation, ...] = ()
+    audiocodes_tls_contexts: tuple[TLSContext, ...] = ()
+    audiocodes_certificates: tuple[Certificate, ...] = ()
 
 
 class RelationshipBuilder:
@@ -85,6 +122,7 @@ class RelationshipBuilder:
         self._add_dial_peer_routes_to_provider(buckets, relationships, seen)
         self._add_cucm_relationships(buckets, relationships, seen)
         self._add_teams_relationships(buckets, relationships, seen)
+        self._add_audiocodes_relationships(buckets, relationships, seen)
 
         return tuple(relationships)
 
@@ -367,6 +405,122 @@ class RelationshipBuilder:
                 )
                 break
 
+    def _add_audiocodes_relationships(
+        self,
+        buckets: _ObjectBuckets,
+        relationships: list[VoiceRelationship],
+        seen: set[tuple[str, str, str]],
+    ) -> None:
+        proxy_set_by_name = {item.name: item for item in buckets.audiocodes_proxy_sets}
+        media_realm_by_name = {item.name: item for item in buckets.audiocodes_media_realms}
+        ip_profile_by_name = {item.name: item for item in buckets.audiocodes_ip_profiles}
+        ip_group_by_name = {item.name: item for item in buckets.audiocodes_ip_groups}
+        tls_context_by_name = {item.name: item for item in buckets.audiocodes_tls_contexts}
+        certificate_by_name = {item.name: item for item in buckets.audiocodes_certificates}
+        manipulation_set_by_name = {item.name: item for item in buckets.audiocodes_manipulation_sets}
+
+        for ip_group in buckets.audiocodes_ip_groups:
+            proxy_set = proxy_set_by_name.get(ip_group.proxy_set or "")
+            if proxy_set is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    ip_group.id,
+                    proxy_set.id,
+                    description=f"{ip_group.name} uses proxy set {ip_group.proxy_set}",
+                )
+            media_realm = media_realm_by_name.get(ip_group.media_realm or "")
+            if media_realm is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    ip_group.id,
+                    media_realm.id,
+                    description=f"{ip_group.name} uses media realm {ip_group.media_realm}",
+                )
+            ip_profile = ip_profile_by_name.get(ip_group.ip_profile or "")
+            if ip_profile is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    ip_group.id,
+                    ip_profile.id,
+                    description=f"{ip_group.name} uses IP profile {ip_group.ip_profile}",
+                )
+
+        for rule in buckets.audiocodes_routing_rules:
+            ip_group = ip_group_by_name.get(rule.ip_group or "")
+            if ip_group is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.ROUTES_TO,
+                    rule.id,
+                    ip_group.id,
+                    description=f"{rule.name} routes to IP group {rule.ip_group}",
+                )
+
+        for address in buckets.audiocodes_proxy_addresses:
+            proxy_set = proxy_set_by_name.get(address.proxy_set_name or "")
+            if proxy_set is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    proxy_set.id,
+                    address.id,
+                    description=f"{proxy_set.name} uses proxy address {address.name}",
+                )
+
+        for sip_interface in buckets.audiocodes_sip_interfaces:
+            tls_context = tls_context_by_name.get(sip_interface.tls_context or "")
+            if tls_context is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    sip_interface.id,
+                    tls_context.id,
+                    description=f"{sip_interface.name} uses TLS context {sip_interface.tls_context}",
+                )
+            media_realm = media_realm_by_name.get(sip_interface.media_realm or "")
+            if media_realm is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    sip_interface.id,
+                    media_realm.id,
+                    description=f"{sip_interface.name} uses media realm {sip_interface.media_realm}",
+                )
+
+        for tls_context in buckets.audiocodes_tls_contexts:
+            certificate = certificate_by_name.get(tls_context.certificate_name or "")
+            if certificate is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    tls_context.id,
+                    certificate.id,
+                    description=f"{tls_context.name} uses certificate {tls_context.certificate_name}",
+                )
+
+        for manipulation in buckets.audiocodes_message_manipulations:
+            manipulation_set = manipulation_set_by_name.get(manipulation.set_name or "")
+            if manipulation_set is not None:
+                _append_relationship(
+                    relationships,
+                    seen,
+                    RelationshipType.USES,
+                    manipulation_set.id,
+                    manipulation.id,
+                    description=f"{manipulation_set.name} uses message manipulation {manipulation.name}",
+                )
+
 
 def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     dial_peers: list[DialPeer] = []
@@ -396,6 +550,17 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
     teams_auto_attendants: list[TeamsAutoAttendant] = []
     teams_resource_accounts: list[TeamsResourceAccount] = []
     teams_lis_locations: list[TeamsLisLocation] = []
+    audiocodes_sip_interfaces: list[SIPInterface] = []
+    audiocodes_media_realms: list[MediaRealm] = []
+    audiocodes_proxy_sets: list[ProxySet] = []
+    audiocodes_proxy_addresses: list[ProxyAddress] = []
+    audiocodes_ip_groups: list[IPGroup] = []
+    audiocodes_ip_profiles: list[IPProfile] = []
+    audiocodes_routing_rules: list[RoutingRule] = []
+    audiocodes_manipulation_sets: list[ManipulationSet] = []
+    audiocodes_message_manipulations: list[MessageManipulation] = []
+    audiocodes_tls_contexts: list[TLSContext] = []
+    audiocodes_certificates: list[Certificate] = []
 
     for obj in voice_objects:
         if isinstance(obj, DialPeer):
@@ -452,6 +617,28 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
             teams_resource_accounts.append(obj)
         elif isinstance(obj, TeamsLisLocation):
             teams_lis_locations.append(obj)
+        elif isinstance(obj, SIPInterface):
+            audiocodes_sip_interfaces.append(obj)
+        elif isinstance(obj, MediaRealm):
+            audiocodes_media_realms.append(obj)
+        elif isinstance(obj, ProxySet):
+            audiocodes_proxy_sets.append(obj)
+        elif isinstance(obj, ProxyAddress):
+            audiocodes_proxy_addresses.append(obj)
+        elif isinstance(obj, IPGroup):
+            audiocodes_ip_groups.append(obj)
+        elif isinstance(obj, IPProfile):
+            audiocodes_ip_profiles.append(obj)
+        elif isinstance(obj, RoutingRule):
+            audiocodes_routing_rules.append(obj)
+        elif isinstance(obj, ManipulationSet):
+            audiocodes_manipulation_sets.append(obj)
+        elif isinstance(obj, MessageManipulation):
+            audiocodes_message_manipulations.append(obj)
+        elif isinstance(obj, TLSContext):
+            audiocodes_tls_contexts.append(obj)
+        elif isinstance(obj, Certificate):
+            audiocodes_certificates.append(obj)
 
     return _ObjectBuckets(
         dial_peers=tuple(sorted(dial_peers, key=lambda item: item.id)),
@@ -483,6 +670,21 @@ def _partition_objects(voice_objects: list[VoiceObject]) -> _ObjectBuckets:
         teams_auto_attendants=tuple(sorted(teams_auto_attendants, key=lambda item: item.id)),
         teams_resource_accounts=tuple(sorted(teams_resource_accounts, key=lambda item: item.id)),
         teams_lis_locations=tuple(sorted(teams_lis_locations, key=lambda item: item.id)),
+        audiocodes_sip_interfaces=tuple(sorted(audiocodes_sip_interfaces, key=lambda item: item.id)),
+        audiocodes_media_realms=tuple(sorted(audiocodes_media_realms, key=lambda item: item.id)),
+        audiocodes_proxy_sets=tuple(sorted(audiocodes_proxy_sets, key=lambda item: item.id)),
+        audiocodes_proxy_addresses=tuple(sorted(audiocodes_proxy_addresses, key=lambda item: item.id)),
+        audiocodes_ip_groups=tuple(sorted(audiocodes_ip_groups, key=lambda item: item.id)),
+        audiocodes_ip_profiles=tuple(sorted(audiocodes_ip_profiles, key=lambda item: item.id)),
+        audiocodes_routing_rules=tuple(sorted(audiocodes_routing_rules, key=lambda item: item.id)),
+        audiocodes_manipulation_sets=tuple(
+            sorted(audiocodes_manipulation_sets, key=lambda item: item.id)
+        ),
+        audiocodes_message_manipulations=tuple(
+            sorted(audiocodes_message_manipulations, key=lambda item: item.id)
+        ),
+        audiocodes_tls_contexts=tuple(sorted(audiocodes_tls_contexts, key=lambda item: item.id)),
+        audiocodes_certificates=tuple(sorted(audiocodes_certificates, key=lambda item: item.id)),
     )
 
 

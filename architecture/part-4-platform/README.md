@@ -17,6 +17,7 @@ Delivery surfaces, packaging, plugins, and operational entry points.
 | [10 — Microsoft Teams Health Engine](10-microsoft-teams-health-engine.md) | Implemented | Teams CVOM health rules and scoring |
 | [11 — Microsoft Teams Investigation Engine](11-microsoft-teams-investigation-engine.md) | Implemented | VP-TEAMS-0001 deterministic investigation pipeline |
 | [12 — AudioCodes SBC Knowledge Library](12-audiocodes-knowledge-library.md) | Implemented | AudioCodes SBC professional knowledge pack |
+| [13 — AudioCodes SBC Object Model](13-audiocodes-object-model.md) | Implemented | AVOM types and deterministic SBC parser framework |
 
 ## Related Documentation
 

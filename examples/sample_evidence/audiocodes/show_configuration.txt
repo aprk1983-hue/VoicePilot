@@ -1,0 +1,16 @@
+show configuration
+Device Name: SBC-LAB-01
+Software Version: 7.40A.500.781
+Device Status: Active
+SRD Name: DEFAULT_SRD
+State: Active
+Manipulation Set Name: OUTBOUND_HDR
+State: Active
+Manipulation Name: ADD_PAI
+Set Name: OUTBOUND_HDR
+Action: HeaderAdd
+Ethernet Interface: LAN1
+State: Up
+IP Address: 10.10.1.10
+Media Security Profile: SRTP_PROFILE
+SRTP Mode: Enabled

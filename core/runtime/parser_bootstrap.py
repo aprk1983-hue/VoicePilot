@@ -27,6 +27,14 @@ def build_default_parser_engine() -> ParserEngine | None:
     except ImportError:
         pass
 
+    try:
+        from plugins.audiocodes.parser import register_audiocodes_parsers
+
+        register_audiocodes_parsers(registry)
+        registered = True
+    except ImportError:
+        pass
+
     if not registered:
         return None
     return ParserEngine(registry=registry)

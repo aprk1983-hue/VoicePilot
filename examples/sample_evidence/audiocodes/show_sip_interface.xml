@@ -1,0 +1,11 @@
+<Records>
+  <Record>
+    <Name>SIP_TRUNK_1</Name>
+    <InterfaceName>SIP_TRUNK_1</InterfaceName>
+    <State>Active</State>
+    <Transport>TLS</Transport>
+    <Port>5061</Port>
+    <TLSContext>TLS_CTX_1</TLSContext>
+    <MediaRealm>MR_INTERNAL</MediaRealm>
+  </Record>
+</Records>

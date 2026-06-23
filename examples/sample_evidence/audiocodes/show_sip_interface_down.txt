@@ -1,0 +1,5 @@
+show sip-interface
+Interface Name: SIP_TRUNK_2
+State: Down
+Transport: TLS
+Port: 5061
