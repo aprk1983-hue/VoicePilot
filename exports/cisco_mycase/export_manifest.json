@@ -1,0 +1,56 @@
+{
+  "case_list": "/Users/praveen/Development/VoicePilot/SCMCaseList_real.xlsx",
+  "output_dir": "/Users/praveen/Development/VoicePilot/exports/cisco_mycase",
+  "created_at": "2026-06-21T23:36:09.916423+00:00",
+  "updated_at": "2026-06-22T00:04:05.351163+00:00",
+  "entries": {
+    "699168133": {
+      "case_number": "699168133",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:38:19.352643+00:00",
+      "html_path": "exports/cisco_mycase/699168133.html",
+      "screenshot_path": "exports/cisco_mycase/699168133.png",
+      "error": "Export button not found; saved HTML and screenshot"
+    },
+    "699201261": {
+      "case_number": "699201261",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:38:29.258480+00:00",
+      "html_path": "exports/cisco_mycase/699201261.html",
+      "screenshot_path": "exports/cisco_mycase/699201261.png",
+      "error": "Export button not found; saved HTML and screenshot"
+    },
+    "700812101": {
+      "case_number": "700812101",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:54:02.517226+00:00",
+      "html_path": "exports/cisco_mycase/700812101.html",
+      "screenshot_path": "exports/cisco_mycase/700812101.png",
+      "error": "Export control not found; saved HTML and screenshot. Visible controls: (none)"
+    },
+    "700848407": {
+      "case_number": "700848407",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:54:12.250618+00:00",
+      "html_path": "exports/cisco_mycase/700848407.html",
+      "screenshot_path": "exports/cisco_mycase/700848407.png",
+      "error": "Export control not found; saved HTML and screenshot. Visible controls: (none)"
+    },
+    "700882867": {
+      "case_number": "700882867",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:54:22.227561+00:00",
+      "html_path": "exports/cisco_mycase/700882867.html",
+      "screenshot_path": "exports/cisco_mycase/700882867.png",
+      "error": "Export control not found; saved HTML and screenshot. Visible controls: (none)"
+    },
+    "700912685": {
+      "case_number": "700912685",
+      "status": "failed",
+      "updated_at": "2026-06-21T23:53:52.705549+00:00",
+      "html_path": "exports/cisco_mycase/700912685.html",
+      "screenshot_path": "exports/cisco_mycase/700912685.png",
+      "error": "Export control not found; saved HTML and screenshot. Visible controls: (none)"
+    }
+  }
+}

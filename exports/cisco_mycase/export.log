@@ -1,0 +1,49 @@
+2026-06-22 07:36:09,916 INFO Loaded 311 case numbers from /Users/praveen/Downloads/SCMCaseList_converted.xlsx
+2026-06-22 07:36:09,917 INFO Output directory: /Users/praveen/Development/VoicePilot/exports/cisco_mycase
+2026-06-22 07:36:09,917 INFO Resume enabled
+2026-06-22 07:36:15,819 INFO Opening Cisco MyCase login page: https://mycase.cloudapps.cisco.com/
+2026-06-22 07:37:34,735 INFO Manual login confirmed by user
+2026-06-22 07:37:34,737 INFO Opening case 700912685
+2026-06-22 07:37:40,387 WARNING Case 700912685 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:37:40,387 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:37:45,393 INFO Opening case 700812101
+2026-06-22 07:37:50,118 WARNING Case 700812101 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:37:50,119 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:37:55,124 INFO Opening case 700848407
+2026-06-22 07:38:00,046 WARNING Case 700848407 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:38:00,047 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:38:05,052 INFO Opening case 700882867
+2026-06-22 07:38:09,754 WARNING Case 700882867 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:38:09,755 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:38:14,761 INFO Opening case 699168133
+2026-06-22 07:38:19,352 WARNING Case 699168133 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:38:19,352 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:38:24,355 INFO Opening case 699201261
+2026-06-22 07:38:29,258 WARNING Case 699201261 failed: Export button not found; saved HTML and screenshot
+2026-06-22 07:38:29,258 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:38:34,273 INFO Opening case 699208981
+2026-06-22 07:53:12,886 INFO Loaded 311 case numbers from SCMCaseList_real.xlsx
+2026-06-22 07:53:12,886 INFO Output directory: /Users/praveen/Development/VoicePilot/exports/cisco_mycase
+2026-06-22 07:53:12,886 INFO Resume enabled
+2026-06-22 07:53:15,741 INFO Opening Cisco MyCase login page: https://mycase.cloudapps.cisco.com/
+2026-06-22 07:53:47,064 INFO Manual login confirmed by user
+2026-06-22 07:53:47,066 INFO Opening case 700912685
+2026-06-22 07:53:52,705 WARNING Case 700912685 failed: Export control not found; saved HTML and screenshot. Visible controls: (none)
+2026-06-22 07:53:52,706 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:53:57,707 INFO Opening case 700812101
+2026-06-22 07:54:02,517 WARNING Case 700812101 failed: Export control not found; saved HTML and screenshot. Visible controls: (none)
+2026-06-22 07:54:02,517 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:54:07,523 INFO Opening case 700848407
+2026-06-22 07:54:12,250 WARNING Case 700848407 failed: Export control not found; saved HTML and screenshot. Visible controls: (none)
+2026-06-22 07:54:12,251 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:54:17,255 INFO Opening case 700882867
+2026-06-22 07:54:22,227 WARNING Case 700882867 failed: Export control not found; saved HTML and screenshot. Visible controls: (none)
+2026-06-22 07:54:22,228 INFO Waiting 5.0 seconds before next case
+2026-06-22 07:54:27,233 INFO Opening case 699168133
+2026-06-22 08:04:05,351 INFO Loaded 311 case numbers from SCMCaseList_real.xlsx
+2026-06-22 08:04:05,351 INFO Output directory: /Users/praveen/Development/VoicePilot/exports/cisco_mycase
+2026-06-22 08:04:05,351 INFO Case URL template: https://mycase.cloudapps.cisco.com/case/{case_number}
+2026-06-22 08:04:05,351 INFO Resume enabled
+2026-06-22 08:04:05,351 INFO Manual first-case mode enabled
+2026-06-22 08:04:05,351 INFO Debug pause on failure enabled
+2026-06-22 08:04:07,248 INFO Opening Cisco MyCase home for manual first-case navigation: https://mycase.cloudapps.cisco.com/
